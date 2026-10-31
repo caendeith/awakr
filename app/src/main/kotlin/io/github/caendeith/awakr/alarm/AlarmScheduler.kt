@@ -28,7 +28,13 @@ class AlarmScheduler(private val context: Context) {
             return
         }
         val now = ZonedDateTime.now()
-        val next = NextOccurrence.next(now, alarm.hour, alarm.minute, alarm.daysMask)
+        val next = NextOccurrence.next(
+            now = now,
+            hour = alarm.hour,
+            minute = alarm.minute,
+            daysMask = alarm.daysMask,
+            skipNextAt = alarm.skipNextAt,
+        )
         if (next == null) {
             Log.w(TAG, "no next occurrence for alarm ${alarm.id}")
             cancel(alarm.id)

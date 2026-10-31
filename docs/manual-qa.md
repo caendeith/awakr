@@ -77,7 +77,45 @@ The module was then deleted and the tree restored, so the repository does not co
 A third, smaller fix landed at the same time: `onDestroy` now cancels the timer, stops sound and vibration,
 releases the wake lock and clears the pending ring queue.
 
-## Not verified by hand (and why)
+
+## v1.1 UX pass — results
+
+Verified on the same device (Pixel 7 Pro, Android 17 / API 37, Russian locale, `Europe/Samara`) with the debug build of v1.1.0.
+
+| # | Scenario | Result | Evidence |
+|---|---|---|---|
+| 1 | Long press a card opens selection mode | ✅ "Выбрано: 1", × to exit, "Выбрать все" | `.notes/screens/v11-select.png` |
+| 2 | Bulk actions from the selection bar | ✅ Duplicate created a second alarm with `sort_order = 1`; enable/disable/delete worked the same way | db dump |
+| 3 | ⋯ menu | ✅ edit / duplicate / skip next / disable / delete | `.notes/screens/v11-menu.png` |
+| 4 | Swipe = delete + Undo | ✅ snackbar "Будильник удалён" + "Отменить" restored the row (`deleted_at = null` after a fast tap) | `.notes/screens/v11-swipe-undo.png` |
+| 5 | Swipe = toggle | ✅ switched the setting in Settings, the next swipe flipped `enabled` 1 → 0 without deleting | db dump |
+| 6 | Swipe = nothing | covered by the same code path; not exercised separately | — |
+| 7 | Drag-to-reorder | ✅ "Порядок" mode, rows move by 200 px steps, `sort_order` becomes 0,1,2 in the new order | `.notes/screens/v11-drag.png` |
+| 8 | Editor time bottom sheet + quick chips | ✅ +15 min changed 07:30 → 07:45 inside the sheet | `.notes/screens/v11-sheet-plus.png` |
+| 9 | Per-alarm sound | ✅ picked "Колокол", preview played, saved as `sound_id = builtin:bell` | db dump |
+| 10 | Both themes | ✅ light palette renders (`#FBF8F4` background, amber accent), system mode restores dark | `.notes/screens/v11-light-home.png`, `v11-home-final.png` |
+| 11 | Code mission — formats | ✅ QR and EAN-13 generate (`AWAKR-ARFKV857`, `2070443182456`); switching format regenerates an incompatible payload instead of leaving an empty preview | `.notes/screens/v11-qr-gen2.png`, `v11-ean-barcode.png` |
+| 12 | Save code as PNG | ✅ SAF picker → `/sdcard/Download/awakr-ean13.png` (2078 bytes), editor shows "Код сохранён" | `.notes/screens/v11-png-saved.png` |
+| 13 | Ring with the code mission | ✅ live preview + "Сканирование…" + "Сфотографировать"; the shutter in a dark room reports "Код не распознан, попробуйте ещё раз" and keeps ringing | `.notes/screens/v11-code-ring.png`, `v11-shoot.png` |
+| 14 | Snooze from the code ring | ✅ "Отложить" schedules +10 min, log "ring finished: SNOOZED" | logcat |
+
+### Bugs found during the v1.1 pass (all three fixed)
+
+1. **A swipe-deleted card stayed red after Undo.** `SwipeToDismissBox.confirmValueChange` returned `true` for the delete branch, so the box settled in the dismissed state and the restored row rendered behind the red "Удалить" background. Returning `false` lets the row disappear from the list while the box stays idle.
+2. **Switching the code format kept a payload the format cannot encode** (letters after generating a QR, then choosing EAN-13 → empty preview). `CodePayload.ensureEncodable` now regenerates a valid payload for the new format.
+3. **Buttons under the generated code were squeezed** ("Поделиться" broke mid-word). `Row` → `FlowRow`, so the third button wraps to its own line.
+
+Also fixed while testing: recurring alarms were rescheduled only on boot/app start (v1 bug), so a daily alarm rang once and then stayed silent — `AlarmRingService.finish()` now reschedules the next occurrence and clears `skip_next_at` after a fired ring.
+
+### Still not verified by hand (v1.1)
+
+| Item | Why | Covered instead by |
+|---|---|---|
+| Camera decoding a real printed QR/barcode | one phone on the desk, no second screen or printer | `CodeImageTest` (QR + EAN-13/EAN-8/UPC-A/CODE-128 round-trip, rotations), `CodeFrameTest`, `CodePayloadTest` |
+| Saving a shot to `Pictures/Awakr` | needs a successful decode first | code path identical to the PNG export that was verified |
+| Importing a custom audio file from storage | picker opens, but there was no audio file on the device to choose | `SoundResolutionTest` (missing file falls back to the default sound) |
+
+## Not verified by hand (v1.0.0, and why)
 
 | Item | Why | Covered instead by |
 |---|---|---|

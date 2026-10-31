@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_code_name">Код</string>
+    <string name="code_format_qr">QR</string>
+    <string name="code_format_ean13">EAN-13</string>
+    <string name="code_format_ean8">EAN-8</string>
+    <string name="code_format_upca">UPC-A</string>
+    <string name="code_format_code128">Code 128</string>
+    <string name="code_hint">Наведите камеру на код</string>
+    <string name="code_permission">Для сканирования нужен доступ к камере</string>
+    <string name="code_grant">Разрешить камеру</string>
+    <string name="code_scanning">Сканирование…</string>
+    <string name="code_editor_hint">Распечатайте код ниже и уберите его подальше от кровати. Новый код отменяет старый.</string>
+    <string name="code_format_label">Тип кода</string>
+    <string name="code_generate">Создать мой код</string>
+    <string name="code_regenerate">Создать другой код</string>
+    <string name="code_print_hint">Можно распечатать или сохранить и держать на другом телефоне.</string>
+    <string name="code_save_png">Сохранить PNG</string>
+    <string name="code_share">Поделиться</string>
+    <string name="code_saved">Код сохранён</string>
+    <string name="code_shoot">Сфотографировать</string>
+    <string name="code_shot_failed">Код не распознан, попробуйте ещё раз</string>
+    <string name="code_shot_saved">Снимок сохранён в Pictures/Awakr</string>
+    <string name="code_numeric_hint">Фиксированная длина, только цифры, с контрольной цифрой</string>
+</resources>

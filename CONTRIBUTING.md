@@ -64,7 +64,7 @@ export ANDROID_HOME="D:/path/to/android-sdk"
 | `:sdk` | the public plugin SDK (`MissionPlugin`, `PluginManifest`, `SettingField`) |
 | `:plugin-runtime` | registry, settings codec, permission checks |
 | `:plugin-codegen` | code generation scaffolding for the registry |
-| `:plugins:mission-*` | mission plugins: math, QR, shake, typing |
+| `:plugins:mission-*` | mission plugins: math, code (QR + barcodes), shake, typing |
 
 ## Adding a mission in one pull request
 
@@ -159,7 +159,7 @@ Both must be green before a pull request is reviewed:
 ```
 
 Unit tests cover pure logic: repeat-day masks, next occurrence across DST, missed-alarm detection,
-settings codec, plugin registry validation, math generation, shake tracking, QR frame rotation and
+settings codec, plugin registry validation, math generation, shake tracking, code frame rotation, payload checksums and
 payload matching. Anything that needs a phone is listed in [docs/manual-qa.md](docs/manual-qa.md).
 
 ## Translations

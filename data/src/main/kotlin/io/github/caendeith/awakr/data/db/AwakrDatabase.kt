@@ -13,7 +13,7 @@ import io.github.caendeith.awakr.data.db.entity.PluginStateEntity
 
 @Database(
     entities = [AlarmEntity::class, AlarmLogEntity::class, PluginStateEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AwakrDatabase : RoomDatabase() {
@@ -26,6 +26,7 @@ abstract class AwakrDatabase : RoomDatabase() {
 
         fun build(context: Context): AwakrDatabase =
             Room.databaseBuilder(context.applicationContext, AwakrDatabase::class.java, NAME)
+                .addMigrations(*AwakrMigrations.ALL)
                 .build()
     }
 }

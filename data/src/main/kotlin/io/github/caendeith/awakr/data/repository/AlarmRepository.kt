@@ -11,7 +11,7 @@ class AlarmRepository(private val dao: AlarmDao) {
 
     fun observeAll(): Flow<List<Alarm>> = dao.observeAll().map { rows -> rows.map { it.toDomain() } }
 
-    suspend fun get(id: Long): Alarm? = dao.getById(id)?.toDomain()
+    suspend fun get(id: Long): Alarm? = dao.getById(id)?.toDomain()?.takeIf { it.deletedAt == null }
 
     suspend fun enabledAlarms(): List<Alarm> = dao.getEnabled().map { it.toDomain() }
 
@@ -19,7 +19,8 @@ class AlarmRepository(private val dao: AlarmDao) {
     suspend fun save(alarm: Alarm): Long {
         val now = System.currentTimeMillis()
         return if (alarm.id == 0L) {
-            dao.insert(alarm.copy(createdAt = now, updatedAt = now).toEntity())
+            val order = if (alarm.sortOrder > 0) alarm.sortOrder else dao.nextSortOrder()
+            dao.insert(alarm.copy(sortOrder = order, createdAt = now, updatedAt = now).toEntity())
         } else {
             val existing = dao.getById(alarm.id)
             val merged = alarm.copy(
@@ -31,11 +32,44 @@ class AlarmRepository(private val dao: AlarmDao) {
         }
     }
 
+    suspend fun duplicate(alarm: Alarm): Long = save(
+        alarm.copy(
+            id = 0L,
+            sortOrder = 0,
+            label = alarm.label,
+            skipNextAt = null,
+            deletedAt = null,
+            createdAt = 0L,
+            updatedAt = 0L,
+        ),
+    )
+
     suspend fun setEnabled(id: Long, enabled: Boolean) {
         dao.setEnabled(id, enabled, System.currentTimeMillis())
     }
 
-    suspend fun delete(id: Long) {
-        dao.deleteById(id)
+    /** One-tap "do not ring the next time" marker; cleared by the scheduler once it passes. */
+    suspend fun setSkipNextAt(id: Long, skipAt: Long?) {
+        dao.setSkipNextAt(id, skipAt, System.currentTimeMillis())
+    }
+
+    /** Soft deletion: the row stays hidden until [purgeDeleted] (or an undo) runs. */
+    suspend fun delete(id: Long) = delete(listOf(id))
+
+    suspend fun delete(ids: Collection<Long>) {
+        val now = System.currentTimeMillis()
+        ids.forEach { dao.softDelete(it, now) }
+    }
+
+    suspend fun restore(ids: Collection<Long>) {
+        val now = System.currentTimeMillis()
+        ids.forEach { dao.restore(it, now) }
+    }
+
+    suspend fun purgeDeleted() = dao.purgeDeleted()
+
+    suspend fun reorder(orderedIds: List<Long>) {
+        val now = System.currentTimeMillis()
+        orderedIds.forEachIndexed { index, id -> dao.setSortOrder(id, index, now) }
     }
 }

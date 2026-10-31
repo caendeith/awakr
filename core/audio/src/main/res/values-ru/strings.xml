@@ -1,0 +1,9 @@
+<resources>
+    <string name="sound_chime_name">Перезвон</string>
+    <string name="sound_marimba_name">Маримба</string>
+    <string name="sound_bell_name">Колокол</string>
+    <string name="sound_digital_name">Цифровой</string>
+    <string name="sound_sunrise_name">Рассвет</string>
+    <string name="sound_alarm_name">Сирена</string>
+    <string name="sound_pulse_name">Пульс</string>
+</resources>

@@ -3,6 +3,7 @@ package io.github.caendeith.awakr.core.time
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZonedDateTime
+import java.util.concurrent.TimeUnit
 
 /**
  * Computes the next moment an alarm should ring.
@@ -21,9 +22,26 @@ object NextOccurrence {
 
     /**
      * @param daysMask repeat mask, or 0 for a one-shot alarm
+     * @param skipNextAt epoch millis of a single occurrence the user asked to skip, or null
      * @return the earliest instant strictly after [now], or null when it cannot be computed
      */
-    fun next(now: ZonedDateTime, hour: Int, minute: Int, daysMask: Int): ZonedDateTime? {
+    fun next(
+        now: ZonedDateTime,
+        hour: Int,
+        minute: Int,
+        daysMask: Int,
+        skipNextAt: Long? = null,
+    ): ZonedDateTime? {
+        val first = nextAfter(now, hour, minute, daysMask) ?: return null
+        if (skipNextAt == null) return first
+        if (first.toInstant().toEpochMilli() != skipNextAt) return first
+        // A one-shot alarm has nothing left to skip to: it is effectively done.
+        if (daysMask == 0) return null
+        // The skipped occurrence is the immediate next one: look one minute past it.
+        return nextAfter(first.plusMinutes(1), hour, minute, daysMask)
+    }
+
+    private fun nextAfter(now: ZonedDateTime, hour: Int, minute: Int, daysMask: Int): ZonedDateTime? {
         if (hour !in 0..23 || minute !in 0..59) return null
 
         // Eight days of candidates is enough for every mask: the same weekday next week
@@ -60,4 +78,8 @@ object NextOccurrence {
     /** Local wall clock time resolved in [zone]; DST gaps move forward, overlaps take the earlier instant. */
     fun resolve(date: LocalDate, hour: Int, minute: Int, zone: java.time.ZoneId): ZonedDateTime =
         ZonedDateTime.of(date.atTime(hour, minute), zone)
+
+    /** Convenience for tests and logs: whole minutes between two instants. */
+    fun minutesBetween(from: ZonedDateTime, to: ZonedDateTime): Long =
+        TimeUnit.MILLISECONDS.toMinutes(java.time.Duration.between(from, to).toMillis())
 }

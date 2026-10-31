@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_code_name">Code</string>
+    <string name="code_format_qr">QR</string>
+    <string name="code_format_ean13">EAN-13</string>
+    <string name="code_format_ean8">EAN-8</string>
+    <string name="code_format_upca">UPC-A</string>
+    <string name="code_format_code128">Code 128</string>
+    <string name="code_hint">Point the camera at the code</string>
+    <string name="code_permission">Camera access is required to scan the code</string>
+    <string name="code_grant">Allow camera</string>
+    <string name="code_scanning">Scanning…</string>
+    <string name="code_editor_hint">Print the code below and keep it away from the bed. A new code invalidates the old one.</string>
+    <string name="code_format_label">Code type</string>
+    <string name="code_generate">Create my code</string>
+    <string name="code_regenerate">Create another code</string>
+    <string name="code_print_hint">Print it, or save it and keep it on another phone.</string>
+    <string name="code_save_png">Save as PNG</string>
+    <string name="code_share">Share</string>
+    <string name="code_saved">Code saved</string>
+    <string name="code_shoot">Take a picture</string>
+    <string name="code_shot_failed">The code was not recognised, try again</string>
+    <string name="code_shot_saved">Picture saved to Pictures/Awakr</string>
+    <string name="code_numeric_hint">Fixed-length digits with a check digit</string>
+</resources>

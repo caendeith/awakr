@@ -222,6 +222,21 @@ class AlarmRingService : Service() {
                         ),
                     )
                 }
+                // Register the next occurrence: a repeating alarm keeps coming back on its own,
+                // a one-shot alarm switches itself off once it has rung.
+                runCatching {
+                    val latest = app.data.alarms.get(alarm.id) ?: return@runCatching
+                    if (!latest.enabled) return@runCatching
+                    if (latest.daysMask == 0) {
+                        app.data.alarms.setEnabled(latest.id, false)
+                    } else {
+                        if (latest.skipNextAt != null) {
+                            app.data.alarms.setSkipNextAt(latest.id, null)
+                        }
+                        app.scheduler.schedule(latest.copy(skipNextAt = null))
+                        Log.i(TAG, "alarm ${latest.id} rescheduled after ${outcome.name}")
+                    }
+                }.onFailure { Log.w(TAG, "could not reschedule alarm ${alarm.id}", it) }
             }
         }
         triggerAtMillis = 0L

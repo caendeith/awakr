@@ -9,7 +9,7 @@ import io.github.caendeith.awakr.core.notify.AwakrNotifications
 import io.github.caendeith.awakr.data.AwakrData
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 import io.github.caendeith.awakr.plugins.mission.math.MathMissionPlugin
-import io.github.caendeith.awakr.plugins.mission.qr.QrMissionPlugin
+import io.github.caendeith.awakr.plugins.mission.code.CodeMissionPlugin
 import io.github.caendeith.awakr.plugins.mission.shake.ShakeMissionPlugin
 import io.github.caendeith.awakr.plugins.mission.typing.TypingMissionPlugin
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +38,7 @@ class AwakrApplication : Application() {
                 MathMissionPlugin(),
                 ShakeMissionPlugin(),
                 TypingMissionPlugin(),
-                QrMissionPlugin(),
+                CodeMissionPlugin(),
             ),
             declaredPermissions = declaredPermissions(),
         )
@@ -62,6 +62,8 @@ class AwakrApplication : Application() {
         data = AwakrData.create(this)
         appScope.launch {
             seedSampleAlarms()
+            // Soft-deleted alarms only live until the next start; the undo window is a few seconds.
+            runCatching { data.alarms.purgeDeleted() }
             // Safety net: the platform can drop alarms (force stop, restore, clock change).
             runCatching { scheduler.rescheduleAll(data.alarms.enabledAlarms()) }
             // The device may have been off at the scheduled minute; only the log comparison notices.

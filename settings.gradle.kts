@@ -51,7 +51,7 @@ include(":plugin-codegen")
 
 // Plugins
 include(":plugins:mission-math")
-include(":plugins:mission-qr")
+include(":plugins:mission-code")
 include(":plugins:mission-shake")
 include(":plugins:mission-typing")
 // include(":plugins:sound-default")

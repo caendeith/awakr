@@ -1,0 +1,9 @@
+<resources>
+    <string name="sound_chime_name">Chime</string>
+    <string name="sound_marimba_name">Marimba</string>
+    <string name="sound_bell_name">Bell</string>
+    <string name="sound_digital_name">Digital</string>
+    <string name="sound_sunrise_name">Sunrise</string>
+    <string name="sound_alarm_name">Alarm</string>
+    <string name="sound_pulse_name">Pulse</string>
+</resources>
