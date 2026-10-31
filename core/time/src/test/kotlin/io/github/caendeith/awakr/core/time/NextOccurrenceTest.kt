@@ -79,6 +79,41 @@ class NextOccurrenceTest {
     }
 
     @Test
+    fun previousReturnsTheSameMorningBeforeTheTime() {
+        val prev = NextOccurrence.previous(at(2026, 3, 2, 8, 0), 7, 30, 0)!!
+        assertEquals(LocalDate.of(2026, 3, 2), prev.toLocalDate())
+        assertEquals(7, prev.hour)
+        assertEquals(30, prev.minute)
+    }
+
+    @Test
+    fun previousRollsBackWhenTheTimeHasNotComeYet() {
+        val prev = NextOccurrence.previous(at(2026, 3, 2, 6, 0), 7, 30, 0)!!
+        assertEquals(LocalDate.of(2026, 3, 1), prev.toLocalDate())
+    }
+
+    @Test
+    fun previousRespectsTheRepeatMask() {
+        // 2026-03-07 is a Saturday; the workday mask must walk back to Friday.
+        val prev = NextOccurrence.previous(at(2026, 3, 7, 12, 0), 7, 30, 0b0011111)!!
+        assertEquals(DayOfWeek.FRIDAY, prev.dayOfWeek)
+        assertEquals(LocalDate.of(2026, 3, 6), prev.toLocalDate())
+    }
+
+    @Test
+    fun previousIsAlwaysBeforeNow() {
+        val now = at(2026, 6, 15, 12, 0)
+        val prev = NextOccurrence.previous(now, 12, 0, 0b1111111)!!
+        assertTrue(prev.isBefore(now))
+        assertTrue(prev.isAfter(now.minusDays(2)))
+    }
+
+    @Test
+    fun previousRejectsInvalidTime() {
+        assertNull(NextOccurrence.previous(at(2026, 3, 2, 6, 0), 24, 0, 0))
+    }
+
+    @Test
     fun repeatsOnUsesIsoWeekdayBits() {
         assertTrue(NextOccurrence.repeatsOn(0b1000000, DayOfWeek.SUNDAY))
         assertTrue(NextOccurrence.repeatsOn(0b0000001, DayOfWeek.MONDAY))

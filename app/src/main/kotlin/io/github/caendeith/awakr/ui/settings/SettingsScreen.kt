@@ -31,6 +31,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenPlugins: () -> Unit,
     onOpenAbout: () -> Unit,
+    onOpenPermissions: () -> Unit = {},
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -57,6 +58,7 @@ fun SettingsScreen(
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            SettingsRow(stringResource(R.string.settings_permissions), onOpenPermissions)
             SettingsRow(stringResource(R.string.settings_plugins), onOpenPlugins)
             SettingsRow(stringResource(R.string.settings_about), onOpenAbout)
         }

@@ -42,10 +42,10 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 | 3 | Alarm engine: exact scheduling, boot re-scheduling, ring service + full screen screen, snooze/dismiss logging | done |
 | 4 | Home screen and polished editor | done |
 | 5 | Missions as plugins (typing, math, shake, QR) | done |
-| 6 | Permission onboarding, locales, about, missed alarms | in progress |
-| 7 | QA matrix, release build, CI, docs | pending |
+| 6 | Permission onboarding, locales, about, missed alarms | done |
+| 7 | QA matrix, release build, CI, docs | in progress |
 
-Verified on a Pixel 7 Pro (Android 17 / API 37): alarms fire at the exact minute from an idle, locked device, the ring screen is raised over the lock screen, every alarm is restored after a reboot, and each mission plugin can dismiss or snooze the ring (math problems, an exact typed phrase, a shake sensor, a camera scan bound to a printed payload). Turning a plugin off falls back to the "hold to dismiss" safety mission.
+Verified on a Pixel 7 Pro (Android 17 / API 37): alarms fire at the exact minute from an idle, locked device, the ring screen is raised over the lock screen, every alarm is restored after a reboot, and each mission plugin can dismiss or snooze the ring (math problems, an exact typed phrase, a shake sensor, a camera scan bound to a printed payload). Turning a plugin off falls back to the "hold to dismiss" safety mission. First launch walks through the three permissions an alarm clock needs, the UI follows the system language (English and Russian ship in the APK), and an alarm the device slept through is reported once — as a card on the home screen and a notification — instead of being silently forgotten.
 
 ### Missions
 
@@ -57,6 +57,21 @@ Verified on a Pixel 7 Pro (Android 17 / API 37): alarms fire at the exact minute
 | QR | scan the printed code | payload (a code is generated in the editor) |
 
 Every mission is a plugin ([sdk/](sdk/)): it declares its manifest, its editor UI and the ring behaviour, and the registry rejects plugins built against a newer API version or with a duplicate id. The QR mission deliberately uses CameraX + ZXing instead of ML Kit, so the app stays usable without Google services.
+
+### Permissions
+
+| Permission | Why | Required |
+|---|---|---|
+| Notifications (API 33+) | fallback ring notification and the missed-alarm summary | yes |
+| Exact alarms (API 31+) | `setAlarmClock` cannot schedule without it | yes |
+| Camera | only the QR mission, and only while the alarm rings | when the QR plugin is on |
+| Display over other apps | helps the ring screen on ROMs that block background activity starts | no |
+
+The onboarding screen links to the matching system settings page and re-checks the state every time the app returns to the foreground; the same screen is reachable later from Settings → Permissions.
+
+### Missed alarms
+
+The platform logs nothing when an alarm cannot ring (device off, force-stopped app, dropped alarm). On start and on boot the app compares the latest scheduled occurrence of every enabled alarm with `alarm_logs`; an occurrence inside the last 24 hours that has no log entry becomes a `MISSED` row, one summary notification and a card on the home screen. Occurrences older than the moment the alarm was saved are ignored, and a boot delivers both `LOCKED_BOOT_COMPLETED` and `BOOT_COMPLETED`, so the sweep runs under a mutex and stays idempotent.
 
 ## Docs
 

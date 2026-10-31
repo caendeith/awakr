@@ -37,6 +37,26 @@ object NextOccurrence {
         return null
     }
 
+    /**
+     * The most recent moment strictly before [now] at which this alarm should have rung.
+     *
+     * Used by the missed-alarm detector: after a reboot the device compares this instant with
+     * the entries in `alarm_logs` to find occurrences that never fired.
+     *
+     * @param daysMask repeat mask, or 0 for a one-shot alarm
+     */
+    fun previous(now: ZonedDateTime, hour: Int, minute: Int, daysMask: Int): ZonedDateTime? {
+        if (hour !in 0..23 || minute !in 0..59) return null
+
+        for (offset in 0..7) {
+            val date: LocalDate = now.toLocalDate().minusDays(offset.toLong())
+            if (daysMask != 0 && !repeatsOn(daysMask, date.dayOfWeek)) continue
+            val candidate = resolve(date, hour, minute, now.zone)
+            if (candidate.isBefore(now)) return candidate
+        }
+        return null
+    }
+
     /** Local wall clock time resolved in [zone]; DST gaps move forward, overlaps take the earlier instant. */
     fun resolve(date: LocalDate, hour: Int, minute: Int, zone: java.time.ZoneId): ZonedDateTime =
         ZonedDateTime.of(date.atTime(hour, minute), zone)

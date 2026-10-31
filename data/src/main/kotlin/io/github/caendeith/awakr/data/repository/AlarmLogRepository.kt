@@ -15,6 +15,13 @@ class AlarmLogRepository(private val dao: AlarmLogDao) {
     fun observeForAlarm(alarmId: Long): Flow<List<AlarmLog>> =
         dao.observeForAlarm(alarmId).map { rows -> rows.map { it.toDomain() } }
 
+    fun observeMissed(limit: Int = 20): Flow<List<AlarmLog>> =
+        dao.observeMissed(limit).map { rows -> rows.map { it.toDomain() } }
+
+    /** Logs written for occurrences at or after [since]; used by the missed-alarm detector. */
+    suspend fun scheduledSince(since: Long): List<AlarmLog> =
+        dao.logsScheduledSince(since).map { it.toDomain() }
+
     suspend fun append(log: AlarmLog): Long = dao.insert(log.toEntity())
 
     suspend fun prune(before: Long) = dao.deleteOlderThan(before)

@@ -59,6 +59,7 @@ fun HomeScreen(
     onAddAlarm: () -> Unit,
     onEditAlarm: (Long) -> Unit,
     onOpenSettings: () -> Unit,
+    missedLabels: List<String> = emptyList(),
 ) {
     val now = rememberNow()
     val schedules = remember(alarms, now) { schedulesOf(alarms, now) }
@@ -114,6 +115,9 @@ fun HomeScreen(
                     )
                 }
             }
+            if (missedLabels.isNotEmpty()) {
+                item { MissedCard(labels = missedLabels) }
+            }
             if (schedules.isNotEmpty()) {
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -129,6 +133,29 @@ fun HomeScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+/** One warning card listing occurrences the device slept through in the last 24 hours. */
+@Composable
+private fun MissedCard(labels: List<String>) {
+    AwakrCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.home_missed_title),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        labels.forEach { label ->
+            Text(
+                text = stringResource(R.string.home_missed_row, label),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

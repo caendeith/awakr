@@ -3,6 +3,7 @@ package io.github.caendeith.awakr.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
@@ -18,11 +19,19 @@ import io.github.caendeith.awakr.ui.about.AboutScreen
 import io.github.caendeith.awakr.ui.editor.AlarmEditorScreen
 import io.github.caendeith.awakr.ui.home.HomeScreen
 import io.github.caendeith.awakr.ui.plugins.PluginsScreen
+import io.github.caendeith.awakr.ui.onboarding.OnboardingScreen
 import io.github.caendeith.awakr.ui.settings.SettingsScreen
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
+fun AwakrNavHost(
+    data: AwakrData,
+    plugins: PluginRegistry,
+    startDestination: String = Routes.HOME,
+) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -45,7 +54,39 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
         }
     }
 
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+    val qrEnabled = pluginStates.firstOrNull { it.pluginId == "mission-qr" }?.enabled ?: true
+    val missed by data.alarmLogs.observeMissed(limit = 5).collectAsState(initial = emptyList())
+    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    // Only the last day matters for a "you missed it" nudge; older rows stay in history.
+    val missedLabels = remember(missed) {
+        val zone = ZoneId.systemDefault()
+        val cutoff = System.currentTimeMillis() - 24L * 60L * 60L * 1000L
+        missed
+            .filter { it.scheduledAt >= cutoff }
+            .map { Instant.ofEpochMilli(it.scheduledAt).atZone(zone).format(timeFormatter) }
+    }
+
+    NavHost(navController = navController, startDestination = startDestination) {
+        composable(Routes.ONBOARDING) {
+            OnboardingScreen(
+                cameraMissionEnabled = qrEnabled,
+                onDone = {
+                    scope.launch { data.settings.setOnboarded(true) }
+                    if (navController.previousBackStackEntry != null) {
+                        navController.popBackStack()
+                    } else {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.ONBOARDING) { inclusive = true }
+                        }
+                    }
+                },
+                onBack = if (startDestination == Routes.ONBOARDING) {
+                    null
+                } else {
+                    { navController.popBackStack() }
+                },
+            )
+        }
         composable(Routes.HOME) {
             val alarms by data.alarms.observeAll().collectAsState(initial = emptyList<Alarm>())
             HomeScreen(
@@ -61,6 +102,7 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
                 onAddAlarm = { navController.navigate(Routes.editor(0L)) },
                 onEditAlarm = { id -> navController.navigate(Routes.editor(id)) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                missedLabels = missedLabels,
             )
         }
         composable(
@@ -97,6 +139,7 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
+                onOpenPermissions = { navController.navigate(Routes.ONBOARDING) },
                 onOpenPlugins = { navController.navigate(Routes.PLUGINS) },
                 onOpenAbout = { navController.navigate(Routes.ABOUT) },
             )
@@ -110,7 +153,10 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
             )
         }
         composable(Routes.ABOUT) {
-            AboutScreen(onBack = { navController.popBackStack() })
+            AboutScreen(
+                onBack = { navController.popBackStack() },
+                missionCount = plugins.missions.size,
+            )
         }
     }
 }

@@ -2,6 +2,7 @@ package io.github.caendeith.awakr
 
 import android.app.Application
 import io.github.caendeith.awakr.alarm.AlarmScheduler
+import io.github.caendeith.awakr.alarm.MissedAlarmReporter
 import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.alarm.Days
 import io.github.caendeith.awakr.core.notify.AwakrNotifications
@@ -63,6 +64,8 @@ class AwakrApplication : Application() {
             seedSampleAlarms()
             // Safety net: the platform can drop alarms (force stop, restore, clock change).
             runCatching { scheduler.rescheduleAll(data.alarms.enabledAlarms()) }
+            // The device may have been off at the scheduled minute; only the log comparison notices.
+            MissedAlarmReporter.sweep(this@AwakrApplication)
         }
     }
 

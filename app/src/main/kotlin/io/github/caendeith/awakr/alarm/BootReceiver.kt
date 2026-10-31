@@ -23,6 +23,11 @@ class BootReceiver : BroadcastReceiver() {
                 val alarms = app.data.alarms.enabledAlarms()
                 app.scheduler.rescheduleAll(alarms)
             }.onFailure { Log.e(TAG, "reschedule failed", it) }
+
+            // A reboot is exactly when an alarm can have been missed while the device was off.
+            if (action == Intent.ACTION_BOOT_COMPLETED || action == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
+                MissedAlarmReporter.sweep(app)
+            }
         }
     }
 
