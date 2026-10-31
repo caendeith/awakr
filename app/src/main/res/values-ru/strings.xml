@@ -50,4 +50,16 @@
 
     <string name="about_version">v%1$s</string>
     <string name="about_license">Свободное ПО с открытым кодом, лицензия MIT. Без рекламы и подписок.</string>
+
+    <string name="home_all_alarms">Все будильники</string>
+    <string name="home_active_none_title">Нет предстоящего будильника</string>
+    <string name="home_active_none_body">Добавьте будильник или включите один из списка.</string>
+    <string name="home_in_days_hours">через %1$d д %2$d ч</string>
+    <string name="home_in_hours_minutes">через %1$d ч %2$d мин</string>
+    <string name="home_in_minutes">через %1$d мин</string>
+    <string name="home_less_than_minute">меньше минуты</string>
+    <string name="home_today">Сегодня</string>
+    <string name="home_tomorrow">Завтра</string>
+    <string name="home_no_next">Нет предстоящего будильника</string>
+    <string name="home_disabled">Выкл</string>
 </resources>

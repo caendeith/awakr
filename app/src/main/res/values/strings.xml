@@ -52,4 +52,16 @@
 
     <string name="about_version">v%1$s</string>
     <string name="about_license">Free and open source software, MIT licensed. No ads, no subscriptions.</string>
+
+    <string name="home_all_alarms">All alarms</string>
+    <string name="home_active_none_title">No upcoming alarm</string>
+    <string name="home_active_none_body">Add an alarm, or turn one on in the list below.</string>
+    <string name="home_in_days_hours">in %1$d d %2$d h</string>
+    <string name="home_in_hours_minutes">in %1$d h %2$d min</string>
+    <string name="home_in_minutes">in %1$d min</string>
+    <string name="home_less_than_minute">in less than a minute</string>
+    <string name="home_today">Today</string>
+    <string name="home_tomorrow">Tomorrow</string>
+    <string name="home_no_next">No upcoming alarm</string>
+    <string name="home_disabled">Off</string>
 </resources>

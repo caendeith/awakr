@@ -57,6 +57,10 @@ import io.github.caendeith.awakr.core.ui.component.TimeText
 import io.github.caendeith.awakr.data.repository.AlarmRepository
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 import io.github.caendeith.awakr.ui.format.formatTime
+import io.github.caendeith.awakr.core.time.NextOccurrence
+import io.github.caendeith.awakr.ui.format.countdownText
+import io.github.caendeith.awakr.ui.format.dateLabel
+import io.github.caendeith.awakr.ui.format.rememberNow
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 
@@ -83,6 +87,8 @@ fun AlarmEditorScreen(
     }
 
     val current = draft ?: return
+    val now = rememberNow(intervalMs = 60_000L)
+    val nextRing = NextOccurrence.next(now, current.hour, current.minute, current.daysMask)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -130,6 +136,13 @@ fun AlarmEditorScreen(
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (nextRing != null) {
+                        Text(
+                            text = "${dateLabel(now, nextRing)} · ${countdownText(now, nextRing)}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
             }
 
