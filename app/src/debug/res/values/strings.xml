@@ -1,0 +1,4 @@
+<resources>
+    <!-- Debug builds sit next to the release build on the phone; keep the two icons apart. -->
+    <string name="app_name" translatable="false">Awakr debug</string>
+</resources>
