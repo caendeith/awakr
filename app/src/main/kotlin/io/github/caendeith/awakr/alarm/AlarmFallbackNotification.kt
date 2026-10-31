@@ -1,10 +1,14 @@
 package io.github.caendeith.awakr.alarm
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import io.github.caendeith.awakr.R
 import io.github.caendeith.awakr.core.notify.AwakrNotifications
 
@@ -16,7 +20,13 @@ object AlarmFallbackNotification {
 
     fun post(context: Context, alarmId: Long) {
         val manager = NotificationManagerCompat.from(context)
-        if (!manager.areNotificationsEnabled()) {
+        val permissionGranted =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) == PackageManager.PERMISSION_GRANTED
+        if (!permissionGranted || !manager.areNotificationsEnabled()) {
             Log.w(TAG, "notifications are disabled, alarm $alarmId cannot be surfaced")
             return
         }

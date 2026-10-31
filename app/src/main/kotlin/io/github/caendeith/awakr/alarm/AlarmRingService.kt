@@ -49,20 +49,37 @@ class AlarmRingService : Service() {
     private var ringing = false
     private var triggerAtMillis = 0L
 
+    /** How many times the current occurrence has already been snoozed. */
+    private var snoozeCount = 0
+
+    /** Id of the alarm that is ringing right now; 0 when nothing rings. */
+    private var ringingAlarmId = 0L
+
+    /**
+     * Alarms that fired while another one was already ringing. Two alarms can share a minute, and
+     * a ring cannot be interrupted, so the second one waits here and starts as soon as the first is
+     * dismissed or snoozed.
+     */
+    private val pendingRings = ArrayDeque<PendingRing>()
+
+    private data class PendingRing(val alarmId: Long, val triggerAt: Long, val snoozeCount: Int)
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         AwakrNotifications.ensureChannels(this)
-        startForeground(
-            AwakrNotifications.NOTIFICATION_RINGING,
-            placeholderNotification(),
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-            } else {
-                0
-            },
-        )
+        val placeholder = placeholderNotification()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // The three-argument overload (and the mediaPlayback type) only exists from API 29.
+            startForeground(
+                AwakrNotifications.NOTIFICATION_RINGING,
+                placeholder,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
+            )
+        } else {
+            startForeground(AwakrNotifications.NOTIFICATION_RINGING, placeholder)
+        }
         acquireWakeLock()
     }
 
@@ -79,26 +96,44 @@ class AlarmRingService : Service() {
             }
             AlarmIntents.ACTION_RING, null -> {
                 val alarmId = intent?.getLongExtra(AlarmIntents.EXTRA_ALARM_ID, 0L) ?: 0L
-                triggerAtMillis = intent?.getLongExtra(AlarmIntents.EXTRA_TRIGGER_AT, 0L) ?: 0L
-                if (alarmId != 0L) startRinging(alarmId)
+                if (alarmId != 0L) {
+                    startRinging(
+                        alarmId = alarmId,
+                        triggerAt = intent?.getLongExtra(AlarmIntents.EXTRA_TRIGGER_AT, 0L) ?: 0L,
+                        snoozeCount = intent?.getIntExtra(AlarmIntents.EXTRA_SNOOZE_COUNT, 0) ?: 0,
+                    )
+                }
             }
         }
         return START_STICKY
     }
 
-    private fun startRinging(alarmId: Long) {
+    private fun startRinging(alarmId: Long, triggerAt: Long = 0L, snoozeCount: Int = 0) {
+        if (ringingAlarmId == alarmId || pendingRings.any { it.alarmId == alarmId }) {
+            // Duplicate delivery for an alarm that is already ringing or queued (full-screen intent
+            // retry, repeated broadcast): the user must not hear it twice, and a stray trigger must
+            // not touch the state of the running ring (it would reset the snooze counter).
+            Log.i(TAG, "already ringing or queued, ignoring trigger for alarm $alarmId")
+            return
+        }
         if (ringing) {
-            // A second trigger for the same ring (full-screen intent retry, duplicate broadcast)
-            // must not restart the sound or launch a second screen.
-            Log.i(TAG, "already ringing, ignoring trigger for alarm $alarmId")
+            // Another alarm is ringing right now. Do not interrupt it and do not drop this one:
+            // queue it and start it as soon as the current ring is finished.
+            pendingRings.addLast(PendingRing(alarmId, triggerAt, snoozeCount))
+            Log.i(TAG, "queued alarm $alarmId until the current ring is finished")
             return
         }
         ringing = true
+        ringingAlarmId = alarmId
+        this.triggerAtMillis = triggerAt
+        this.snoozeCount = snoozeCount
         val app = application as AwakrApplication
         scope.launch {
             val alarm = runCatching { app.data.alarms.get(alarmId) }.getOrNull()
             if (alarm == null) {
                 Log.w(TAG, "alarm $alarmId no longer exists")
+                ringing = false
+                ringingAlarmId = 0L
                 stopSelf()
                 return@launch
             }
@@ -124,7 +159,7 @@ class AlarmRingService : Service() {
      * that asks for "display over other apps").
      */
     private fun launchRingActivity(alarm: Alarm) {
-        runCatching { startActivity(AlarmIntents.ringActivityIntent(this, alarm.id)) }
+        runCatching { startActivity(AlarmIntents.ringActivityIntent(this, alarm.id, snoozeCount)) }
             .onFailure { Log.w(TAG, "could not launch ring activity", it) }
     }
 
@@ -159,7 +194,7 @@ class AlarmRingService : Service() {
         val minutes = alarm?.snoozeMinutes ?: 10
         if (alarm != null) {
             val app = application as AwakrApplication
-            app.scheduler.scheduleSnooze(alarm, minutes)
+            app.scheduler.scheduleSnooze(alarm, minutes, snoozeCount + 1)
         }
         finish(AlarmOutcome.SNOOZED, missionPassed = true)
     }
@@ -171,6 +206,8 @@ class AlarmRingService : Service() {
             val app = application as AwakrApplication
             val firedAt = System.currentTimeMillis()
             val scheduledAt = if (triggerAtMillis > 0L) triggerAtMillis else firedAt
+            // Read the counter before the fields below are cleared; the log write is asynchronous.
+            val loggedSnoozeCount = if (outcome == AlarmOutcome.SNOOZED) snoozeCount + 1 else 0
             app.appScope.launch {
                 runCatching {
                     app.data.alarmLogs.append(
@@ -180,7 +217,7 @@ class AlarmRingService : Service() {
                             firedAt = firedAt,
                             missionPluginId = alarm.missionPluginId,
                             missionPassed = missionPassed,
-                            snoozeCount = if (outcome == AlarmOutcome.SNOOZED) 1 else 0,
+                            snoozeCount = loggedSnoozeCount,
                             outcome = outcome,
                         ),
                     )
@@ -188,15 +225,23 @@ class AlarmRingService : Service() {
             }
         }
         triggerAtMillis = 0L
+        snoozeCount = 0
         timeoutJob?.cancel()
         timeoutJob = null
         soundPlayer.stop()
         runCatching { vibrator?.cancel() }
         vibrator = null
         ringing = false
+        ringingAlarmId = 0L
         currentAlarm = null
         stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
+        val next = pendingRings.removeFirstOrNull()
+        if (next != null) {
+            Log.i(TAG, "starting queued alarm ${next.alarmId}")
+            startRinging(next.alarmId, next.triggerAt, next.snoozeCount)
+        } else {
+            stopSelf()
+        }
     }
 
     private fun notifyRinging(alarm: Alarm) {
@@ -235,8 +280,12 @@ class AlarmRingService : Service() {
             .setSilent(true)
             .setContentIntent(AlarmIntents.ringActivityPendingIntent(this, alarm.id))
             .setFullScreenIntent(AlarmIntents.ringActivityPendingIntent(this, alarm.id), true)
-            .addAction(0, getString(R.string.ring_snooze), snooze)
-            .addAction(0, getString(R.string.ring_dismiss), dismiss)
+            .apply {
+                // Once the snooze allowance for this occurrence is spent, only passing the
+                // mission dismisses the alarm.
+                if (snoozeCount < alarm.maxSnoozes) addAction(0, getString(R.string.ring_snooze), snooze)
+                addAction(0, getString(R.string.ring_dismiss), dismiss)
+            }
             .build()
     }
 
@@ -277,11 +326,12 @@ class AlarmRingService : Service() {
         private const val RING_TIMEOUT_MS = 10 * 60_000L
         private val VIBRATION_PATTERN = longArrayOf(0, 800, 600, 800, 600, 800)
 
-        fun start(context: Context, alarmId: Long, triggerAt: Long = 0L) {
+        fun start(context: Context, alarmId: Long, triggerAt: Long = 0L, snoozeCount: Int = 0) {
             val intent = Intent(context, AlarmRingService::class.java).apply {
                 action = AlarmIntents.ACTION_RING
                 putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
                 if (triggerAt > 0L) putExtra(AlarmIntents.EXTRA_TRIGGER_AT, triggerAt)
+                if (snoozeCount > 0) putExtra(AlarmIntents.EXTRA_SNOOZE_COUNT, snoozeCount)
             }
             ContextCompat.startForegroundService(context, intent)
         }

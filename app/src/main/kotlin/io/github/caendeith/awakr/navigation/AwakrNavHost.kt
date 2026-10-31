@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,8 +35,8 @@ fun AwakrNavHost(
 ) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val app = context.applicationContext as AwakrApplication
+    val app = LocalContext.current.applicationContext as AwakrApplication
+    val resources = LocalResources.current
 
     val pluginStates by data.pluginStates.observeAll().collectAsState(initial = emptyList())
     val enabledPluginIds: Set<String> = plugins.missions
@@ -49,7 +50,7 @@ fun AwakrNavHost(
         val manifest = plugins.mission(pluginId)?.manifest
         when {
             manifest == null -> pluginId
-            manifest.name.resId != 0 -> context.getString(manifest.name.resId)
+            manifest.name.resId != 0 -> resources.getString(manifest.name.resId)
             else -> manifest.name.fallback.ifBlank { pluginId }
         }
     }

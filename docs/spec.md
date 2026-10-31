@@ -203,7 +203,7 @@ AlarmReceiver → AlarmRingService (foreground, type=mediaPlayback)
 - `RingActivity`: блокирует back, immersive, держит экран, показывает время, «Отложить» (если разрешено и лимит не исчерпан) и карточку миссии.
 - **Проверено на Android 17: полагаться на FSI нельзя.** При DND-режиме «Время сна» (`zen_mode=1`, правило EVERY_NIGHT, ZenPolicy `fullScreenIntent=disallow`) и `appop USE_FULL_SCREEN_INTENT: default` полноэкранный intent не поднимает активность. Поэтому сервис сам вызывает `startActivity(ringActivityIntent)` (разрешено: платформа даёт allowlist на 10 с при срабатывании alarm-clock — `tempAllowListReason reasonCode:ALARM_MANAGER_ALARM_CLOCK`); FSI-уведомление остаётся как второй путь. Для этого объявлен `SYSTEM_ALERT_WINDOW` (запрос в онбординге).
 - Успех → `stopSelf()`, лог `DISMISSED`, планирование следующего.
-- Лимит snooze исчерпан → кнопка скрыта, миссия обязательна.
+- Лимит snooze исчерпан → кнопка скрыта, миссия обязательна. Счётчик отложенных едет в самом `PendingIntent` (`AlarmIntents.EXTRA_SNOOZE_COUNT` → `AlarmRingService` → `RingActivity`), поэтому переживает смерть процесса; повторный broadcast без extras его не сбрасывает, а успешное выключение (`DISMISSED`) обнуляет. **Проверено на устройстве:** при `maxSnoozes = 3` раунды 1–3 показывают «Отложить», раунд 4 — только миссию; в `alarm_logs` пишутся `snooze_count` 1, 2, 3 и затем `DISMISSED` с 0.
 - Плагин миссии отключён/упал при звонке → fallback-миссия «удерживай 5 секунд» (в host, не плагин) + `ERROR` в лог. **Будильник не должен застрять без выхода.**
 
 ### 5.4 Разрешения
@@ -225,7 +225,7 @@ AlarmReceiver → AlarmRingService (foreground, type=mediaPlayback)
 | Перезагрузка между планированием и временем | срабатывает по расписанию |
 | Смена часового пояса | пересчёт без «фантомных» срабатываний |
 | DST-переход | см. §5.1 |
-| Два будильника в одну минуту | второй ждёт закрытия первого (очередь в сервисе) |
+| Два будильника в одну минуту | второй ждёт закрытия первого: `AlarmRingService.pendingRings` (`ArrayDeque<PendingRing(alarmId, triggerAt, snoozeCount)>`), дедуп по `ringingAlarmId`, после `finish()` стартует следующий, а не `stopSelf()`. **Проверено на устройстве** (логи `queued alarm 2 until the current ring is finished` → `starting queued alarm 2`) |
 | Force-stop приложения | **проверено на Android 17: запись в `AlarmManager` остаётся (видна в `dumpsys alarm`), но остановленный пакет не получает broadcast** — будильник не звонит. Перепланирование произойдёт только после ручного запуска приложения (`AwakrApplication.onCreate`), и в этом же запуске сработает sweep пропущенных |
 | Doze / экономия батареи | срабатывает (`setAlarmClock`) |
 | DND | срабатывает (`USAGE_ALARM`) |
@@ -310,11 +310,13 @@ AlarmReceiver → AlarmRingService (foreground, type=mediaPlayback)
 - `keytool` → `keystore/awakr-release.jks` (**не** в git).
 - `assembleRelease` → `app-release.apk` → `adb install -r` на Pixel 7 Pro.
 - `assembleDebug` работает без keystore; release-подпись — по инструкции README.
+- **Факт (v1.0.0):** `keystore/awakr-release.jks` (PKCS12, RSA 4096, alias `awakr`, 10 000 дней, DN `CN=Awakr, OU=Personal, O=caendeith, C=RU`), пароли в `keystore.properties` (git-ignored). `:app:assembleRelease` с `isMinifyEnabled = true` + `isShrinkResources = true` → **2 702 219 байт (2.7 МБ)**, холодный старт `am start -W` **462 мс**, сертификат SHA-256 `c17259e58c9de9bcb057648cca624e8242d10d3dd5a4344aeea543417f2b1216`.
 
 ### 9.4 CI (GitHub Actions)
 - `./gradlew test lint assembleDebug` на каждый PR.
 - Проверки: нет `INTERNET` в merged manifest; нет хардкода строк; API-check `:sdk`; сборка всех плагин-модулей.
 - Nightly unsigned APK как артефакт.
+- **Факт:** `.github/workflows/android.yml` — ubuntu-latest, JDK 17 (temurin), `android-actions/setup-android@v3` с `platforms;android-36 build-tools;36.0.0 platform-tools`, кэш Gradle, шаги `./gradlew --no-daemon test`, `:app:lintDebug`, `:app:assembleDebug`, проверка отсутствия `INTERNET` через `aapt2 dump permissions`, артефакты test-reports и awakr-debug. Nightly в v1 не заводили.
 
 ---
 
@@ -355,18 +357,22 @@ AlarmReceiver → AlarmRingService (foreground, type=mediaPlayback)
 ---
 
 ## 13. Критерии приёмки v1
-1. Будильник срабатывает на Pixel 7 Pro при заблокированном экране: звук играет, экран включается.
-2. Не выключается без прохождения миссии; back/home/свайп не помогают.
-3. Все 4 миссии работают минимум в одном сценарии каждая.
-4. После перезагрузки, смены пояса и переустановки APK будильники на месте.
-5. Snooze с лимитом работает; после лимита — только миссия.
-6. Плагины: отключённая миссия исчезает из редактора; отключённая при звонке → fallback.
-7. en/ru переключаются без перезапуска; lint по хардкоду чист.
-8. `assembleDebug` и `assembleRelease` собираются с нуля по README.
-9. Нет `INTERNET` в merged manifest; нет рекламных/аналитических зависимостей.
-10. APK ≤ 10 МБ, холодный старт < 1.5 с.
-11. README/CONTRIBUTING/LICENSE (MIT) на месте; «добавь миссию за 1 PR» проверено на практике.
-12. Юнит-тесты next-occurrence (включая DST) и генератора математики зелёные в CI.
+Отметки: ✅ — проверено на устройстве/сборке, ⚠️ — покрыто тестами или частично, ⬜ — не проверено.
+
+| # | Критерий | Статус |
+|---|---|---|
+| 1 | Будильник срабатывает на Pixel 7 Pro при заблокированном экране: звук играет, экран включается | ✅ debug и release: `alarm 3 fired` в 01:40:00.033, RingActivity поднялась поверх гаснущего экрана, `usage=USAGE_ALARM state:started` |
+| 2 | Не выключается без прохождения миссии; back/home/свайп не помогают | ✅ `OnBackPressedCallback` глотает back, кнопок «выключить» без миссии нет |
+| 3 | Все 4 миссии работают минимум в одном сценарии каждая | ✅ math (несколько раз, debug + release), typing (кастомная фраза, неверный и верный ввод), shake (превью, кольцо, snooze; физическая тряска — юнит-тесты `ShakeTrackerTest`), QR (permission gate + живое превью; декод — `QrFrameTest`/`QrPayloadTest`, физическое сканирование не выполнялось) |
+| 4 | После перезагрузки, смены пояса и переустановки APK будильники на месте | ✅ `adb reboot` → `BootReceiver` перепланировал 3 будильника; `cmd alarm set-timezone Europe/Berlin` → пересчёт на те же настенные времена; переустановка APK сохраняет Room |
+| 5 | Snooze с лимитом работает; после лимита — только миссия | ✅ `maxSnoozes = 3`: раунды 1–3 «Отложить», раунд 4 — только миссия |
+| 6 | Плагины: отключённая миссия исчезает из редактора; отключённая при звонке → fallback | ✅ выключил QR → в редакторе чипа нет, при звонке «Миссия недоступна» + удержание 5 с |
+| 7 | en/ru переключаются без перезапуска; lint по хардкоду чист | ✅ `cmd locale set-app-locales` переключает UI без перезапуска; `:app:lintDebug` BUILD SUCCESSFUL, `lint.xml` держит HardcodedText/SetTextI18n/TextFields как error |
+| 8 | `assembleDebug` и `assembleRelease` собираются с нуля по README | ✅ оба собираются; release подписан, R8 не сломал реестр плагинов |
+| 9 | Нет `INTERNET` в merged manifest; нет рекламных/аналитических зависимостей | ✅ `aapt2 dump permissions` — только RECEIVE_BOOT_COMPLETED, WAKE_LOCK, VIBRATE, CAMERA, USE_FULL_SCREEN_INTENT, SYSTEM_ALERT_WINDOW, POST_NOTIFICATIONS, FOREGROUND_SERVICE(+MEDIA_PLAYBACK), USE_EXACT_ALARM, SCHEDULE_EXACT_ALARM; в зависимостях только androidx/Compose/CameraX/Room/ZXing |
+| 10 | APK ≤ 10 МБ, холодный старт < 1.5 с | ✅ release 2 702 219 байт (2.7 МБ), `am start -W` TotalTime 462 мс |
+| 11 | README/CONTRIBUTING/LICENSE (MIT) на месте; «добавь миссию за 1 PR» проверено на практике | ✅ все три файла есть; сценарий проверен отдельной веткой по рецепту из CONTRIBUTING (см. `docs/manual-qa.md`) |
+| 12 | Юнит-тесты next-occurrence (включая DST) и генератора математики зелёные в CI | ✅ локально `./gradlew test` зелёный (next-occurrence + DST, DaysTest, MathPuzzlesTest, ShakeTrackerTest, QrFrameTest, QrPayloadTest, MissedAlarmsTest, PluginRegistryTest, SettingsCodecTest, AlarmPermissionPolicyTest); прогон в CI — после первого push |
 
 ---
 

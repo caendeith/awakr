@@ -146,6 +146,17 @@
 5. README (EN) с инструкцией сборки с нуля, CONTRIBUTING («миссия за 1 PR»), docs/manual-qa.md.
 6. Push в caendeith/awakr — **после разрешения**; тег v1.0.0.
 
+**Факт (выполнено)**
+- Матрица §5.5 и критерии §13 прогнаны вручную на Pixel 7 Pro (Android 17/API 37); журнал — `docs/manual-qa.md` (таблицы результатов + «что не проверено руками»: физическое сканирование QR, физическая тряска, PIN-локскрин подтверждён, DST закрыт юнит-тестом).
+- По результатам прогона найдены и исправлены три дефекта в `AlarmRingService`: сброс счётчика snooze посторонним broadcast (extras читались до проверки `if (ringing)`), `snooze_count` всегда 1 в `alarm_logs` (чтение поля после сброса), отсутствие очереди при двух будильниках в одну минуту (теперь `pendingRings` + `ringingAlarmId`, после `finish()` стартует следующий). Добавлен `onDestroy`: отмена `timeoutJob`, стоп звука/вибрации, release wakelock, очистка очереди.
+- Добавлены тесты: `MathPuzzlesTest` (6 тестов генератора), `QrFrameTest`/`QrPayloadTest` — итого `./gradlew test` зелёный по всем модулям.
+- **Lint**: `./gradlew :app:lintDebug` зелёный (было 11 errors): guard `POST_NOTIFICATIONS` перед `notify`, `OnBackPressedCallback` вместо `onBackPressed`, ветка `startForeground` с типом только с API 29, локаль через `LocalConfiguration`, `translatable="false"` для `app_name`, экранирование `sdk.dir`; корневой `lint.xml` держит `HardcodedText`/`SetTextI18n`/`TextFields` как error.
+- **Keystore**: `keystore/awakr-release.jks` (PKCS12, RSA 4096, alias `awakr`), пароли в `keystore.properties` (git-ignored). `:app:assembleRelease` с R8 + shrinkResources → **2 702 219 байт**, холодный старт **462 мс**, `aapt2 dump permissions` без `INTERNET`, `apksigner verify` OK. Release-смоук: будильник 01:40 сработал, миссия «Математика» решена, `ring finished: DISMISSED`.
+- **CI**: `.github/workflows/android.yml` (JDK 17, setup-android с `platforms;android-36 build-tools;36.0.0`, кэш Gradle, `test` + `:app:lintDebug` + `:app:assembleDebug`, проверка отсутствия INTERNET, артефакты).
+- **Документы**: `CONTRIBUTING.md` (в т.ч. рецепт «миссия за 1 PR»), `docs/manual-qa.md`, README (секции Release build, Snooze limit, статус v1.0.0).
+- «Миссия за 1 PR» проверена на практике: временный модуль `plugins/mission-hold` (один Kotlin-файл + два файла строк + build.gradle.kts и три однострочные проводки) собрался, установился и появился в списке плагинов как «Удержание · mission-hold · v1.0.0»; затем модуль удалён, дерево восстановлено.
+- Пункт 6 (push + тег) остался за пользователем: push и тег `v1.0.0` выполняются только после его явного разрешения.
+
 **Проверка:** чек-лист §13 спеки — все 12 пунктов закрыты.
 
 ---

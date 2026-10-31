@@ -18,6 +18,9 @@ object AlarmIntents {
     const val EXTRA_TRIGGER_AT = "trigger_at"
     const val EXTRA_MISSION_PASSED = "mission_passed"
     const val EXTRA_SNOOZE_MINUTES = "snooze_minutes"
+
+    /** How many times the current occurrence has already been snoozed. */
+    const val EXTRA_SNOOZE_COUNT = "snooze_count"
     const val EXTRA_LABEL = "label"
     const val EXTRA_TIME = "time"
 
@@ -26,11 +29,17 @@ object AlarmIntents {
 
     fun snoozeRequestCode(alarmId: Long): Int = triggerRequestCode(alarmId) + 1_000_000
 
-    fun ringIntent(context: Context, alarmId: Long, triggerAt: Long = 0L): Intent =
+    fun ringIntent(
+        context: Context,
+        alarmId: Long,
+        triggerAt: Long = 0L,
+        snoozeCount: Int = 0,
+    ): Intent =
         Intent(context, AlarmReceiver::class.java).apply {
             action = ACTION_RING
             putExtra(EXTRA_ALARM_ID, alarmId)
             if (triggerAt > 0L) putExtra(EXTRA_TRIGGER_AT, triggerAt)
+            if (snoozeCount > 0) putExtra(EXTRA_SNOOZE_COUNT, snoozeCount)
         }
 
     fun ringPendingIntent(
@@ -38,19 +47,21 @@ object AlarmIntents {
         alarmId: Long,
         snooze: Boolean = false,
         triggerAt: Long = 0L,
+        snoozeCount: Int = 0,
     ): PendingIntent {
         val requestCode = if (snooze) snoozeRequestCode(alarmId) else triggerRequestCode(alarmId)
         return PendingIntent.getBroadcast(
             context,
             requestCode,
-            ringIntent(context, alarmId, triggerAt),
+            ringIntent(context, alarmId, triggerAt, snoozeCount),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }
 
-    fun ringActivityIntent(context: Context, alarmId: Long): Intent =
+    fun ringActivityIntent(context: Context, alarmId: Long, snoozeCount: Int = 0): Intent =
         Intent(context, RingActivity::class.java).apply {
             putExtra(EXTRA_ALARM_ID, alarmId)
+            if (snoozeCount > 0) putExtra(EXTRA_SNOOZE_COUNT, snoozeCount)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
 

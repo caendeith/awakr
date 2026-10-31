@@ -44,7 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.caendeith.awakr.R
@@ -285,7 +285,7 @@ private fun SectionTitle(text: String) {
 
 @Composable
 private fun RowScope.DayToggles(daysMask: Int, onToggle: (DayOfWeek, Boolean) -> Unit) {
-    val locale = LocalContext.current.resources.configuration.locales[0]
+    val locale = LocalConfiguration.current.locales[0]
     DayOfWeek.entries.forEach { day ->
         val selected = Days.bit(daysMask, day)
         Box(

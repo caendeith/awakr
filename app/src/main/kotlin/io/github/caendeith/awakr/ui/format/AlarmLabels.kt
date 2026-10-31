@@ -1,7 +1,7 @@
 package io.github.caendeith.awakr.ui.format
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import io.github.caendeith.awakr.R
 import io.github.caendeith.awakr.core.alarm.Days
 import java.time.DayOfWeek
@@ -20,7 +20,7 @@ fun repeatSummary(daysMask: Int): String {
     if (daysMask and Days.EVERY_DAY == Days.EVERY_DAY) {
         return androidx.compose.ui.res.stringResource(R.string.repeat_every_day)
     }
-    val locale = LocalContext.current.resources.configuration.locales[0]
+    val locale = LocalConfiguration.current.locales[0]
     val days = Days.toDaySet(daysMask)
         .sortedBy { it.value }
         .joinToString(", ") { day: DayOfWeek -> day.getDisplayName(TextStyle.SHORT, locale) }

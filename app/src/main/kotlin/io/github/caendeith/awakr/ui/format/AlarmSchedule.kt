@@ -2,7 +2,7 @@ package io.github.caendeith.awakr.ui.format
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import io.github.caendeith.awakr.R
 import io.github.caendeith.awakr.core.alarm.Alarm
@@ -66,8 +66,7 @@ fun countdownText(now: ZonedDateTime, target: ZonedDateTime?): String {
 /** "Today", "Tomorrow" or a short date for the day an alarm rings. */
 @Composable
 fun dateLabel(now: ZonedDateTime, target: ZonedDateTime): String {
-    val context = LocalContext.current
-    val locale = context.resources.configuration.locales[0]
+    val locale = LocalConfiguration.current.locales[0]
     val days = ChronoUnit.DAYS.between(now.toLocalDate(), target.toLocalDate())
     return when {
         days <= 0L -> stringResource(R.string.home_today)

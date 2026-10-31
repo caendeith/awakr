@@ -2,7 +2,7 @@
 
 An open-source alarm clock for Android: reliable wake-ups, mission-based dismissal, no ads, no subscriptions, no trackers.
 
-> Status: **v1 in development**. The repository is being built from the ground up as a clean-room implementation.
+> Status: **v1.0.0**. Clean-room implementation: no code, assets or sounds from any other alarm app.
 
 ## Principles
 
@@ -32,6 +32,27 @@ The build uses public Maven mirrors (aliyun/google, huaweicloud) because they ar
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
+The debug build has the `.debug` application id suffix, so it installs side by side with a release build.
+
+## Release build
+
+Signing is driven by an optional `keystore.properties` in the repository root (never commit it — it is git-ignored):
+
+```properties
+storeFile=keystore/awakr-release.jks
+storePassword=...
+keyAlias=awakr
+keyPassword=...
+```
+
+```
+./gradlew :app:assembleRelease
+```
+
+Without that file the same task still succeeds and produces an unsigned APK. The release build runs R8 (`isMinifyEnabled`) and resource shrinking, keeps the build-time plugin registry intact, and is reproducible byte for byte from a clean checkout once the keystore matches.
+
+Measured on a Pixel 7 Pro (Android 17): release APK **2.7 MB**, cold start **462 ms**. The APK declares no `INTERNET` permission; CI fails the build if one ever appears.
+
 ## Status
 
 | Phase | Scope | State |
@@ -43,9 +64,9 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 | 4 | Home screen and polished editor | done |
 | 5 | Missions as plugins (typing, math, shake, QR) | done |
 | 6 | Permission onboarding, locales, about, missed alarms | done |
-| 7 | QA matrix, release build, CI, docs | in progress |
+| 7 | QA matrix, release build, CI, docs | done |
 
-Verified on a Pixel 7 Pro (Android 17 / API 37): alarms fire at the exact minute from an idle, locked device, the ring screen is raised over the lock screen, every alarm is restored after a reboot, and each mission plugin can dismiss or snooze the ring (math problems, an exact typed phrase, a shake sensor, a camera scan bound to a printed payload). Turning a plugin off falls back to the "hold to dismiss" safety mission. First launch walks through the three permissions an alarm clock needs, the UI follows the system language (English and Russian ship in the APK), and an alarm the device slept through is reported once — as a card on the home screen and a notification — instead of being silently forgotten.
+Verified on a Pixel 7 Pro (Android 17 / API 37): alarms fire at the exact minute from an idle, locked device, the ring screen is raised over the lock screen, every alarm is restored after a reboot, and each mission plugin can dismiss or snooze the ring (math problems, an exact typed phrase, a shake sensor, a camera scan bound to a printed payload). Turning a plugin off falls back to the "hold to dismiss" safety mission. First launch walks through the three permissions an alarm clock needs, the UI follows the system language (English and Russian ship in the APK), and an alarm the device slept through is reported once — as a card on the home screen and a notification — instead of being silently forgotten. The signed release build (R8 + resource shrinking) was smoke-tested the same way and rings exactly as the debug build does. The full matrix with per-scenario evidence and the list of things that cannot be tested from a desk lives in [docs/manual-qa.md](docs/manual-qa.md).
 
 ### Missions
 
@@ -73,11 +94,25 @@ The onboarding screen links to the matching system settings page and re-checks t
 
 The platform logs nothing when an alarm cannot ring (device off, force-stopped app, dropped alarm). On start and on boot the app compares the latest scheduled occurrence of every enabled alarm with `alarm_logs`; an occurrence inside the last 24 hours that has no log entry becomes a `MISSED` row, one summary notification and a card on the home screen. Occurrences older than the moment the alarm was saved are ignored, and a boot delivers both `LOCKED_BOOT_COMPLETED` and `BOOT_COMPLETED`, so the sweep runs under a mutex and stays idempotent.
 
+### Snooze limit
+
+Snooze is per alarm and finite: the ring screen and the notification only offer it while the current ring has been snoozed fewer times than `max_snoozes` (3 by default). The counter travels with the scheduled intent, so it survives the ringing service being recreated — and a stray re-trigger cannot reset it — and it resets when the alarm is dismissed. Once the limit is reached only the mission dismisses the alarm.
+
+### Overlapping alarms
+
+A ring cannot be interrupted, so when two alarms share a minute the second one waits: the service keeps a small queue and starts the next ring as soon as the first is dismissed or snoozed. Both occurrences are logged, each with its own snooze counter.
+
+### Adding a mission
+
+A mission is a self-contained module: one Gradle file, one plugin class and two string resources, plus three one-line wiring edits. The recipe in [CONTRIBUTING.md](CONTRIBUTING.md) was executed for real during the v1 QA pass — a throwaway "hold the button for five seconds" mission built, installed and appeared in Settings → Plugins without touching any other code (see [docs/manual-qa.md](docs/manual-qa.md)).
+
 ## Docs
 
 - [docs/spec.md](docs/spec.md) — product and technical specification (v1 scope)
 - [docs/plan.md](docs/plan.md) — implementation plan, phases 0-7
 - [docs/toolchain.md](docs/toolchain.md) — verified toolchain and known pitfalls
+- [docs/manual-qa.md](docs/manual-qa.md) — manual test matrix and results on real hardware
+- [CONTRIBUTING.md](CONTRIBUTING.md) — build setup, code style, adding a mission in one pull request
 
 ## License
 

@@ -14,7 +14,8 @@ class AlarmReceiver : BroadcastReceiver() {
         if (alarmId == 0L) return
         Log.i(TAG, "alarm $alarmId fired")
         val triggerAt = intent.getLongExtra(AlarmIntents.EXTRA_TRIGGER_AT, 0L)
-        runCatching { AlarmRingService.start(context, alarmId, triggerAt) }
+        val snoozeCount = intent.getIntExtra(AlarmIntents.EXTRA_SNOOZE_COUNT, 0)
+        runCatching { AlarmRingService.start(context, alarmId, triggerAt, snoozeCount) }
             .onFailure { error ->
                 // Background foreground-service starts can be refused when the alarm did not
                 // come from the platform alarm manager (manual trigger, restored state).

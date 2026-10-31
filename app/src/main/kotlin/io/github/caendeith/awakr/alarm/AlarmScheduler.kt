@@ -52,10 +52,16 @@ class AlarmScheduler(private val context: Context) {
         }
     }
 
-    fun scheduleSnooze(alarm: Alarm, minutes: Int) {
+    fun scheduleSnooze(alarm: Alarm, minutes: Int, snoozeCount: Int = 0) {
         val manager = alarmManager ?: return
         val triggerAt = System.currentTimeMillis() + minutes.coerceIn(1, 120) * 60_000L
-        val operation = AlarmIntents.ringPendingIntent(context, alarm.id, snooze = true, triggerAt = triggerAt)
+        val operation = AlarmIntents.ringPendingIntent(
+            context,
+            alarm.id,
+            snooze = true,
+            triggerAt = triggerAt,
+            snoozeCount = snoozeCount,
+        )
         try {
             if (canScheduleExact(manager)) {
                 manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)

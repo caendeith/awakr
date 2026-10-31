@@ -4,6 +4,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,7 +32,20 @@ class RingActivity : ComponentActivity() {
         showOverLockScreen()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+        // Back must never dismiss a ringing alarm: the dispatcher swallows both the button and
+        // the predictive-back gesture (an onBackPressed override no longer receives the gesture
+        // on API 36+).
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    // Deliberately ignored: the mission is the only way out.
+                }
+            },
+        )
+
         val alarmId = intent.getLongExtra(AlarmIntents.EXTRA_ALARM_ID, 0L)
+        val snoozeCount = intent.getIntExtra(AlarmIntents.EXTRA_SNOOZE_COUNT, 0)
         val app = application as AwakrApplication
 
         setContent {
@@ -59,18 +73,17 @@ class RingActivity : ComponentActivity() {
                     RingScreen(
                         alarm = current,
                         mission = plugin.takeIf { enabled },
-                        showSnooze = current?.snoozeEnabled ?: true,
+                        // The snooze allowance is per occurrence: after maxSnoozes the only way
+                        // out is passing the mission.
+                        showSnooze = current != null &&
+                            current.snoozeEnabled &&
+                            snoozeCount < current.maxSnoozes,
                         onDismiss = { finishWithAction(AlarmIntents.ACTION_DISMISS, missionPassed = true) },
                         onSnooze = { finishWithAction(AlarmIntents.ACTION_SNOOZE) },
                     )
                 }
             }
         }
-    }
-
-    @Deprecated("Back must not dismiss a ringing alarm")
-    override fun onBackPressed() {
-        // Deliberately ignored: an alarm cannot be dismissed with the back gesture.
     }
 
     private sealed interface RingState {
