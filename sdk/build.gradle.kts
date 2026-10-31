@@ -36,4 +36,5 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(project(":core:ui"))
+    api(libs.kotlinx.serialization.json)
 }

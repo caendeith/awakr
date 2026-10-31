@@ -1,8 +1,10 @@
 package io.github.caendeith.awakr.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,63 +27,30 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.caendeith.awakr.R
+import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.ui.component.AwakrCard
 import io.github.caendeith.awakr.core.ui.component.TimeText
-import io.github.caendeith.awakr.core.ui.theme.AwakrTheme
-
-/**
- * Placeholder model for the phase 1 visual skeleton.
- * TODO(phase 4): replace with AlarmRepository data (Room).
- */
-private data class AlarmPreview(
-    val id: Long,
-    val time: String,
-    val label: String,
-    val schedule: String,
-    val mission: String,
-    val enabled: Boolean,
-)
-
-@Composable
-private fun demoAlarms(): List<AlarmPreview> = listOf(
-    AlarmPreview(
-        id = 1L,
-        time = "07:30",
-        label = stringResource(R.string.demo_label_work),
-        schedule = stringResource(R.string.demo_repeat_workdays),
-        mission = stringResource(R.string.mission_math),
-        enabled = true,
-    ),
-    AlarmPreview(
-        id = 2L,
-        time = "09:15",
-        label = stringResource(R.string.demo_label_weekend),
-        schedule = stringResource(R.string.demo_repeat_weekend),
-        mission = stringResource(R.string.mission_shake),
-        enabled = false,
-    ),
-)
+import io.github.caendeith.awakr.ui.format.formatTime
+import io.github.caendeith.awakr.ui.format.repeatSummary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    alarms: List<Alarm>,
+    missionLabel: (String) -> String,
+    onToggle: (Alarm, Boolean) -> Unit,
     onAddAlarm: () -> Unit,
     onEditAlarm: (Long) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
-    val initialAlarms = demoAlarms()
-    var alarms by remember { mutableStateOf(initialAlarms) }
+    val enabled = alarms.filter { it.enabled }
+    val next = enabled.minByOrNull { it.hour * 60 + it.minute } ?: enabled.firstOrNull()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -114,9 +83,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                start = 20.dp, end = 20.dp, top = 8.dp, bottom = 96.dp,
-            ),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
@@ -128,9 +95,12 @@ fun HomeScreen(
             }
             item {
                 NextAlarmCard(
-                    time = alarms.firstOrNull()?.time ?: "--:--",
-                    caption = alarms.firstOrNull()?.let { "${it.label} · ${it.schedule}" }
-                        ?: stringResource(R.string.home_no_alarms),
+                    time = next?.let { formatTime(it.hour, it.minute) } ?: "--:--",
+                    caption = next?.let {
+                        val repeat = repeatSummary(it.daysMask)
+                        val mission = missionLabel(it.missionPluginId)
+                        "$repeat · $mission"
+                    } ?: stringResource(R.string.home_no_alarms),
                 )
             }
             item {
@@ -153,9 +123,8 @@ fun HomeScreen(
             items(alarms, key = { it.id }) { alarm ->
                 AlarmRow(
                     alarm = alarm,
-                    onToggle = { enabled ->
-                        alarms = alarms.map { if (it.id == alarm.id) it.copy(enabled = enabled) else it }
-                    },
+                    mission = missionLabel(alarm.missionPluginId),
+                    onToggle = { onToggle(alarm, it) },
                     onClick = { onEditAlarm(alarm.id) },
                 )
             }
@@ -186,18 +155,21 @@ private fun NextAlarmCard(time: String, caption: String) {
 
 @Composable
 private fun AlarmRow(
-    alarm: AlarmPreview,
+    alarm: Alarm,
+    mission: String,
     onToggle: (Boolean) -> Unit,
     onClick: () -> Unit,
 ) {
     AwakrCard(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = alarm.time,
+                    text = formatTime(alarm.hour, alarm.minute),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                         fontFeatureSettings = "tnum",
@@ -207,7 +179,9 @@ private fun AlarmRow(
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "${alarm.label} · ${alarm.schedule} · ${alarm.mission}",
+                    text = listOf(repeatSummary(alarm.daysMask), mission)
+                        .filter { it.isNotBlank() }
+                        .joinToString(" · "),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -216,13 +190,5 @@ private fun AlarmRow(
                 Switch(checked = alarm.enabled, onCheckedChange = onToggle)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun HomeScreenPreview() {
-    AwakrTheme(darkTheme = true) {
-        HomeScreen(onAddAlarm = {}, onEditAlarm = {}, onOpenSettings = {})
     }
 }

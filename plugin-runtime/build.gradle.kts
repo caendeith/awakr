@@ -20,6 +20,10 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 kotlin {
@@ -37,4 +41,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(project(":sdk"))
     implementation(project(":core:ui"))
+
+    testImplementation(libs.junit)
 }

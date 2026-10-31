@@ -13,6 +13,17 @@
 
     <string name="editor_new_alarm">New alarm</string>
     <string name="editor_edit_alarm">Edit alarm</string>
+    <string name="editor_tap_to_change_time">Tap to change the time</string>
+    <string name="editor_repeat">Repeat</string>
+    <string name="editor_label">Label</string>
+    <string name="editor_mission">Mission</string>
+    <string name="editor_no_plugins">No mission plugins are available.</string>
+    <string name="editor_snooze">Snooze</string>
+    <string name="editor_snooze_length">%1$d min</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+
     <string name="editor_placeholder">Time, repeat days, sound and mission settings arrive in the next phase.</string>
 
     <string name="ring_mission_placeholder">Complete the mission to stop the alarm.</string>
@@ -25,6 +36,9 @@
 
     <string name="plugins_empty_title">No plugins installed</string>
     <string name="plugins_empty_body">Missions, sound packs and themes will show up here.</string>
+
+    <string name="repeat_once">Once</string>
+    <string name="repeat_every_day">Every day</string>
 
     <string name="demo_label_work">Work</string>
     <string name="demo_label_weekend">Weekend run</string>

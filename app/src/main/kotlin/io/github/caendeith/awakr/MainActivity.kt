@@ -11,9 +11,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val app = application as AwakrApplication
         setContent {
             AwakrTheme {
-                AwakrNavHost()
+                AwakrNavHost(data = app.data, plugins = app.plugins)
             }
         }
     }

@@ -21,10 +21,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.caendeith.awakr.R
 import io.github.caendeith.awakr.core.ui.component.AwakrCard
+import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PluginsScreen(onBack: () -> Unit) {
+fun PluginsScreen(
+    plugins: PluginRegistry,
+    missionLabel: (String) -> String,
+    onBack: () -> Unit,
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -50,18 +55,53 @@ fun PluginsScreen(onBack: () -> Unit) {
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            AwakrCard(modifier = Modifier.fillMaxWidth()) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.plugins_empty_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = stringResource(R.string.plugins_empty_body),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            if (plugins.missions.isEmpty()) {
+                AwakrCard(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        Text(
+                            text = stringResource(R.string.plugins_empty_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = stringResource(R.string.plugins_empty_body),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            } else {
+                plugins.missions.forEach { mission ->
+                    AwakrCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = missionLabel(mission.kind),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = "${mission.manifest.id} · v${mission.manifest.version}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+            plugins.issues.forEach { issue ->
+                AwakrCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = issue.pluginId,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                        Text(
+                            text = issue.reason,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }

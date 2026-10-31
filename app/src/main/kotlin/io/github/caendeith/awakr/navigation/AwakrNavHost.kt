@@ -1,37 +1,79 @@
 package io.github.caendeith.awakr.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import io.github.caendeith.awakr.core.alarm.Alarm
+import io.github.caendeith.awakr.data.AwakrData
+import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 import io.github.caendeith.awakr.ui.about.AboutScreen
 import io.github.caendeith.awakr.ui.editor.AlarmEditorScreen
 import io.github.caendeith.awakr.ui.home.HomeScreen
 import io.github.caendeith.awakr.ui.plugins.PluginsScreen
 import io.github.caendeith.awakr.ui.ring.RingScreen
 import io.github.caendeith.awakr.ui.settings.SettingsScreen
+import kotlinx.coroutines.launch
 
 @Composable
-fun AwakrNavHost() {
+fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
     val navController = rememberNavController()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val missionLabel: (String) -> String = { pluginId ->
+        val manifest = plugins.mission(pluginId)?.manifest
+        when {
+            manifest == null -> pluginId
+            manifest.name.resId != 0 -> context.getString(manifest.name.resId)
+            else -> manifest.name.fallback.ifBlank { pluginId }
+        }
+    }
 
     NavHost(navController = navController, startDestination = Routes.HOME) {
         composable(Routes.HOME) {
+            val alarms by data.alarms.observeAll().collectAsState(initial = emptyList<Alarm>())
             HomeScreen(
-                onAddAlarm = { navController.navigate(Routes.editor()) },
+                alarms = alarms,
+                missionLabel = missionLabel,
+                onToggle = { alarm, enabled -> scope.launch { data.alarms.setEnabled(alarm.id, enabled) } },
+                onAddAlarm = { navController.navigate(Routes.editor(0L)) },
                 onEditAlarm = { id -> navController.navigate(Routes.editor(id)) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
             )
         }
         composable(
             route = Routes.EDITOR,
-            arguments = listOf(navArgument(Routes.EDITOR_ARG_ID) { type = NavType.LongType }),
+            arguments = listOf(navArgument(Routes.EDITOR_ARG_ID) {
+                type = NavType.LongType
+                defaultValue = 0L
+            }),
         ) { entry ->
+            val alarmId = entry.arguments?.getLong(Routes.EDITOR_ARG_ID) ?: 0L
             AlarmEditorScreen(
-                alarmId = entry.arguments?.getLong(Routes.EDITOR_ARG_ID) ?: 0L,
+                alarmId = alarmId,
+                alarms = data.alarms,
+                plugins = plugins,
+                missionLabel = missionLabel,
                 onBack = { navController.popBackStack() },
+                onSave = { alarm ->
+                    scope.launch {
+                        data.alarms.save(alarm)
+                        navController.popBackStack()
+                    }
+                },
+                onDelete = { id ->
+                    scope.launch {
+                        data.alarms.delete(id)
+                        navController.popBackStack()
+                    }
+                },
             )
         }
         composable(
@@ -51,7 +93,11 @@ fun AwakrNavHost() {
             )
         }
         composable(Routes.PLUGINS) {
-            PluginsScreen(onBack = { navController.popBackStack() })
+            PluginsScreen(
+                plugins = plugins,
+                missionLabel = missionLabel,
+                onBack = { navController.popBackStack() },
+            )
         }
         composable(Routes.ABOUT) {
             AboutScreen(onBack = { navController.popBackStack() })
