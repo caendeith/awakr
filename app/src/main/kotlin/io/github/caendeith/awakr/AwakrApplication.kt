@@ -1,8 +1,10 @@
 package io.github.caendeith.awakr
 
 import android.app.Application
+import io.github.caendeith.awakr.alarm.AlarmScheduler
 import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.alarm.Days
+import io.github.caendeith.awakr.core.notify.AwakrNotifications
 import io.github.caendeith.awakr.data.AwakrData
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 import kotlinx.coroutines.CoroutineScope
@@ -14,10 +16,12 @@ import java.time.DayOfWeek
 
 class AwakrApplication : Application() {
 
-    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     lateinit var data: AwakrData
         private set
+
+    val scheduler: AlarmScheduler by lazy { AlarmScheduler(this) }
 
     /**
      * Build-time plugin set. Mission/sound/theme modules are appended here as they land
@@ -27,8 +31,13 @@ class AwakrApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        AwakrNotifications.ensureChannels(this)
         data = AwakrData.create(this)
-        appScope.launch { seedSampleAlarms() }
+        appScope.launch {
+            seedSampleAlarms()
+            // Safety net: the platform can drop alarms (force stop, restore, clock change).
+            runCatching { scheduler.rescheduleAll(data.alarms.enabledAlarms()) }
+        }
     }
 
     /** First launch only: a couple of sample alarms so the UI is not empty. */

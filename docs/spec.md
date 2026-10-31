@@ -177,7 +177,8 @@ plugin_state(plugin_id TEXT PK, enabled INT, settings_json TEXT, last_error TEXT
 
 ### 5.1 Планирование
 - `AlarmScheduler` (интерфейс) → `AlarmManagerScheduler`.
-- Основной вызов: `setAlarmClock(AlarmClockInfo(triggerAt, showIntent))` — не требует `SCHEDULE_EXACT_ALARM`, переживает Doze, виден в статус-баре.
+- Основной вызов: `setAlarmClock(AlarmClockInfo(triggerAt, showIntent))` — переживает Doze, виден в статус-баре.
+  **Проверено на Android 17 (API 37): `setAlarmClock` требует `USE_EXACT_ALARM` или `SCHEDULE_EXACT_ALARM`** — без них бросается `SecurityException: Caller ... needs to hold android.permission.SCHEDULE_EXACT_ALARM or android.permission.USE_EXACT_ALARM to set exact alarms`. Первоначальное утверждение спеки («не требует») было неверным. Реализация: объявлены оба разрешения, при отказе — fallback на `setAndAllowWhileIdle` (неточный, но срабатывает).
 - Snooze: `setExactAndAllowWhileIdle(now + snoozeMinutes)`.
 - `PendingIntent`: `FLAG_IMMUTABLE | FLAG_UPDATE_CURRENT`, requestCode = `alarmId`, action = `ACTION_ALARM_FIRE`.
 - После срабатывания сразу планируется следующее, если есть будущие дни; иначе будильник помечается «без даты» в UI.
@@ -196,10 +197,11 @@ plugin_state(plugin_id TEXT PK, enabled INT, settings_json TEXT, last_error TEXT
 AlarmReceiver → AlarmRingService (foreground, type=mediaPlayback)
    ├─ MediaPlayer: AudioAttributes(USAGE_ALARM), audio focus, ramp 15%→100%
    ├─ Vibrator: паттерн из настроек
-   ├─ FullScreenIntent → RingActivity (showWhenLocked, turnScreenOn, singleInstance)
+   ├─ startActivity(RingActivity) напрямую + FullScreenIntent-уведомление (showWhenLocked, turnScreenOn, singleInstance)
    └─ WakeLock (PARTIAL) на время звонка, с таймаутом-предохранителем
 ```
 - `RingActivity`: блокирует back, immersive, держит экран, показывает время, «Отложить» (если разрешено и лимит не исчерпан) и карточку миссии.
+- **Проверено на Android 17: полагаться на FSI нельзя.** При DND-режиме «Время сна» (`zen_mode=1`, правило EVERY_NIGHT, ZenPolicy `fullScreenIntent=disallow`) и `appop USE_FULL_SCREEN_INTENT: default` полноэкранный intent не поднимает активность. Поэтому сервис сам вызывает `startActivity(ringActivityIntent)` (разрешено: платформа даёт allowlist на 10 с при срабатывании alarm-clock — `tempAllowListReason reasonCode:ALARM_MANAGER_ALARM_CLOCK`); FSI-уведомление остаётся как второй путь. Для этого объявлен `SYSTEM_ALERT_WINDOW` (запрос в онбординге).
 - Успех → `stopSelf()`, лог `DISMISSED`, планирование следующего.
 - Лимит snooze исчерпан → кнопка скрыта, миссия обязательна.
 - Плагин миссии отключён/упал при звонке → fallback-миссия «удерживай 5 секунд» (в host, не плагин) + `ERROR` в лог. **Будильник не должен застрять без выхода.**
@@ -207,8 +209,8 @@ AlarmReceiver → AlarmRingService (foreground, type=mediaPlayback)
 ### 5.4 Разрешения
 | Разрешение / API | 26–30 | 31–32 | 33 | 34+ |
 |---|---|---|---|---|
-| `USE_EXACT_ALARM` | — | объявить (clock-приложениям выдаётся автоматически) | да | да |
-| `SCHEDULE_EXACT_ALARM` | — | fallback, если `setAlarmClock` недоступен | проверить | проверить |
+| `USE_EXACT_ALARM` | — (нет ограничения на точные будильники) | объявить (clock-приложениям выдаётся автоматически) | да | да |
+| `SCHEDULE_EXACT_ALARM` | — | объявить как второй путь к точным будильникам | проверить | проверить |
 | `USE_FULL_SCREEN_INTENT` | — | — | — | объявить (auto-grant для alarm-приложений) |
 | `POST_NOTIFICATIONS` | — | — | запрос | запрос |
 | `CAMERA` | запрос (плагин QR) | запрос | запрос | запрос |
@@ -224,7 +226,7 @@ AlarmReceiver → AlarmRingService (foreground, type=mediaPlayback)
 | Смена часового пояса | пересчёт без «фантомных» срабатываний |
 | DST-переход | см. §5.1 |
 | Два будильника в одну минуту | второй ждёт закрытия первого (очередь в сервисе) |
-| Force-stop приложения | не сработает → **явное предупреждение в UI** и онбординге |
+| Force-stop приложения | **проверено: `am force-stop` снимает все зарегистрированные будильники** → явное предупреждение в UI и онбординге, после force-stop перепланирование не произойдёт |
 | Doze / экономия батареи | срабатывает (`setAlarmClock`) |
 | DND | срабатывает (`USAGE_ALARM`) |
 | Локскрин с PIN | миссия доступна |

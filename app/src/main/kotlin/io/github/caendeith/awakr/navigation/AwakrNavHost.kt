@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import io.github.caendeith.awakr.AwakrApplication
 import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.data.AwakrData
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
@@ -17,7 +18,6 @@ import io.github.caendeith.awakr.ui.about.AboutScreen
 import io.github.caendeith.awakr.ui.editor.AlarmEditorScreen
 import io.github.caendeith.awakr.ui.home.HomeScreen
 import io.github.caendeith.awakr.ui.plugins.PluginsScreen
-import io.github.caendeith.awakr.ui.ring.RingScreen
 import io.github.caendeith.awakr.ui.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
@@ -26,6 +26,7 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val app = context.applicationContext as AwakrApplication
 
     val missionLabel: (String) -> String = { pluginId ->
         val manifest = plugins.mission(pluginId)?.manifest
@@ -42,7 +43,13 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
             HomeScreen(
                 alarms = alarms,
                 missionLabel = missionLabel,
-                onToggle = { alarm, enabled -> scope.launch { data.alarms.setEnabled(alarm.id, enabled) } },
+                onToggle = { alarm, enabled ->
+                    scope.launch {
+                        data.alarms.setEnabled(alarm.id, enabled)
+                        if (enabled) app.scheduler.schedule(alarm.copy(enabled = true))
+                        else app.scheduler.cancel(alarm.id)
+                    }
+                },
                 onAddAlarm = { navController.navigate(Routes.editor(0L)) },
                 onEditAlarm = { id -> navController.navigate(Routes.editor(id)) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
@@ -64,25 +71,18 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
                 onBack = { navController.popBackStack() },
                 onSave = { alarm ->
                     scope.launch {
-                        data.alarms.save(alarm)
+                        val savedId = data.alarms.save(alarm)
+                        app.scheduler.schedule(alarm.copy(id = if (alarm.id == 0L) savedId else alarm.id))
                         navController.popBackStack()
                     }
                 },
                 onDelete = { id ->
                     scope.launch {
+                        app.scheduler.cancel(id)
                         data.alarms.delete(id)
                         navController.popBackStack()
                     }
                 },
-            )
-        }
-        composable(
-            route = Routes.RING,
-            arguments = listOf(navArgument(Routes.RING_ARG_ID) { type = NavType.LongType }),
-        ) { entry ->
-            RingScreen(
-                alarmId = entry.arguments?.getLong(Routes.RING_ARG_ID) ?: 0L,
-                onFinished = { navController.popBackStack() },
             )
         }
         composable(Routes.SETTINGS) {

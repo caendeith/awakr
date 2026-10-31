@@ -26,9 +26,12 @@
 
     <string name="editor_placeholder">Time, repeat days, sound and mission settings arrive in the next phase.</string>
 
+    <string name="ring_default_label">Alarm</string>
     <string name="ring_mission_placeholder">Complete the mission to stop the alarm.</string>
     <string name="ring_dismiss">Dismiss</string>
     <string name="ring_snooze">Snooze</string>
+    <string name="ring_fallback_title">Alarm is ringing</string>
+    <string name="ring_fallback_text">Tap to open it</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_plugins">Plugins</string>

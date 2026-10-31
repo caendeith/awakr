@@ -32,6 +32,21 @@ The build uses public Maven mirrors (aliyun/google, huaweicloud) because they ar
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
+## Status
+
+| Phase | Scope | State |
+|---|---|---|
+| 0 | Toolchain, Gradle skeleton, first APK on device | done |
+| 1 | Module skeleton, design system, navigation | done |
+| 2 | Room storage, plugin SDK, plugin registry (KSP), alarm editor | done |
+| 3 | Alarm engine: exact scheduling, boot re-scheduling, ring service + full screen screen, snooze/dismiss logging | done |
+| 4 | Home screen and polished editor | in progress |
+| 5 | Missions as plugins (typing, math, shake, QR) | pending |
+| 6 | Permission onboarding, locales, about, missed alarms | pending |
+| 7 | QA matrix, release build, CI, docs | pending |
+
+Verified on a Pixel 7 Pro (Android 17 / API 37): alarms fire at the exact minute from an idle, locked device, the ring screen is raised over the lock screen, and every alarm is restored after a reboot.
+
 ## Docs
 
 - [docs/spec.md](docs/spec.md) — product and technical specification (v1 scope)

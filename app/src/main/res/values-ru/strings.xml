@@ -24,9 +24,12 @@
 
     <string name="editor_placeholder">Время, дни повтора, звук и миссии появятся на следующем этапе.</string>
 
+    <string name="ring_default_label">Будильник</string>
     <string name="ring_mission_placeholder">Выполните миссию, чтобы выключить будильник.</string>
     <string name="ring_dismiss">Выключить</string>
     <string name="ring_snooze">Отложить</string>
+    <string name="ring_fallback_title">Будильник звенит</string>
+    <string name="ring_fallback_text">Нажмите, чтобы открыть</string>
 
     <string name="settings_title">Настройки</string>
     <string name="settings_plugins">Плагины</string>

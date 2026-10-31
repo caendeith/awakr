@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_alarm_name">Alarms</string>
+    <string name="channel_alarm_description">Notifications for alarms that are ringing</string>
+    <string name="channel_missed_name">Missed alarms</string>
+    <string name="channel_missed_description">Reminders about alarms that were missed</string>
+    <string name="channel_service_name">Alarm engine</string>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug-only overlay: lets `adb shell am broadcast` trigger the alarm pipeline so the
+     ring flow can be exercised without waiting for a real alarm. Release builds keep the
+     receiver private. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <receiver
+            android:name=".alarm.AlarmReceiver"
+            android:exported="true"
+            tools:replace="android:exported" />
+    </application>
+</manifest>

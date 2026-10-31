@@ -1,0 +1,279 @@
+package io.github.caendeith.awakr.alarm
+
+import android.app.Notification
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.net.Uri
+import android.os.Build
+import android.os.IBinder
+import android.os.PowerManager
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.provider.Settings
+import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import io.github.caendeith.awakr.AwakrApplication
+import io.github.caendeith.awakr.R
+import io.github.caendeith.awakr.core.alarm.Alarm
+import io.github.caendeith.awakr.core.alarm.AlarmLog
+import io.github.caendeith.awakr.core.alarm.AlarmOutcome
+import io.github.caendeith.awakr.core.audio.AlarmSoundPlayer
+import io.github.caendeith.awakr.core.notify.AwakrNotifications
+import io.github.caendeith.awakr.ui.format.formatTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/**
+ * Keeps an alarm ringing in the foreground: plays the sound, vibrates and shows the
+ * full screen ring UI. The service owns the lifecycle of a single ringing alarm.
+ */
+class AlarmRingService : Service() {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val soundPlayer by lazy { AlarmSoundPlayer(this) }
+
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var vibrator: Vibrator? = null
+    private var currentAlarm: Alarm? = null
+    private var timeoutJob: Job? = null
+    private var ringing = false
+    private var triggerAtMillis = 0L
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        AwakrNotifications.ensureChannels(this)
+        startForeground(
+            AwakrNotifications.NOTIFICATION_RINGING,
+            placeholderNotification(),
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+            } else {
+                0
+            },
+        )
+        acquireWakeLock()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            AlarmIntents.ACTION_DISMISS -> {
+                finish(outcome = AlarmOutcome.DISMISSED, missionPassed = false)
+            }
+            AlarmIntents.ACTION_SNOOZE -> {
+                snooze()
+            }
+            AlarmIntents.ACTION_RING, null -> {
+                val alarmId = intent?.getLongExtra(AlarmIntents.EXTRA_ALARM_ID, 0L) ?: 0L
+                triggerAtMillis = intent?.getLongExtra(AlarmIntents.EXTRA_TRIGGER_AT, 0L) ?: 0L
+                if (alarmId != 0L) startRinging(alarmId)
+            }
+        }
+        return START_STICKY
+    }
+
+    private fun startRinging(alarmId: Long) {
+        if (ringing) return
+        ringing = true
+        val app = application as AwakrApplication
+        scope.launch {
+            val alarm = runCatching { app.data.alarms.get(alarmId) }.getOrNull()
+            if (alarm == null) {
+                Log.w(TAG, "alarm $alarmId no longer exists")
+                stopSelf()
+                return@launch
+            }
+            currentAlarm = alarm
+            if (triggerAtMillis <= 0L) triggerAtMillis = System.currentTimeMillis()
+            startSound(alarm)
+            startVibration(alarm)
+            notifyRinging(alarm)
+            launchRingActivity(alarm)
+            timeoutJob?.cancel()
+            timeoutJob = scope.launch {
+                delay(RING_TIMEOUT_MS)
+                Log.w(TAG, "ring timeout, stopping")
+                finish(AlarmOutcome.MISSED, missionPassed = false)
+            }
+        }
+    }
+
+    /**
+     * The full-screen intent is the sanctioned way to surface the ring screen, but some OEM
+     * builds and Do-not-disturb policies drop it. An explicit start covers those cases as soon
+     * as the app is allowed to launch activities from the background (see the onboarding step
+     * that asks for "display over other apps").
+     */
+    private fun launchRingActivity(alarm: Alarm) {
+        runCatching { startActivity(AlarmIntents.ringActivityIntent(this, alarm.id)) }
+            .onFailure { Log.w(TAG, "could not launch ring activity", it) }
+    }
+
+    private fun startSound(alarm: Alarm) {
+        val uri = alarm.soundUri?.let(Uri::parse) ?: Settings.System.DEFAULT_ALARM_ALERT_URI
+        soundPlayer.play(
+            uri = uri,
+            rampSeconds = alarm.rampSeconds,
+            startVolumePercent = alarm.volumeStart,
+            scope = scope,
+        )
+    }
+
+    private fun startVibration(alarm: Alarm) {
+        if (!alarm.vibrate) return
+        val deviceVibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(VibratorManager::class.java))?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+        vibrator = deviceVibrator
+        runCatching {
+            deviceVibrator?.vibrate(
+                VibrationEffect.createWaveform(VIBRATION_PATTERN, 0),
+            )
+        }.onFailure { Log.w(TAG, "vibration unavailable", it) }
+    }
+
+    private fun snooze() {
+        val alarm = currentAlarm
+        val minutes = alarm?.snoozeMinutes ?: 10
+        if (alarm != null) {
+            val app = application as AwakrApplication
+            app.scheduler.scheduleSnooze(alarm, minutes)
+        }
+        finish(AlarmOutcome.SNOOZED, missionPassed = true)
+    }
+
+    private fun finish(outcome: AlarmOutcome, missionPassed: Boolean) {
+        Log.i(TAG, "ring finished: $outcome")
+        val alarm = currentAlarm
+        if (alarm != null) {
+            val app = application as AwakrApplication
+            val firedAt = System.currentTimeMillis()
+            val scheduledAt = if (triggerAtMillis > 0L) triggerAtMillis else firedAt
+            app.appScope.launch {
+                runCatching {
+                    app.data.alarmLogs.append(
+                        AlarmLog(
+                            alarmId = alarm.id,
+                            scheduledAt = scheduledAt,
+                            firedAt = firedAt,
+                            missionPluginId = alarm.missionPluginId,
+                            missionPassed = missionPassed,
+                            snoozeCount = if (outcome == AlarmOutcome.SNOOZED) 1 else 0,
+                            outcome = outcome,
+                        ),
+                    )
+                }
+            }
+        }
+        triggerAtMillis = 0L
+        timeoutJob?.cancel()
+        timeoutJob = null
+        soundPlayer.stop()
+        runCatching { vibrator?.cancel() }
+        vibrator = null
+        ringing = false
+        currentAlarm = null
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
+    private fun notifyRinging(alarm: Alarm) {
+        val notification = buildNotification(alarm)
+        val manager = getSystemService(android.app.NotificationManager::class.java)
+        manager?.notify(AwakrNotifications.NOTIFICATION_RINGING, notification)
+    }
+
+    private fun buildNotification(alarm: Alarm): Notification {
+        val dismiss = PendingIntent.getService(
+            this,
+            AlarmIntents.triggerRequestCode(alarm.id),
+            Intent(this, AlarmRingService::class.java).apply {
+                action = AlarmIntents.ACTION_DISMISS
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val snooze = PendingIntent.getService(
+            this,
+            AlarmIntents.snoozeRequestCode(alarm.id),
+            Intent(this, AlarmRingService::class.java).apply {
+                action = AlarmIntents.ACTION_SNOOZE
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val time = formatTime(alarm.hour, alarm.minute)
+        return NotificationCompat.Builder(this, AwakrNotifications.CHANNEL_ALARM)
+            .setSmallIcon(R.drawable.ic_alarm_notification)
+            .setContentTitle(time)
+            .setContentText(alarm.label.ifBlank { getString(R.string.ring_default_label) })
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setSilent(true)
+            .setContentIntent(AlarmIntents.ringActivityPendingIntent(this, alarm.id))
+            .setFullScreenIntent(AlarmIntents.ringActivityPendingIntent(this, alarm.id), true)
+            .addAction(0, getString(R.string.ring_snooze), snooze)
+            .addAction(0, getString(R.string.ring_dismiss), dismiss)
+            .build()
+    }
+
+    private fun placeholderNotification(): Notification =
+        NotificationCompat.Builder(this, AwakrNotifications.CHANNEL_SERVICE)
+            .setSmallIcon(R.drawable.ic_alarm_notification)
+            .setContentTitle(getString(R.string.ring_default_label))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .setSilent(true)
+            .build()
+
+    private fun acquireWakeLock() {
+        val powerManager = getSystemService(PowerManager::class.java)
+        wakeLock = powerManager?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Awakr::ringing")?.apply {
+            runCatching { acquire(RING_TIMEOUT_MS + 60_000L) }
+        }
+    }
+
+    override fun onDestroy() {
+        timeoutJob?.cancel()
+        soundPlayer.stop()
+        runCatching { vibrator?.cancel() }
+        runCatching { if (wakeLock?.isHeld == true) wakeLock?.release() }
+        scope.cancel()
+        super.onDestroy()
+    }
+
+    companion object {
+        private const val TAG = "AlarmRingService"
+        private const val RING_TIMEOUT_MS = 10 * 60_000L
+        private val VIBRATION_PATTERN = longArrayOf(0, 800, 600, 800, 600, 800)
+
+        fun start(context: Context, alarmId: Long, triggerAt: Long = 0L) {
+            val intent = Intent(context, AlarmRingService::class.java).apply {
+                action = AlarmIntents.ACTION_RING
+                putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
+                if (triggerAt > 0L) putExtra(AlarmIntents.EXTRA_TRIGGER_AT, triggerAt)
+            }
+            ContextCompat.startForegroundService(context, intent)
+        }
+
+        fun sendAction(context: Context, action: String) {
+            val intent = Intent(context, AlarmRingService::class.java).apply { this.action = action }
+            runCatching { context.startService(intent) }
+        }
+    }
+}

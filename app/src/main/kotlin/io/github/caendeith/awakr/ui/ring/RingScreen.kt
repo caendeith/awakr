@@ -1,5 +1,6 @@
 package io.github.caendeith.awakr.ui.ring
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,25 +22,56 @@ import io.github.caendeith.awakr.core.ui.component.SecondaryButton
 import io.github.caendeith.awakr.core.ui.component.TimeText
 
 @Composable
-fun RingScreen(alarmId: Long, onFinished: () -> Unit) {
+fun RingScreen(
+    time: String,
+    label: String,
+    missionText: String,
+    showSnooze: Boolean,
+    onDismiss: () -> Unit,
+    onSnooze: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 24.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        TimeText(text = "07:30", fontSize = MaterialTheme.typography.displayLarge.fontSize, color = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(12.dp))
+        TimeText(
+            text = time,
+            fontSize = MaterialTheme.typography.displayLarge.fontSize,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.height(8.dp))
+        if (label.isNotBlank()) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+        }
+        Spacer(Modifier.height(24.dp))
         Text(
-            text = stringResource(R.string.ring_mission_placeholder),
+            text = missionText,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(32.dp))
-        PrimaryButton(text = stringResource(R.string.ring_dismiss), onClick = onFinished, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(12.dp))
-        SecondaryButton(text = stringResource(R.string.ring_snooze), onClick = onFinished, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(40.dp))
+        PrimaryButton(
+            text = stringResource(R.string.ring_dismiss),
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (showSnooze) {
+            Spacer(Modifier.height(12.dp))
+            SecondaryButton(
+                text = stringResource(R.string.ring_snooze),
+                onClick = onSnooze,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }

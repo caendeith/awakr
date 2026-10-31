@@ -46,3 +46,13 @@
 5. **sdkmanager не юзабелен** — распаковывать официальные zip из `dl.google.com/android/repository/` напрямую: `platform-36_r02.zip` → `platforms/android-36`, `build-tools_r36_windows.zip` → `build-tools/36.0.0` (внутри папка `android-16` — переименовать), `platform-tools_r37.0.1-win.zip` → `platform-tools/`.
 6. **Лицензии.** Без `licenses/android-sdk-license` Gradle падает на «licences have not been accepted». Файл создан вручную со стандартными SHA1.
 7. **buildToolsVersion** зафиксирован в `app/build.gradle.kts` (`36.0.0`), иначе AGP хочет 35.0.0 и пытается его скачать.
+
+## Проверено на устройстве (Pixel 7 Pro, Android 17 / API 37)
+
+1. **Точные будильники**: `setAlarmClock` на API 31+ требует `USE_EXACT_ALARM`/`SCHEDULE_EXACT_ALARM`, иначе `SecurityException`. С обоими разрешениями `dumpsys alarm` показывает `RTC_WAKEUP ... exactAllowReason=policy_permission`.
+2. **Старт foreground-сервиса из ресивера будильника разрешён**: платформа выдаёт allowlist на 10 с (`tempAllowListReason reasonCode:ALARM_MANAGER_ALARM_CLOCK, duration:10000`). Из ручного `am broadcast` — нет: `ForegroundServiceStartNotAllowedException`, если приложение не на переднем плане.
+3. **Полноэкранный intent не поднимает экран при DND** («Время сна», ZenPolicy `fullScreenIntent=disallow`) — нужен явный `startActivity` из сервиса.
+4. **`am force-stop` снимает все зарегистрированные будильники** — для QA это «сброс» состояния.
+5. **Ручной триггер из shell** требует `android:exported="true"` (сделан debug-overlay `app/src/debug/AndroidManifest.xml`) и приложения на переднем плане.
+6. **UI-автоматизация**: координаты брать из `uiautomator dump` (`tools/ui.py`), а не с картинки; `adb` под MSYS требует `MSYS2_ARG_CONV_EXCL='*'` и `MSYS_NO_PATHCONV=1`.
+7. **БД смотреть через** `adb exec-out run-as <pkg> cat databases/awakr.db` (+ `-wal`); `sqlite3` на устройстве нет.
