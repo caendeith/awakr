@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_math_name">Math mission</string>
+    <string name="math_level">Difficulty</string>
+    <string name="math_level_easy">Easy</string>
+    <string name="math_level_medium">Medium</string>
+    <string name="math_level_hard">Hard</string>
+    <string name="math_count">Problems: %1$d</string>
+    <string name="math_progress">Problem %1$d of %2$d</string>
+    <string name="math_wrong">Wrong, try again</string>
+    <string name="math_check">Check</string>
+</resources>

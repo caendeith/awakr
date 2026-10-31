@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_math_name">Математика</string>
+    <string name="math_level">Сложность</string>
+    <string name="math_level_easy">Легко</string>
+    <string name="math_level_medium">Средне</string>
+    <string name="math_level_hard">Сложно</string>
+    <string name="math_count">Примеров: %1$d</string>
+    <string name="math_progress">Пример %1$d из %2$d</string>
+    <string name="math_wrong">Неверно, попробуйте ещё</string>
+    <string name="math_check">Проверить</string>
+</resources>

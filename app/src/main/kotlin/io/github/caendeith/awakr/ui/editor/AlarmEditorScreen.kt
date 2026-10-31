@@ -59,6 +59,7 @@ import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 import io.github.caendeith.awakr.ui.format.formatTime
 import io.github.caendeith.awakr.core.time.NextOccurrence
 import io.github.caendeith.awakr.ui.format.countdownText
+import io.github.caendeith.awakr.ui.format.parseMissionConfig
 import io.github.caendeith.awakr.ui.format.dateLabel
 import io.github.caendeith.awakr.ui.format.rememberNow
 import java.time.DayOfWeek
@@ -70,6 +71,7 @@ fun AlarmEditorScreen(
     alarmId: Long,
     alarms: AlarmRepository,
     plugins: PluginRegistry,
+    enabledPluginIds: Set<String>,
     missionLabel: (String) -> String,
     onBack: () -> Unit,
     onSave: (Alarm) -> Unit,
@@ -167,7 +169,7 @@ fun AlarmEditorScreen(
             )
 
             SectionTitle(stringResource(R.string.editor_mission))
-            val missions = plugins.missions
+            val missions = plugins.missions.filter { enabledPluginIds.contains(it.manifest.id) }
             if (missions.isEmpty()) {
                 Text(
                     text = stringResource(R.string.editor_no_plugins),
@@ -184,9 +186,21 @@ fun AlarmEditorScreen(
                     missions.forEach { mission ->
                         FilterChip(
                             selected = current.missionPluginId == mission.kind,
-                            onClick = { draft = current.copy(missionPluginId = mission.kind) },
+                            onClick = {
+                                draft = current.copy(missionPluginId = mission.kind, missionConfig = "{}")
+                            },
                             label = { Text(missionLabel(mission.kind)) },
                         )
+                    }
+                }
+            }
+
+            val selectedMission = plugins.mission(current.missionPluginId)
+                ?.takeIf { enabledPluginIds.contains(it.manifest.id) }
+            if (selectedMission != null) {
+                AwakrCard(modifier = Modifier.fillMaxWidth()) {
+                    selectedMission.Editor(parseMissionConfig(current.missionConfig)) { next ->
+                        draft = current.copy(missionConfig = next.toString())
                     }
                 }
             }

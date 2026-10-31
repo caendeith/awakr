@@ -29,7 +29,15 @@ class PluginRegistry private constructor(
     fun mission(kind: String): MissionPlugin? = missions.firstOrNull { it.kind == kind }
 
     companion object {
-        fun build(plugins: List<AwakrPlugin>): PluginRegistry {
+        /**
+         * @param declaredPermissions permissions the host app declares in its manifest. When
+         * provided, a plugin asking for anything outside that set is reported as an issue: the
+         * runtime request would be rejected by the platform and the mission could never start.
+         */
+        fun build(
+            plugins: List<AwakrPlugin>,
+            declaredPermissions: Set<String>? = null,
+        ): PluginRegistry {
             val issues = mutableListOf<PluginIssue>()
             val seenIds = mutableSetOf<String>()
             val accepted = plugins.filter { plugin ->
@@ -44,6 +52,18 @@ class PluginRegistry private constructor(
                         false
                     }
                     else -> true
+                }
+            }
+            if (declaredPermissions != null) {
+                accepted.forEach { plugin ->
+                    plugin.manifest.requiredPermissions
+                        .filterNot { it in declaredPermissions }
+                        .forEach { missing ->
+                            issues += PluginIssue(
+                                plugin.manifest.id,
+                                "Missing manifest permission $missing",
+                            )
+                        }
                 }
             }
             return PluginRegistry(

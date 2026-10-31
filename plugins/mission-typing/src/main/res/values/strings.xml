@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_typing_name">Typing mission</string>
+    <string name="typing_phrase">Phrase</string>
+    <string name="typing_placeholder">Type the phrase below</string>
+    <string name="typing_hint">Type this phrase exactly:</string>
+    <string name="typing_wrong">Not yet, keep typing</string>
+    <string name="typing_default_phrase">I am awake and ready for the day</string>
+</resources>

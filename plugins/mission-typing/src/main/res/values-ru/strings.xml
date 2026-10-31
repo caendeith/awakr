@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_typing_name">Ввод текста</string>
+    <string name="typing_phrase">Фраза</string>
+    <string name="typing_placeholder">Введите фразу ниже</string>
+    <string name="typing_hint">Введите эту фразу точно:</string>
+    <string name="typing_wrong">Пока не совпадает</string>
+    <string name="typing_default_phrase">Я проснулся и готов к новому дню</string>
+</resources>

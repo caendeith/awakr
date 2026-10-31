@@ -62,4 +62,6 @@
     <string name="home_tomorrow">Завтра</string>
     <string name="home_no_next">Нет предстоящего будильника</string>
     <string name="home_disabled">Выкл</string>
+    <string name="ring_fallback_hint">Миссия недоступна — удерживайте кнопку, чтобы выключить</string>
+    <string name="ring_hold">Держать</string>
 </resources>

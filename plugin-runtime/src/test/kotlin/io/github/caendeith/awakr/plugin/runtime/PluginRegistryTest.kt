@@ -32,13 +32,42 @@ class PluginRegistryTest {
         capability: Capability = Capability.MISSION,
         apiVersion: Int = AwakrApiVersion.CURRENT,
         nameRes: Int = 1,
+        requiredPermissions: List<String> = emptyList(),
     ) = PluginManifest(
         id = id,
         name = StringRes(nameRes, id),
         version = "1.0",
         capabilities = setOf(capability),
         apiVersion = apiVersion,
+        requiredPermissions = requiredPermissions,
     )
+
+    @Test
+    fun reportsPluginPermissionMissingFromTheHostManifest() {
+        val qr = FakeMission(
+            "qr",
+            manifest("mission-qr", requiredPermissions = listOf("android.permission.CAMERA")),
+        )
+
+        val without = PluginRegistry.build(listOf(qr), declaredPermissions = emptySet())
+        assertEquals(1, without.issues.size)
+        assertTrue(without.issues.first().reason.contains("CAMERA"))
+
+        val with = PluginRegistry.build(
+            listOf(qr),
+            declaredPermissions = setOf("android.permission.CAMERA"),
+        )
+        assertTrue(with.issues.isEmpty())
+    }
+
+    @Test
+    fun skipsThePermissionCheckWhenDeclaredPermissionsAreUnknown() {
+        val qr = FakeMission(
+            "qr",
+            manifest("mission-qr", requiredPermissions = listOf("android.permission.CAMERA")),
+        )
+        assertTrue(PluginRegistry.build(listOf(qr)).issues.isEmpty())
+    }
 
     @Test
     fun buildsFromListAndFindsByKind() {

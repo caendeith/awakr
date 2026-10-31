@@ -6,16 +6,18 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
-import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.remember
 import io.github.caendeith.awakr.AwakrApplication
-import io.github.caendeith.awakr.R
 import io.github.caendeith.awakr.alarm.AlarmIntents
 import io.github.caendeith.awakr.alarm.AlarmRingService
 import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.ui.theme.AwakrTheme
-import io.github.caendeith.awakr.ui.format.formatTime
 
 /**
  * Full screen alarm UI. It is launched by the full screen intent of the ringing
@@ -34,18 +36,34 @@ class RingActivity : ComponentActivity() {
 
         setContent {
             AwakrTheme {
-                val alarm by produceState<Alarm?>(initialValue = null, alarmId) {
-                    value = runCatching { app.data.alarms.get(alarmId) }.getOrNull()
+                val state by produceState<RingState>(initialValue = RingState.Loading, alarmId) {
+                    val alarm = runCatching { app.data.alarms.get(alarmId) }.getOrNull()
+                    value = if (alarm == null) RingState.Missing else RingState.Ready(alarm)
                 }
-                val current = alarm
-                RingScreen(
-                    time = current?.let { formatTime(it.hour, it.minute) } ?: "--:--",
-                    label = current?.label.orEmpty(),
-                    missionText = stringResource(R.string.ring_mission_placeholder),
-                    showSnooze = current?.snoozeEnabled ?: true,
-                    onDismiss = { finishWithAction(AlarmIntents.ACTION_DISMISS) },
-                    onSnooze = { finishWithAction(AlarmIntents.ACTION_SNOOZE) },
-                )
+                val current = (state as? RingState.Ready)?.alarm
+                val plugin = remember(current) {
+                    current?.let { app.plugins.mission(it.missionPluginId) }
+                }
+                val enabled by produceState(initialValue = true, plugin) {
+                    value = plugin?.let { mission ->
+                        runCatching {
+                            app.data.pluginStates.get(mission.manifest.id)?.enabled
+                        }.getOrNull() ?: true
+                    } ?: false
+                }
+                // Loading is a distinct state: rendering the ready screen with a null alarm would
+                // flash the fallback mission ("mission unavailable") for a frame or two.
+                if (state == RingState.Loading) {
+                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {}
+                } else {
+                    RingScreen(
+                        alarm = current,
+                        mission = plugin.takeIf { enabled },
+                        showSnooze = current?.snoozeEnabled ?: true,
+                        onDismiss = { finishWithAction(AlarmIntents.ACTION_DISMISS, missionPassed = true) },
+                        onSnooze = { finishWithAction(AlarmIntents.ACTION_SNOOZE) },
+                    )
+                }
             }
         }
     }
@@ -55,8 +73,14 @@ class RingActivity : ComponentActivity() {
         // Deliberately ignored: an alarm cannot be dismissed with the back gesture.
     }
 
-    private fun finishWithAction(action: String) {
-        AlarmRingService.sendAction(this, action)
+    private sealed interface RingState {
+        data object Loading : RingState
+        data object Missing : RingState
+        data class Ready(val alarm: Alarm) : RingState
+    }
+
+    private fun finishWithAction(action: String, missionPassed: Boolean = false) {
+        AlarmRingService.sendAction(this, action, missionPassed)
         finishAndRemoveTask()
     }
 

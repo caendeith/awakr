@@ -56,6 +56,10 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":sdk"))
     implementation(project(":plugin-runtime"))
+    implementation(project(":plugins:mission-math"))
+    implementation(project(":plugins:mission-qr"))
+    implementation(project(":plugins:mission-shake"))
+    implementation(project(":plugins:mission-typing"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)

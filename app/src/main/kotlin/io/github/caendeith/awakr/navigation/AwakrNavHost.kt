@@ -28,6 +28,14 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
     val context = LocalContext.current
     val app = context.applicationContext as AwakrApplication
 
+    val pluginStates by data.pluginStates.observeAll().collectAsState(initial = emptyList())
+    val enabledPluginIds: Set<String> = plugins.missions
+        .filter { plugin ->
+            pluginStates.firstOrNull { it.pluginId == plugin.manifest.id }?.enabled ?: true
+        }
+        .map { it.manifest.id }
+        .toSet()
+
     val missionLabel: (String) -> String = { pluginId ->
         val manifest = plugins.mission(pluginId)?.manifest
         when {
@@ -67,6 +75,7 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
                 alarmId = alarmId,
                 alarms = data.alarms,
                 plugins = plugins,
+                enabledPluginIds = enabledPluginIds,
                 missionLabel = missionLabel,
                 onBack = { navController.popBackStack() },
                 onSave = { alarm ->
@@ -95,6 +104,7 @@ fun AwakrNavHost(data: AwakrData, plugins: PluginRegistry) {
         composable(Routes.PLUGINS) {
             PluginsScreen(
                 plugins = plugins,
+                pluginStates = data.pluginStates,
                 missionLabel = missionLabel,
                 onBack = { navController.popBackStack() },
             )

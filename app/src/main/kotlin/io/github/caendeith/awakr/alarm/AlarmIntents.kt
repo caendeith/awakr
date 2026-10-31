@@ -16,6 +16,7 @@ object AlarmIntents {
 
     const val EXTRA_ALARM_ID = "alarm_id"
     const val EXTRA_TRIGGER_AT = "trigger_at"
+    const val EXTRA_MISSION_PASSED = "mission_passed"
     const val EXTRA_SNOOZE_MINUTES = "snooze_minutes"
     const val EXTRA_LABEL = "label"
     const val EXTRA_TIME = "time"

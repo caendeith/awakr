@@ -54,5 +54,8 @@
 3. **Полноэкранный intent не поднимает экран при DND** («Время сна», ZenPolicy `fullScreenIntent=disallow`) — нужен явный `startActivity` из сервиса.
 4. **`am force-stop` снимает все зарегистрированные будильники** — для QA это «сброс» состояния.
 5. **Ручной триггер из shell** требует `android:exported="true"` (сделан debug-overlay `app/src/debug/AndroidManifest.xml`) и приложения на переднем плане.
-6. **UI-автоматизация**: координаты брать из `uiautomator dump` (`tools/ui.py`), а не с картинки; `adb` под MSYS требует `MSYS2_ARG_CONV_EXCL='*'` и `MSYS_NO_PATHCONV=1`.
-7. **БД смотреть через** `adb exec-out run-as <pkg> cat databases/awakr.db` (+ `-wal`); `sqlite3` на устройстве нет.
+6. **UI-автоматизация**: координаты брать из `uiautomator dump` (`tools/uidump.py` — дамп это XML, не JSON), а не с картинки; превью скриншота масштабируется (~0.8) и даёт неверные координаты. `adb` под MSYS требует `MSYS2_ARG_CONV_EXCL='*'` и `MSYS_NO_PATHCONV=1`.
+7. **Клавиатура сдвигает раскладку**: после фокуса текстового поля (Compose) IME поднимает низ экрана, и дампы могут отдавать устаревшие bounds — перед сохранением/тапом прятать клавиатуру `adb shell input keyevent 4`, затем заново снимать дамп. Кириллицу `input text` не вводит (только ASCII, пробел = `%s`); очистка поля — `keyevent KEYCODE_MOVE_END` + N×`keyevent 67`.
+8. **Compose и uiautomator**: тексты видны как `android.widget.TextView` с bounds, но `clickable="true"` почти не выставляется, а `Switch` и чипы не имеют собственных узлов — тапать по координатам из bounds текста/строки.
+9. **Юнит-тесты плагинов** требуют в их `build.gradle.kts` `testImplementation(libs.junit)` и `testOptions { unitTests.isReturnDefaultValues = true }` (Android API без Robolectric).
+10. **БД смотреть через** `adb exec-out run-as <pkg> cat databases/awakr.db` (+ `-wal`); `sqlite3` на устройстве нет.

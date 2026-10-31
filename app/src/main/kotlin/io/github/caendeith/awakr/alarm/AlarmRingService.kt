@@ -69,7 +69,10 @@ class AlarmRingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             AlarmIntents.ACTION_DISMISS -> {
-                finish(outcome = AlarmOutcome.DISMISSED, missionPassed = false)
+                finish(
+                    outcome = AlarmOutcome.DISMISSED,
+                    missionPassed = intent.getBooleanExtra(AlarmIntents.EXTRA_MISSION_PASSED, false),
+                )
             }
             AlarmIntents.ACTION_SNOOZE -> {
                 snooze()
@@ -84,7 +87,12 @@ class AlarmRingService : Service() {
     }
 
     private fun startRinging(alarmId: Long) {
-        if (ringing) return
+        if (ringing) {
+            // A second trigger for the same ring (full-screen intent retry, duplicate broadcast)
+            // must not restart the sound or launch a second screen.
+            Log.i(TAG, "already ringing, ignoring trigger for alarm $alarmId")
+            return
+        }
         ringing = true
         val app = application as AwakrApplication
         scope.launch {
@@ -249,10 +257,17 @@ class AlarmRingService : Service() {
     }
 
     override fun onDestroy() {
+        // The system can tear the service down before finish() runs: never leave the sound, the
+        // vibration or the "already ringing" flag behind.
         timeoutJob?.cancel()
-        soundPlayer.stop()
+        timeoutJob = null
+        runCatching { soundPlayer.stop() }
         runCatching { vibrator?.cancel() }
         runCatching { if (wakeLock?.isHeld == true) wakeLock?.release() }
+        vibrator = null
+        wakeLock = null
+        ringing = false
+        currentAlarm = null
         scope.cancel()
         super.onDestroy()
     }
@@ -271,8 +286,11 @@ class AlarmRingService : Service() {
             ContextCompat.startForegroundService(context, intent)
         }
 
-        fun sendAction(context: Context, action: String) {
-            val intent = Intent(context, AlarmRingService::class.java).apply { this.action = action }
+        fun sendAction(context: Context, action: String, missionPassed: Boolean = false) {
+            val intent = Intent(context, AlarmRingService::class.java).apply {
+                this.action = action
+                putExtra(AlarmIntents.EXTRA_MISSION_PASSED, missionPassed)
+            }
             runCatching { context.startService(intent) }
         }
     }

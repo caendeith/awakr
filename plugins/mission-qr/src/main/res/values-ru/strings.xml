@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_qr_name">QR-код</string>
+    <string name="qr_hint">Наведите камеру на QR-код</string>
+    <string name="qr_permission">Для сканирования нужен доступ к камере</string>
+    <string name="qr_grant">Разрешить камеру</string>
+    <string name="qr_scanning">Сканирование…</string>
+    <string name="qr_editor_hint">Распечатайте код ниже и уберите его подальше от кровати. Новый код отменяет старый.</string>
+    <string name="qr_generate">Создать мой код</string>
+    <string name="qr_print_hint">Код можно распечатать или держать на другом телефоне.</string>
+    <string name="qr_regenerate">Создать другой код</string>
+</resources>

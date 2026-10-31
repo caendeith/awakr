@@ -64,4 +64,6 @@
     <string name="home_tomorrow">Tomorrow</string>
     <string name="home_no_next">No upcoming alarm</string>
     <string name="home_disabled">Off</string>
+    <string name="ring_fallback_hint">Mission unavailable — hold the button to stop the alarm</string>
+    <string name="ring_hold">Hold</string>
 </resources>

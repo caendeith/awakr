@@ -7,6 +7,10 @@ import io.github.caendeith.awakr.core.alarm.Days
 import io.github.caendeith.awakr.core.notify.AwakrNotifications
 import io.github.caendeith.awakr.data.AwakrData
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
+import io.github.caendeith.awakr.plugins.mission.math.MathMissionPlugin
+import io.github.caendeith.awakr.plugins.mission.qr.QrMissionPlugin
+import io.github.caendeith.awakr.plugins.mission.shake.ShakeMissionPlugin
+import io.github.caendeith.awakr.plugins.mission.typing.TypingMissionPlugin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,7 +31,29 @@ class AwakrApplication : Application() {
      * Build-time plugin set. Mission/sound/theme modules are appended here as they land
      * (no reflection, no dynamic loading).
      */
-    val plugins: PluginRegistry by lazy { PluginRegistry.build(emptyList()) }
+    val plugins: PluginRegistry by lazy {
+        PluginRegistry.build(
+            plugins = listOf(
+                MathMissionPlugin(),
+                ShakeMissionPlugin(),
+                TypingMissionPlugin(),
+                QrMissionPlugin(),
+            ),
+            declaredPermissions = declaredPermissions(),
+        )
+    }
+
+    /**
+     * Permissions this build actually declares. A plugin asking for anything else is reported in
+     * Settings → Plugins instead of failing with a silent runtime permission denial.
+     */
+    @Suppress("DEPRECATION")
+    private fun declaredPermissions(): Set<String> =
+        packageManager
+            .getPackageInfo(packageName, android.content.pm.PackageManager.GET_PERMISSIONS)
+            .requestedPermissions
+            ?.toSet()
+            .orEmpty()
 
     override fun onCreate() {
         super.onCreate()

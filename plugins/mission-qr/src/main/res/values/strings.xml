@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_qr_name">QR mission</string>
+    <string name="qr_hint">Point the camera at the QR code</string>
+    <string name="qr_permission">Camera access is required to scan the code</string>
+    <string name="qr_grant">Allow camera</string>
+    <string name="qr_scanning">Scanning…</string>
+    <string name="qr_editor_hint">Print the code below and keep it away from the bed. Creating a new code invalidates the old one.</string>
+    <string name="qr_generate">Create my code</string>
+    <string name="qr_print_hint">You can print this code or keep it on another phone.</string>
+    <string name="qr_regenerate">Create another code</string>
+</resources>
