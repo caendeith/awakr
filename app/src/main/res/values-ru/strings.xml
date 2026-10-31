@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_settings">Настройки</string>
+    <string name="action_back">Назад</string>
+    <string name="action_save">Сохранить</string>
+
+    <string name="home_next_alarm">Следующий будильник</string>
+    <string name="home_alarms">Будильники</string>
+    <string name="home_no_alarms">Пока нет будильников</string>
+    <string name="home_add_alarm">Добавить</string>
+
+    <string name="editor_new_alarm">Новый будильник</string>
+    <string name="editor_edit_alarm">Изменить будильник</string>
+    <string name="editor_placeholder">Время, дни повтора, звук и миссии появятся на следующем этапе.</string>
+
+    <string name="ring_mission_placeholder">Выполните миссию, чтобы выключить будильник.</string>
+    <string name="ring_dismiss">Выключить</string>
+    <string name="ring_snooze">Отложить</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="settings_plugins">Плагины</string>
+    <string name="settings_about">О приложении</string>
+
+    <string name="plugins_empty_title">Плагинов нет</string>
+    <string name="plugins_empty_body">Здесь появятся миссии, наборы звуков и темы.</string>
+
+    <string name="demo_label_work">Работа</string>
+    <string name="demo_label_weekend">Пробежка</string>
+    <string name="demo_repeat_workdays">Пн, Вт, Ср, Чт, Пт</string>
+    <string name="demo_repeat_weekend">Сб, Вс</string>
+    <string name="mission_math">Математика</string>
+    <string name="mission_shake">Тряска</string>
+
+    <string name="about_version">v%1$s</string>
+    <string name="about_license">Свободное ПО с открытым кодом, лицензия MIT. Без рекламы и подписок.</string>
+</resources>

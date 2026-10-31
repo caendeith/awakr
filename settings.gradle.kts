@@ -30,4 +30,30 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Awakr"
+
 include(":app")
+
+// Shared foundations
+include(":core:time")
+include(":core:ui")
+include(":core:alarm")
+include(":core:audio")
+include(":core:notify")
+include(":core:perm")
+
+// Data
+include(":data")
+
+// Plugin platform
+include(":sdk")
+include(":plugin-runtime")
+include(":plugin-codegen")
+
+// Plugins (implemented in later phases)
+// include(":plugins:mission-math")
+// include(":plugins:mission-qr")
+// include(":plugins:mission-shake")
+// include(":plugins:mission-typing")
+// include(":plugins:sound-default")
+// include(":plugins:theme-default")
+// include(":plugins:locale-ru")
