@@ -19,6 +19,13 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 
 <p><sub>100 unit tests · release APK 4.3 MB · cold start 479 ms · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
 
+<p>
+<a href="https://caendeith.github.io/awakr/"><b>Website</b></a> ·
+<a href="https://github.com/caendeith/awakr/releases/latest"><b>Download APK</b></a> ·
+<a href="CONTRIBUTING.md">Contributing</a> ·
+<a href="docs/manual-qa.md">What was tested by hand</a>
+</p>
+
 </div>
 
 ## Why another alarm clock
@@ -149,6 +156,7 @@ Roadmap ideas for v2: dynamic color and widgets, sleep-cycle "smart wake", recor
 - [docs/toolchain.md](docs/toolchain.md) - verified toolchain, versions and known pitfalls
 - [docs/manual-qa.md](docs/manual-qa.md) - manual test matrix and results on real hardware
 - [CONTRIBUTING.md](CONTRIBUTING.md) - build setup, code style, adding a mission in one pull request
+- [docs/index.html](docs/index.html) - the landing page served at https://caendeith.github.io/awakr/ (GitHub Pages, `main` → `/docs`)
 
 ## License
 
