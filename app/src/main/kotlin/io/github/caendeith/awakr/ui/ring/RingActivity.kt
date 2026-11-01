@@ -1,5 +1,6 @@
 package io.github.caendeith.awakr.ui.ring
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -10,10 +11,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import io.github.caendeith.awakr.AwakrApplication
 import io.github.caendeith.awakr.alarm.AlarmIntents
 import io.github.caendeith.awakr.alarm.AlarmRingService
@@ -25,6 +27,13 @@ import io.github.caendeith.awakr.core.ui.theme.AwakrTheme
  * notification, on top of the lock screen, and it owns the dismiss/snooze actions.
  */
 class RingActivity : ComponentActivity() {
+
+    /**
+     * Alarm shown by this screen. It is state, not a plain intent read, so that a second alarm
+     * that waited in the service queue updates the live screen through [onNewIntent] instead of
+     * forcing a recreate (the ring session state lives in the service).
+     */
+    private val ringRequest = mutableStateOf(RingRequest(alarmId = 0L, snoozeCount = 0))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,14 +53,18 @@ class RingActivity : ComponentActivity() {
             },
         )
 
-        val alarmId = intent.getLongExtra(AlarmIntents.EXTRA_ALARM_ID, 0L)
-        val snoozeCount = intent.getIntExtra(AlarmIntents.EXTRA_SNOOZE_COUNT, 0)
+        ringRequest.value = RingRequest.from(intent)
         val app = application as AwakrApplication
 
         setContent {
             AwakrTheme {
-                val state by produceState<RingState>(initialValue = RingState.Loading, alarmId) {
-                    val alarm = runCatching { app.data.alarms.get(alarmId) }.getOrNull()
+                val request = ringRequest.value
+                val state by produceState<RingState>(initialValue = RingState.Loading, request) {
+                    if (request.alarmId == 0L) {
+                        value = RingState.Missing
+                        return@produceState
+                    }
+                    val alarm = runCatching { app.data.alarms.get(request.alarmId) }.getOrNull()
                     value = if (alarm == null) RingState.Missing else RingState.Ready(alarm)
                 }
                 val current = (state as? RingState.Ready)?.alarm
@@ -77,12 +90,45 @@ class RingActivity : ComponentActivity() {
                         // out is passing the mission.
                         showSnooze = current != null &&
                             current.snoozeEnabled &&
-                            snoozeCount < current.maxSnoozes,
+                            request.snoozeCount < current.maxSnoozes,
                         onDismiss = { finishWithAction(AlarmIntents.ACTION_DISMISS, missionPassed = true) },
                         onSnooze = { finishWithAction(AlarmIntents.ACTION_SNOOZE) },
+                        onSilenceChanged = { silenced ->
+                            AlarmRingService.setSilenced(this@RingActivity, silenced)
+                        },
                     )
                 }
             }
+        }
+    }
+
+    /**
+     * A queued alarm starts while this screen is alive: reuse it and swap the alarm instead of
+     * recreating the activity in the middle of a ring.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val request = RingRequest.from(intent)
+        if (request.alarmId != 0L) ringRequest.value = request
+    }
+
+    override fun onStop() {
+        // Safety net for the mission timer: whenever the ring screen leaves the foreground (the
+        // device was locked again, another app was opened, the system moved us away) the alarm
+        // must be audible again rather than staying muted forever.
+        if (!isChangingConfigurations) {
+            AlarmRingService.setSilenced(this, silenced = false)
+        }
+        super.onStop()
+    }
+
+    private data class RingRequest(val alarmId: Long, val snoozeCount: Int) {
+        companion object {
+            fun from(intent: Intent): RingRequest = RingRequest(
+                alarmId = intent.getLongExtra(AlarmIntents.EXTRA_ALARM_ID, 0L),
+                snoozeCount = intent.getIntExtra(AlarmIntents.EXTRA_SNOOZE_COUNT, 0),
+            )
         }
     }
 
@@ -93,16 +139,26 @@ class RingActivity : ComponentActivity() {
     }
 
     private fun finishWithAction(action: String, missionPassed: Boolean = false) {
+        // Never leave the service muted after the ring was handled from here.
+        AlarmRingService.setSilenced(this, silenced = false)
         AlarmRingService.sendAction(this, action, missionPassed)
-        finishAndRemoveTask()
+        // The ring shares the app task, so removing the whole task would also close the user's
+        // alarm list. Only a ring that owns its task should take the task down with it.
+        if (isTaskRoot) finishAndRemoveTask() else finish()
     }
 
+    /**
+     * Draws the ring above the lock screen without asking for the device PIN or pattern.
+     *
+     * "Like Alarmy": the ring screen must be usable on a secure lock screen, so the keyguard is
+     * deliberately not dismissed (a dismissal request turns the ring into an authentication
+     * prompt). [setShowWhenLocked] keeps the activity visible above the keyguard; unlocking just
+     * reveals the same activity instead of recreating it.
+     */
     private fun showOverLockScreen() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
-            val keyguard = getSystemService(android.app.KeyguardManager::class.java)
-            keyguard?.requestDismissKeyguard(this, null)
         } else {
             @Suppress("DEPRECATION")
             window.addFlags(

@@ -13,6 +13,8 @@ local.properties
 
 # Build artifacts
 *.apk
+# ...except the F-Droid repository, which has to ship the signed APK
+!docs/fdroid/repo/*.apk
 *.aab
 *.ap_
 *.dex

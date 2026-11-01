@@ -148,3 +148,19 @@ Goal: an alarm can be dismissed by any QR code or barcode you already own (a pro
 | Physically shaking the phone for 20 s | not reproducible while driving the device over adb | `ShakeTrackerTest` |
 | DST transition on the device | hard to move the clock across a real DST boundary without disturbing the phone | `NextOccurrenceTest` (spring forward / fall back) |
 | Release build with a different signing key | out of scope for v1 | README documents the keystore setup |
+
+## v1.2.1 regression pass — fixes from the first real user report
+
+Three reports came from the first user (a real device, adb-installed 1.2.0). Each row names the
+cause that was found in the code and how it is now covered.
+
+| Report | Cause | Fix | Status |
+|---|---|---|---|
+| "the sound was the system default although I picked my own file" | `AlarmRingService.startSound()` played `alarm.soundUri` and fell back to `Settings.System.DEFAULT_ALARM_ALERT_URI`, bypassing `SoundResolver`, while the editor stores the choice in `alarm.soundId` (`builtin:<id>` / `file:<path>`) | the service resolves through `SoundResolver.uri(...)` with the default from `AppSettingsRepository`; `AlarmSoundPlayer.createPlayer()` tries the chosen URI first and the shipped tone second, so a deleted user file can never make the alarm silent; the resolved URI is logged | code + unit tests green, on-device pending |
+| "it asked for my PIN when the alarm went off" | `RingActivity.drawOverLockScreen()` called `keyguard.requestDismissKeyguard(...)`, which turns the ring into an authentication prompt on a secure lock screen | the call is gone; `setShowWhenLocked(true)` + `setTurnScreenOn(true)` already draw above the keyguard. `RingActivity` is `singleTask` in the app task, and a queued alarm swaps the live screen through `onNewIntent` instead of recreating it | code + unit tests green, on-device pending |
+| "after unlocking, the app did not open; I had to use the notification shade" | the ring activity lived in its own task (`singleInstance` + `finishAndRemoveTask()`), so dismissing it left an empty task behind | shared app task, `FLAG_ACTIVITY_SINGLE_TOP`, and `finishAndRemoveTask()` only when the ring owns its task | code + unit tests green, on-device pending |
+| feature request: mute while the mission is on screen, 90 s budget, then ring again with a new task | not implemented | `MissionTimer` (90 s), `AlarmRingService.setSilenced()` with a 3-minute watchdog, `RingScreen` mutes only while the mission is visible and the activity is resumed, then unmutes, shows a 4 s "time is up" banner, hands out a fresh task (`key(missionKind, missionAttempt)`) and restarts the timer; the QR mission is not re-generated | code + `MissionTimerTest` (5 tests) green, on-device pending |
+
+Also in this release: `SYSTEM_ALERT_WINDOW` was removed from the manifest and from onboarding. It
+was declared but never used, and on Android 13+ an app installed outside a store cannot even grant
+it without "Allow restricted settings" — which is the dialog the user sent a screenshot of.

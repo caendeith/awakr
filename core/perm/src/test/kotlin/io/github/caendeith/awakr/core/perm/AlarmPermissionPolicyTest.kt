@@ -37,13 +37,6 @@ class AlarmPermissionPolicyTest {
     }
 
     @Test
-    fun overlayIsNeverRequired() {
-        assertTrue(AlarmPermissionPolicy.requirements(34, true).none {
-            it.permission == AlarmPermission.OVERLAY && it.required
-        })
-    }
-
-    @Test
     fun snapshotIsReadyWhenEveryRequiredPermissionIsGranted() {
         val granted = setOf(AlarmPermission.NOTIFICATIONS, AlarmPermission.EXACT_ALARM)
         val snapshot = AlarmPermissionPolicy.snapshot(33, cameraMissionEnabled = false, granted = granted)
@@ -69,7 +62,7 @@ class AlarmPermissionPolicyTest {
     fun optionalPermissionsDoNotBlockOnboarding() {
         val granted = setOf(AlarmPermission.NOTIFICATIONS, AlarmPermission.EXACT_ALARM)
         val snapshot = AlarmPermissionPolicy.snapshot(33, cameraMissionEnabled = false, granted = granted)
-        assertFalse(snapshot.isGranted(AlarmPermission.OVERLAY))
+        assertFalse(snapshot.isGranted(AlarmPermission.CAMERA))
         assertTrue(snapshot.ready)
     }
 }

@@ -6,14 +6,12 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -23,6 +21,7 @@ import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.alarm.AlarmLog
 import io.github.caendeith.awakr.core.alarm.AlarmOutcome
 import io.github.caendeith.awakr.core.audio.AlarmSoundPlayer
+import io.github.caendeith.awakr.core.audio.SoundResolver
 import io.github.caendeith.awakr.core.notify.AwakrNotifications
 import io.github.caendeith.awakr.ui.format.formatTime
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -46,6 +46,9 @@ class AlarmRingService : Service() {
     private var vibrator: Vibrator? = null
     private var currentAlarm: Alarm? = null
     private var timeoutJob: Job? = null
+
+    /** Safety net that un-mutes the sound if the ring screen disappears without doing it. */
+    private var silenceWatchdog: Job? = null
     private var ringing = false
     private var triggerAtMillis = 0L
 
@@ -94,6 +97,9 @@ class AlarmRingService : Service() {
             AlarmIntents.ACTION_SNOOZE -> {
                 snooze()
             }
+            AlarmIntents.ACTION_SET_SILENCED -> {
+                setSilenced(intent.getBooleanExtra(AlarmIntents.EXTRA_SILENCED, false))
+            }
             AlarmIntents.ACTION_RING, null -> {
                 val alarmId = intent?.getLongExtra(AlarmIntents.EXTRA_ALARM_ID, 0L) ?: 0L
                 if (alarmId != 0L) {
@@ -139,10 +145,11 @@ class AlarmRingService : Service() {
             }
             currentAlarm = alarm
             if (triggerAtMillis <= 0L) triggerAtMillis = System.currentTimeMillis()
-            startSound(alarm)
             startVibration(alarm)
             notifyRinging(alarm)
             launchRingActivity(alarm)
+            // Resolving the sound id touches settings storage, so the UI above comes first.
+            startSound(alarm)
             timeoutJob?.cancel()
             timeoutJob = scope.launch {
                 delay(RING_TIMEOUT_MS)
@@ -163,14 +170,62 @@ class AlarmRingService : Service() {
             .onFailure { Log.w(TAG, "could not launch ring activity", it) }
     }
 
-    private fun startSound(alarm: Alarm) {
-        val uri = alarm.soundUri?.let(Uri::parse) ?: Settings.System.DEFAULT_ALARM_ALERT_URI
+    /**
+     * Starts the sound the user actually chose for this alarm.
+     *
+     * The choice lives in [Alarm.soundId] ("builtin:<id>", "file:<path>" or empty meaning "the
+     * default sound from the settings"). [SoundResolver] validates it and falls back to the
+     * settings default and finally to a shipped tone, so a deleted import can never end with a
+     * silent alarm. The legacy soundUri/soundPackId columns are deliberately ignored here.
+     */
+    private suspend fun startSound(alarm: Alarm) {
+        val uri = SoundResolver.uri(this, alarm.soundId, defaultSoundId())
+        // Logged so a support log shows which tone the alarm actually used: the user picks it in
+        // the editor as builtin:<id> or file:<path>, and both are easy to mix up in a bug report.
+        Log.i(TAG, "playing sound ${alarm.soundId.ifBlank { "<default>" }} -> ${uri}")
         soundPlayer.play(
             uri = uri,
             rampSeconds = alarm.rampSeconds,
             startVolumePercent = alarm.volumeStart,
             scope = scope,
         )
+    }
+
+    /** Default sound from the settings, or null when the settings cannot be read. */
+    private suspend fun defaultSoundId(): String? =
+        runCatching { (application as AwakrApplication).data.settings.settings.first().defaultSoundId }
+            .getOrNull()
+
+    /**
+     * Mutes or un-mutes the ring sound while the ring session keeps running.
+     *
+     * Used by the ring screen while the mission timer counts down. A call that arrives when
+     * nothing rings is ignored, and the service then stops so that no empty foreground
+     * notification is left behind.
+     */
+    private fun setSilenced(silenced: Boolean) {
+        if (!ringing) {
+            Log.i(TAG, "setSilenced($silenced) without a ring, ignoring")
+            if (pendingRings.isEmpty()) stopSelf()
+            return
+        }
+        Log.i(TAG, "silenced=$silenced")
+        soundPlayer.setSilenced(silenced)
+        silenceWatchdog?.cancel()
+        silenceWatchdog = if (silenced) {
+            // Only the ring screen mutes the sound, and only while the mission timer runs. If that
+            // screen goes away (crash, process death, task removed) the alarm would stay silent
+            // forever, so the mute always expires on its own.
+            scope.launch {
+                delay(MAX_SILENCE_MS)
+                if (ringing && soundPlayer.isSilenced) {
+                    Log.w(TAG, "silence watchdog fired, ringing again")
+                    soundPlayer.setSilenced(false)
+                }
+            }
+        } else {
+            null
+        }
     }
 
     private fun startVibration(alarm: Alarm) {
@@ -243,6 +298,10 @@ class AlarmRingService : Service() {
         snoozeCount = 0
         timeoutJob?.cancel()
         timeoutJob = null
+        silenceWatchdog?.cancel()
+        silenceWatchdog = null
+        // stop() also clears the mute flag: finishing an alarm must never leave it silenced, and a
+        // queued ring that starts right after must be audible again.
         soundPlayer.stop()
         runCatching { vibrator?.cancel() }
         vibrator = null
@@ -262,6 +321,14 @@ class AlarmRingService : Service() {
     private fun notifyRinging(alarm: Alarm) {
         val notification = buildNotification(alarm)
         val manager = getSystemService(android.app.NotificationManager::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+            manager?.canUseFullScreenIntent() == false
+        ) {
+            // Android 14+ lets the user withhold the full screen intent permission: the ring screen
+            // then does not open over the keyguard on its own and the direct activity start in
+            // launchRingActivity is the only way in. Worth a log line when a device misbehaves.
+            Log.w(TAG, "full screen intent permission is not granted")
+        }
         manager?.notify(AwakrNotifications.NOTIFICATION_RINGING, notification)
     }
 
@@ -325,6 +392,8 @@ class AlarmRingService : Service() {
         // vibration or the "already ringing" flag behind.
         timeoutJob?.cancel()
         timeoutJob = null
+        silenceWatchdog?.cancel()
+        silenceWatchdog = null
         runCatching { soundPlayer.stop() }
         runCatching { vibrator?.cancel() }
         runCatching { if (wakeLock?.isHeld == true) wakeLock?.release() }
@@ -339,6 +408,9 @@ class AlarmRingService : Service() {
     companion object {
         private const val TAG = "AlarmRingService"
         private const val RING_TIMEOUT_MS = 10 * 60_000L
+
+        /** Longest time the mission timer may keep the ring silent before the sound comes back. */
+        private const val MAX_SILENCE_MS = 3 * 60_000L
         private val VIBRATION_PATTERN = longArrayOf(0, 800, 600, 800, 600, 800)
 
         fun start(context: Context, alarmId: Long, triggerAt: Long = 0L, snoozeCount: Int = 0) {
@@ -349,6 +421,18 @@ class AlarmRingService : Service() {
                 if (snoozeCount > 0) putExtra(AlarmIntents.EXTRA_SNOOZE_COUNT, snoozeCount)
             }
             ContextCompat.startForegroundService(context, intent)
+        }
+
+        /**
+         * Mutes or un-mutes the alarm that is ringing right now.
+         *
+         * The ring screen calls it while the mission timer counts down; [context] only needs to be
+         * an application context. Calls without a ringing alarm are harmless.
+         */
+        fun setSilenced(context: Context, silenced: Boolean) {
+            val intent = AlarmIntents.silencedIntent(context, silenced)
+            runCatching { context.startService(intent) }
+                .onFailure { Log.w(TAG, "could not set silenced=$silenced", it) }
         }
 
         fun sendAction(context: Context, action: String, missionPassed: Boolean = false) {

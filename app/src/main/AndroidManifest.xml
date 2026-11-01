@@ -9,8 +9,6 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <!-- Lets the ringing screen come up even when the full-screen intent is suppressed. -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
@@ -39,13 +37,17 @@
             </intent-filter>
         </activity>
 
+        <!-- The ring screen draws above the lock screen (showOnLockScreen/turnScreenOn + the code
+             in RingActivity), so it must not ask for the device PIN. It shares the app task now:
+             after the user unlocks the phone the ring screen is what comes to the front, and a
+             singleTask/singleTop launch reuses the live screen for a queued alarm instead of
+             recreating it (the ring session state lives in AlarmRingService). -->
         <activity
             android:name=".ui.ring.RingActivity"
             android:excludeFromRecents="true"
             android:exported="false"
-            android:launchMode="singleInstance"
+            android:launchMode="singleTask"
             android:showOnLockScreen="true"
-            android:taskAffinity="io.github.caendeith.awakr.ring"
             android:theme="@style/Theme.Awakr.Ring"
             android:turnScreenOn="true" />
 

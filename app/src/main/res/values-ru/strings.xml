@@ -64,6 +64,9 @@
     <string name="home_disabled">Выкл</string>
     <string name="ring_fallback_hint">Миссия недоступна — удерживайте кнопку, чтобы выключить</string>
     <string name="ring_hold">Держать</string>
+    <string name="ring_timer_label">Время на задание</string>
+    <string name="ring_timer_hint">Будильник молчит, пока идёт время</string>
+    <string name="ring_timer_expired">Время вышло! Новое задание — будильник снова звонит</string>
 <string name="onboarding_title">Две минуты — и будильник не подведёт</string>
     <string name="onboarding_subtitle">Awakr нужны системные разрешения, чтобы звонить сквозь режим сна, блокировку экрана и перезагрузку.</string>
     <string name="perm_notifications_title">Уведомления</string>
@@ -72,8 +75,6 @@
     <string name="perm_exact_body">Без них Android может отложить звонок до первого пробуждения телефона.</string>
     <string name="perm_camera_title">Камера</string>
     <string name="perm_camera_body">Нужна только миссии с QR-кодом и только пока звенит будильник.</string>
-    <string name="perm_overlay_title">Поверх других приложений</string>
-    <string name="perm_overlay_body">Необязательно. Помогает экрану звонка открываться на прошивках, которые блокируют фоновые экраны.</string>
     <string name="perm_granted">Разрешено</string>
     <string name="perm_missing">Не разрешено</string>
     <string name="perm_optional">Необязательно</string>

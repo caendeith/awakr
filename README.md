@@ -35,7 +35,7 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 | Ads, subscriptions, analytics SDKs | MIT licensed, no ads, no in-app purchases, **no INTERNET permission at all** |
 | A snooze button you can press half-asleep | a **mission** you have to complete; snooze is finite (3 by default) and can be turned off per alarm |
 | Account, cloud sync, "wake-up insights" | everything stays on the device: Room + DataStore, nothing leaves the phone |
-| Closed source, opaque behaviour | `5 500 lines of readable Kotlin, plugin architecture, every design decision written down in [docs/](docs/) |
+| Closed source, opaque behaviour | `more than 8 000 lines of readable Kotlin, plugin architecture, every design decision written down in [docs/](docs/) |
 
 ## Screenshots
 
@@ -62,6 +62,8 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 - **Snooze is honest.** 5-30 minutes per alarm, at most `max_snoozes` times (3 by default), and the counter travels with the alarm intent so a stray re-trigger cannot reset it.
 - **Missed alarms are visible.** The platform logs nothing when an alarm could not ring, so on start and on boot Awakr compares the last scheduled occurrence against its log and reports a missed alarm as a card plus one notification.
 - **Per-alarm sound.** Seven synthesized tones, or import any audio file from storage - it is copied into app storage, so the alarm still rings when the original file moves.
+- **A mission has a time limit.** While a mission is on screen the alarm goes quiet and a 90 second countdown runs; if it expires the sound comes back and a fresh task is generated, so stalling never gets you out.
+- **No password to dismiss an alarm.** The ring screen is raised above the lock screen with the full-screen intent and never asks for the device PIN - it does not need the "display over other apps" permission either.
 - **Both themes.** Dark by default (background `#0B0C0E`, amber `#FFB020`), a warm light palette (`#FBF8F4` / `#B87500`), and "follow the system".
 - **Housekeeping gestures.** Long press to select many alarms, "..." menu for duplicate / skip-next / enable / delete, a configurable swipe, drag-to-reorder, and a five-second Undo on deletion.
 
@@ -85,7 +87,6 @@ On first launch an onboarding screen asks for the permissions the app can actual
 | Notifications (API 33+) | fallback ring notification and the missed-alarm summary | yes |
 | Exact alarms (API 31+) | `setAlarmClock` cannot schedule without it | yes |
 | Camera | only the code mission, while the alarm rings, and the optional shutter | when the code plugin is on |
-| Display over other apps | helps the ring screen on ROMs that block background activity starts | no |
 
 No `INTERNET`, no location, no contacts, no storage permission. CI fails the build if `INTERNET` ever appears in the merged manifest.
 
@@ -134,7 +135,7 @@ Requirements: JDK 17, Android SDK (platform 36, build-tools 36.0.0). The Gradle 
 ./gradlew :app:assembleRelease # R8 + resource shrinking, signed if keystore.properties exists
 ```
 
-The build resolves dependencies from public Maven mirrors (aliyun/google, huaweicloud) because those are reachable in restricted networks; [docs/toolchain.md](docs/toolchain.md) explains the exact pins and the traps behind them.
+Dependencies come from the official repositories (Google Maven, Maven Central) by default, which is what CI and the F-Droid build server use. On networks where those are unreachable set `AWAKR_MIRRORS=true` to switch `settings.gradle.kts` to the aliyun/huaweicloud mirrors this project was originally developed against; [docs/toolchain.md](docs/toolchain.md) explains the exact pins and the traps behind them.
 
 Release signing is driven by an optional, git-ignored `keystore.properties`; without it the same task still succeeds and produces an unsigned APK. Measured release: **4.3 MB**, cold start **479 ms**.
 
@@ -154,6 +155,7 @@ Roadmap ideas for v2: dynamic color and widgets, sleep-cycle "smart wake", recor
 - [docs/spec-v1.1.md](docs/spec-v1.1.md) - v1.1 / v1.2 scope: UX pass, code mission, sounds, themes
 - [docs/plan.md](docs/plan.md) - implementation plan, phases 0-7
 - [docs/toolchain.md](docs/toolchain.md) - verified toolchain, versions and known pitfalls
+- [docs/faq.md](docs/faq.md) - FAQ and troubleshooting (sound, lock screen, permissions, OEM battery savers)
 - [docs/manual-qa.md](docs/manual-qa.md) - manual test matrix and results on real hardware
 - [CONTRIBUTING.md](CONTRIBUTING.md) - build setup, code style, adding a mission in one pull request
 - [docs/index.html](docs/index.html) - the landing page served at https://caendeith.github.io/awakr/ (GitHub Pages, `main` → `/docs`)

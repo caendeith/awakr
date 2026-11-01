@@ -1,0 +1,30 @@
+Awakr wakes you up for real. The alarm stops only when you finish a mission, so the half-asleep "slap the snooze button" loop does not work.
+
+<b>Missions</b>
+• Math — easy, medium or hard puzzles, 1 to 5 correct answers in a row.
+• Code — scan a QR code, EAN-13, EAN-8, UPC-A or Code 128. Generate your own code and print it, or bind any code you already have: a real product barcode from your shelf works.
+• Shake — shake the phone for 10 to 100 seconds.
+• Typing — type the phrase you configured.
+Each alarm has its own mission and settings. Missions are plugins: they can be switched off, and an alarm whose mission is unavailable falls back to "hold to dismiss" instead of ringing forever.
+
+<b>Your alarm, your rules</b>
+• Seven built-in tones, or pick any audio file from storage — it is copied into the app, so deleting the original is safe.
+• Snooze limit per alarm: after the last allowed snooze the snooze button disappears.
+• Skip the next occurrence without turning the alarm off.
+• Dark, light or system theme.
+• Long-press to select several alarms at once, configurable swipe action, drag-and-drop ordering, undo after delete.
+• Missed alarms are reported once with a card and a notification if the phone was off or the app was force-stopped.
+
+<b>Reliable by construction</b>
+• Uses the platform alarm-clock API with exact scheduling.
+• Reschedules after reboot, app update and timezone change.
+• Two alarms at the same minute are queued instead of fighting for the screen.
+• The ringing screen appears over the lock screen.
+
+<b>No ads, no subscription, no internet</b>
+The app does not request the INTERNET permission at all, so it cannot phone home, send analytics or show ads. It does not even have code to do it. Everything (alarms, sounds, settings) stays on the device.
+
+<b>Open source</b>
+MIT licensed, written from scratch (clean-room) in Kotlin with Jetpack Compose. No Google Play services, no Firebase, no proprietary libraries. Source code, build instructions and the test list are in the repository.
+
+Requires Android 8.0 or newer. Available in English and Russian.

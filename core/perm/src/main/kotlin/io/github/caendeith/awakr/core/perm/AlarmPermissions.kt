@@ -20,9 +20,6 @@ enum class AlarmPermission {
 
     /** Only required while a camera based mission is enabled. */
     CAMERA,
-
-    /** Optional: makes the ring screen reliable on ROMs that ignore background activity starts. */
-    OVERLAY,
 }
 
 /**
@@ -60,7 +57,6 @@ object AlarmPermissionPolicy {
         PermissionItem(AlarmPermission.NOTIFICATIONS, required = sdkInt >= Build.VERSION_CODES.TIRAMISU),
         PermissionItem(AlarmPermission.EXACT_ALARM, required = sdkInt >= Build.VERSION_CODES.S),
         PermissionItem(AlarmPermission.CAMERA, required = cameraMissionEnabled),
-        PermissionItem(AlarmPermission.OVERLAY, required = false),
     )
 
     fun snapshot(
@@ -78,8 +74,6 @@ object AlarmPermissionChecks {
         AlarmPermission.EXACT_ALARM -> exactAlarmsAllowed(context)
         AlarmPermission.CAMERA ->
             context.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-        AlarmPermission.OVERLAY ->
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(context)
     }
 
     fun snapshot(context: Context, cameraMissionEnabled: Boolean): PermissionSnapshot {
@@ -121,7 +115,6 @@ object AlarmPermissionChecks {
                 .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             AlarmPermission.EXACT_ALARM -> Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, packageUri)
             AlarmPermission.CAMERA -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri)
-            AlarmPermission.OVERLAY -> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, packageUri)
         }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 }

@@ -1,0 +1,6 @@
+1.2.1
+• The alarm plays the sound you chose, not the system default one.
+• No PIN or pattern prompt when the alarm starts ringing: the ring screen opens above the lock screen and stays in front after you unlock.
+• While you solve the mission the alarm goes silent and a countdown shows the time you have left. When it runs out the sound returns and a new task is generated, the way Alarmy does it.
+• Removed the unused "display over other apps" permission, so Android 13+ no longer shows the "access denied for this app" dialog for Awakr.
+• Added an FAQ with troubleshooting for sound, lock screen, notifications and aggressive battery savers.

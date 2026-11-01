@@ -1,31 +1,45 @@
 pluginManagement {
+    // Official repositories are the default so that CI (GitHub Actions) and the F-Droid
+    // build server can resolve dependencies. Set AWAKR_MIRRORS=true to prefer the Chinese
+    // mirrors this project was originally developed against (see docs/toolchain.md).
+    val useMirrors = System.getenv("AWAKR_MIRRORS").equals("true", ignoreCase = true)
     repositories {
-        maven("https://maven.aliyun.com/repository/google") {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("androidx.*")
-                includeGroupByRegex("com\\.google\\.android.*")
-                includeGroupByRegex("com\\.google\\.testing.*")
+        if (useMirrors) {
+            maven("https://maven.aliyun.com/repository/google") {
+                content {
+                    includeGroupByRegex("com\\.android.*")
+                    includeGroupByRegex("androidx.*")
+                    includeGroupByRegex("com\\.google\\.android.*")
+                    includeGroupByRegex("com\\.google\\.testing.*")
+                }
             }
+            maven("https://repo.huaweicloud.com/repository/maven")
+            maven("https://maven.aliyun.com/repository/public")
         }
-        maven("https://repo.huaweicloud.com/repository/maven")
-        maven("https://maven.aliyun.com/repository/public")
+        google()
+        mavenCentral()
+        gradlePluginPortal()
     }
 }
 
 dependencyResolutionManagement {
+    val useMirrors = System.getenv("AWAKR_MIRRORS").equals("true", ignoreCase = true)
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        maven("https://maven.aliyun.com/repository/google") {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("androidx.*")
-                includeGroupByRegex("com\\.google\\.android.*")
-                includeGroupByRegex("com\\.google\\.testing.*")
+        if (useMirrors) {
+            maven("https://maven.aliyun.com/repository/google") {
+                content {
+                    includeGroupByRegex("com\\.android.*")
+                    includeGroupByRegex("androidx.*")
+                    includeGroupByRegex("com\\.google\\.android.*")
+                    includeGroupByRegex("com\\.google\\.testing.*")
+                }
             }
+            maven("https://repo.huaweicloud.com/repository/maven")
+            maven("https://maven.aliyun.com/repository/public")
         }
-        maven("https://repo.huaweicloud.com/repository/maven")
-        maven("https://maven.aliyun.com/repository/public")
+        google()
+        mavenCentral()
     }
 }
 

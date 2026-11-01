@@ -14,6 +14,14 @@ object AlarmIntents {
     const val ACTION_SNOOZE = "io.github.caendeith.awakr.action.SNOOZE"
     const val ACTION_STOP_SERVICE = "io.github.caendeith.awakr.action.STOP_SERVICE"
 
+    /**
+     * Mutes or un-mutes the ringing sound without touching the ring session.
+     *
+     * The ring screen sends it while the mission timer counts down: the alarm stays silent while
+     * the user solves the task and rings again when the mission time runs out.
+     */
+    const val ACTION_SET_SILENCED = "io.github.caendeith.awakr.action.SET_SILENCED"
+
     const val EXTRA_ALARM_ID = "alarm_id"
     const val EXTRA_TRIGGER_AT = "trigger_at"
     const val EXTRA_MISSION_PASSED = "mission_passed"
@@ -23,6 +31,9 @@ object AlarmIntents {
     const val EXTRA_SNOOZE_COUNT = "snooze_count"
     const val EXTRA_LABEL = "label"
     const val EXTRA_TIME = "time"
+
+    /** Target mute state for [ACTION_SET_SILENCED]. */
+    const val EXTRA_SILENCED = "silenced"
 
     /** Request code of the alarm trigger PendingIntent; snooze uses the next range. */
     fun triggerRequestCode(alarmId: Long): Int = (alarmId xor (alarmId ushr 32)).toInt()
@@ -62,7 +73,21 @@ object AlarmIntents {
         Intent(context, RingActivity::class.java).apply {
             putExtra(EXTRA_ALARM_ID, alarmId)
             if (snoozeCount > 0) putExtra(EXTRA_SNOOZE_COUNT, snoozeCount)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            // SINGLE_TOP: an alarm that is already ringing must reuse the live screen instead of
+            // recreating it (the ring session state lives in AlarmRingService). CLEAR_TOP drops a
+            // stale ring screen of an alarm that was already handled.
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
+            )
+        }
+
+    /** Intent that mutes or un-mutes the currently ringing alarm. */
+    fun silencedIntent(context: Context, silenced: Boolean): Intent =
+        Intent(context, AlarmRingService::class.java).apply {
+            action = ACTION_SET_SILENCED
+            putExtra(EXTRA_SILENCED, silenced)
         }
 
     fun ringActivityPendingIntent(context: Context, alarmId: Long): PendingIntent =

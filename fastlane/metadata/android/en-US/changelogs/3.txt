@@ -1,0 +1,11 @@
+1.2.0
+• Bind any existing code to an alarm: scan a QR code or a real product barcode (EAN-13, EAN-8, UPC-A, Code 128) instead of generating your own.
+• In the ring screen the code mission scans live — just point the camera; the shutter button is optional and stores a photo of the code.
+• Save the generated code as PNG or share it.
+
+1.1.0
+• Modern home: long-press multi-select, per-alarm menu, configurable swipe, drag-and-drop ordering, undo.
+• Seven built-in sounds and support for your own audio file.
+• Dark, light or system theme.
+• Time picker bottom sheet with +5/+15/+30 minutes.
+• Snooze limit, skip next occurrence, duplicate alarm.

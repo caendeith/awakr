@@ -4,6 +4,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,21 +18,30 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import io.github.caendeith.awakr.R
 import io.github.caendeith.awakr.core.alarm.Alarm
+import io.github.caendeith.awakr.core.ui.component.AwakrCard
 import io.github.caendeith.awakr.core.ui.component.SecondaryButton
 import io.github.caendeith.awakr.core.ui.component.TimeText
 import io.github.caendeith.awakr.sdk.MissionPlugin
@@ -42,6 +53,17 @@ import kotlinx.serialization.json.JsonObject
 /**
  * Full screen alarm UI. The mission owns the "dismiss" action: the alarm stops only
  * once the assigned mission reports success.
+ *
+ * While a mission is on screen the sound is muted and a countdown of [MissionTimer.DURATION_SECONDS]
+ * seconds is shown ("like Alarmy"). When the countdown runs out the sound comes back, the mission is
+ * replaced by a fresh task and the countdown starts again.
+ *
+ * @param alarm the ringing alarm, or null when it could not be loaded.
+ * @param mission mission that unlocks the dismiss action, or null when it is not available.
+ * @param showSnooze whether the snooze button is offered for this occurrence.
+ * @param onDismiss called when the mission was passed.
+ * @param onSnooze called when the user snoozes.
+ * @param onSilenceChanged mutes (true) or un-mutes (false) the ringing sound.
  */
 @Composable
 fun RingScreen(
@@ -50,12 +72,13 @@ fun RingScreen(
     showSnooze: Boolean,
     onDismiss: () -> Unit,
     onSnooze: () -> Unit,
+    onSilenceChanged: (Boolean) -> Unit,
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        RingContent(alarm, mission, showSnooze, onDismiss, onSnooze)
+        RingContent(alarm, mission, showSnooze, onDismiss, onSnooze, onSilenceChanged)
     }
 }
 
@@ -66,20 +89,66 @@ private fun RingContent(
     showSnooze: Boolean,
     onDismiss: () -> Unit,
     onSnooze: () -> Unit,
+    onSilenceChanged: (Boolean) -> Unit,
 ) {
+    val time = alarm?.let { formatTime(it.hour, it.minute) } ?: "--:--"
+    val label = alarm?.label.orEmpty()
+    val missionConfig = remember(alarm?.missionConfig) {
+        parseMissionConfig(alarm?.missionConfig ?: "{}")
+    }
+    val silenceChange by rememberUpdatedState(onSilenceChanged)
+    val missionKind = mission?.kind
+    // The "mission unavailable" fallback is the last resort to end a ring, so it keeps ringing.
+    val missionOnScreen = mission != null
+    val resumed = rememberResumed()
+
+    var missionAttempt by remember(missionKind) { mutableIntStateOf(0) }
+    var countdownRound by remember { mutableIntStateOf(0) }
+    var remainingMillis by remember { mutableLongStateOf(MissionTimer.DURATION_MILLIS) }
+    var timeIsUp by remember { mutableStateOf(false) }
+
+    LaunchedEffect(countdownRound, missionOnScreen, resumed) {
+        if (!missionOnScreen) {
+            // The fallback mission is the last resort to end a ring, so it must be audible.
+            silenceChange(false)
+            return@LaunchedEffect
+        }
+        if (!resumed) {
+            // Never mute a ring the user cannot see: while the ring screen is not in front (locked
+            // device, another app) the alarm is audible again.
+            silenceChange(false)
+            return@LaunchedEffect
+        }
+        remainingMillis = MissionTimer.DURATION_MILLIS
+        silenceChange(true)
+        val deadline = MissionTimer.deadlineFrom(System.currentTimeMillis())
+        while (true) {
+            val left = MissionTimer.remainingMillis(deadline, System.currentTimeMillis())
+            remainingMillis = left
+            if (left <= 0L) break
+            delay(COUNTDOWN_TICK_MILLIS)
+        }
+        // Out of time: the alarm rings again, the mission is replaced by a new task and the
+        // countdown restarts once the user heard the penalty.
+        silenceChange(false)
+        timeIsUp = true
+        delay(PENALTY_MILLIS)
+        timeIsUp = false
+        if (MissionTimer.isResettable(missionKind)) missionAttempt++
+        countdownRound++
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val time = alarm?.let { formatTime(it.hour, it.minute) } ?: "--:--"
         TimeText(
             text = time,
             fontSize = MaterialTheme.typography.displayMedium.fontSize,
             color = MaterialTheme.colorScheme.primary,
         )
-        val label = alarm?.label.orEmpty()
         if (label.isNotBlank()) {
             Spacer(Modifier.height(8.dp))
             Text(
@@ -89,14 +158,19 @@ private fun RingContent(
                 textAlign = TextAlign.Center,
             )
         }
-        val missionConfig = remember(alarm?.missionConfig) {
-            parseMissionConfig(alarm?.missionConfig ?: "{}")
+        if (missionOnScreen) {
+            Spacer(Modifier.height(16.dp))
+            MissionCountdown(remainingMillis = remainingMillis, remainingIsGone = timeIsUp)
         }
         Box(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            MissionHost(mission = mission, config = missionConfig, onSolved = onDismiss)
+            // A new attempt really re-creates the mission state, so math and typing hand out a
+            // different task instead of keeping the previous answer on screen.
+            key(missionKind, missionAttempt) {
+                MissionHost(mission = mission, config = missionConfig, onSolved = onDismiss)
+            }
         }
         if (showSnooze) {
             SecondaryButton(
@@ -106,6 +180,72 @@ private fun RingContent(
             )
         }
     }
+}
+
+/**
+ * Countdown of the mission time budget.
+ *
+ * Digits use [TimeText] so they keep their width while the time runs down.
+ */
+@Composable
+private fun MissionCountdown(remainingMillis: Long, remainingIsGone: Boolean) {
+    AwakrCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.ring_timer_label),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(
+                        if (remainingIsGone) R.string.ring_timer_expired else R.string.ring_timer_hint,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (remainingIsGone) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+            if (!remainingIsGone) {
+                TimeText(
+                    text = MissionTimer.format(remainingMillis),
+                    fontSize = 32.sp,
+                    color = if (remainingMillis <= WARNING_MILLIS) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                )
+            }
+        }
+    }
+}
+
+/** True while the hosting activity is resumed; the countdown only runs in the foreground. */
+@Composable
+private fun rememberResumed(): Boolean {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var resumed by remember(lifecycleOwner) {
+        mutableStateOf(lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
+    }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> resumed = true
+                Lifecycle.Event.ON_PAUSE -> resumed = false
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    return resumed
 }
 
 @Composable
@@ -176,3 +316,12 @@ private fun FallbackMission(onSolved: () -> Unit) {
 }
 
 private const val HOLD_MILLIS = 5_000L
+
+/** How often the countdown is refreshed; the label itself changes once a second. */
+private const val COUNTDOWN_TICK_MILLIS = 200L
+
+/** How long the alarm rings before a fresh mission and a fresh countdown start. */
+private const val PENALTY_MILLIS = 4_000L
+
+/** Below this the countdown turns red. */
+private const val WARNING_MILLIS = 10_000L

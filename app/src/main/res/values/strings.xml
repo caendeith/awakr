@@ -66,6 +66,9 @@
     <string name="home_disabled">Off</string>
     <string name="ring_fallback_hint">Mission unavailable — hold the button to stop the alarm</string>
     <string name="ring_hold">Hold</string>
+    <string name="ring_timer_label">Time to solve</string>
+    <string name="ring_timer_hint">The alarm stays silent while the time runs</string>
+    <string name="ring_timer_expired">Time is up! A new task — the alarm is ringing again</string>
 <string name="onboarding_title">Two minutes to a reliable alarm</string>
     <string name="onboarding_subtitle">Awakr needs a few system permissions to ring through sleep mode, lock screens and reboots.</string>
     <string name="perm_notifications_title">Notifications</string>
@@ -74,8 +77,6 @@
     <string name="perm_exact_body">Without it Android may delay the alarm until the phone wakes up for something else.</string>
     <string name="perm_camera_title">Camera</string>
     <string name="perm_camera_body">Only used by the QR mission, and only while the alarm rings.</string>
-    <string name="perm_overlay_title">Display over other apps</string>
-    <string name="perm_overlay_body">Optional. Helps the ring screen appear on ROMs that block background screens.</string>
     <string name="perm_granted">Granted</string>
     <string name="perm_missing">Not granted</string>
     <string name="perm_optional">Optional</string>
