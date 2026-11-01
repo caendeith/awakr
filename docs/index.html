@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Awakr — an alarm clock that actually wakes you up</title>
+<meta name="description" content="Awakr is an open-source Android alarm clock: missions you cannot skip, your own sounds, QR and barcode codes, no ads, no subscription, no INTERNET permission.">
+<meta name="theme-color" content="#0B0C0E">
+<meta property="og:title" content="Awakr — an alarm clock that actually wakes you up">
+<meta property="og:description" content="Missions you cannot skip, your own sounds, QR and barcode codes. No ads, no subscription, no INTERNET permission.">
+<meta property="og:image" content="screenshots/home-dark.webp">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230B0C0E'/%3E%3Ccircle cx='32' cy='36' r='15' fill='none' stroke='%23FFB020' stroke-width='4'/%3E%3Cpath d='M27 8l-8 7M37 8l8 7' stroke='%23FFB020' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M32 27v10l7 4' stroke='%23FFB020' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --bg:#0B0C0E; --surface:#14161A; --container:#1B1E24; --line:#262A31;
+    --text:#ECEFF3; --muted:#98A1AD; --amber:#FFB020; --on-amber:#241800; --amber-soft:rgba(255,176,32,.12);
+    --radius:28px; --radius-sm:20px;
+    --max:1160px;
+  }
+  html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    letter-spacing:.01em; overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:-30% -10% auto -10%; height:80vh; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(45% 45% at 78% 8%, rgba(255,176,32,.16), transparent 70%),
+      radial-gradient(40% 40% at 12% 0%, rgba(96,140,255,.10), transparent 70%);
+    filter:blur(6px);
+  }
+  a{color:inherit; text-decoration:none}
+  img{max-width:100%; display:block}
+  .wrap{width:min(var(--max),calc(100% - 48px)); margin-inline:auto; position:relative; z-index:1}
+  code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92em}
+
+  /* nav */
+  header.nav{position:sticky; top:0; z-index:20; backdrop-filter:blur(14px);
+    background:rgba(11,12,14,.72); border-bottom:1px solid rgba(255,255,255,.06)}
+  .nav-inner{display:flex; align-items:center; gap:28px; height:68px}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.02em; font-size:19px}
+  .brand .dot{width:26px;height:26px;border-radius:9px;background:var(--amber);display:grid;place-items:center;color:var(--on-amber);font-size:15px;font-weight:800}
+  nav.links{display:flex; gap:26px; margin-left:auto; font-size:14.5px; color:var(--muted)}
+  nav.links a:hover{color:var(--text)}
+  .btn{display:inline-flex; align-items:center; gap:9px; border-radius:999px; padding:12px 22px;
+    font-weight:650; font-size:15px; border:1px solid transparent; transition:transform .15s ease, background .2s ease, border-color .2s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-amber{background:var(--amber); color:var(--on-amber)}
+  .btn-ghost{border-color:rgba(255,255,255,.16); color:var(--text); background:rgba(255,255,255,.03)}
+  .btn-ghost:hover{background:rgba(255,255,255,.07)}
+
+  /* hero */
+  .hero{display:grid; grid-template-columns:1.05fr .95fr; gap:56px; align-items:center; padding:76px 0 40px}
+  .eyebrow{display:inline-flex; align-items:center; gap:8px; font-size:13px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--amber); background:var(--amber-soft); border:1px solid rgba(255,176,32,.28);
+    padding:7px 14px; border-radius:999px; font-weight:650}
+  h1{font-size:clamp(40px,5.4vw,68px); line-height:1.03; letter-spacing:-.03em; margin:22px 0 0; font-weight:800}
+  h1 .amber{color:var(--amber)}
+  .lede{font-size:clamp(17px,1.6vw,19.5px); color:var(--muted); margin:22px 0 0; max-width:33em}
+  .cta{display:flex; flex-wrap:wrap; gap:14px; margin-top:34px}
+  .hero-meta{display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:26px; color:var(--muted); font-size:14px}
+  .hero-meta span{display:inline-flex; align-items:center; gap:7px}
+  .tick{color:var(--amber)}
+  .phone{position:relative; justify-self:center; width:min(330px,86%)}
+  .phone::after{content:""; position:absolute; inset:-14% -18% -18%; z-index:-1; border-radius:50%;
+    background:radial-gradient(closest-side, rgba(255,176,32,.22), transparent 72%); filter:blur(18px)}
+  .phone img{border-radius:34px; border:1px solid rgba(255,255,255,.1); box-shadow:0 40px 90px rgba(0,0,0,.62)}
+  .phone .notch{position:absolute; top:10px; left:50%; transform:translateX(-50%); width:88px; height:20px;
+    background:#000; border-radius:999px; opacity:.85}
+
+  /* strip of badges */
+  .badges{display:flex; flex-wrap:wrap; gap:10px; padding:26px 0 6px; border-top:1px solid rgba(255,255,255,.06); margin-top:26px}
+  .chip{font-size:13px; color:var(--muted); border:1px solid var(--line); background:var(--surface);
+    padding:7px 13px; border-radius:999px}
+  .chip b{color:var(--text); font-weight:650}
+
+  section{padding:76px 0}
+  .section-head{max-width:44em; margin-bottom:40px}
+  h2{font-size:clamp(27px,3.2vw,38px); letter-spacing:-.025em; line-height:1.12; margin:0; font-weight:750}
+  .section-head p{color:var(--muted); margin:14px 0 0}
+
+  .grid{display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+  .card{background:linear-gradient(180deg,var(--surface),rgba(20,22,26,.72)); border:1px solid var(--line);
+    border-radius:var(--radius-sm); padding:24px 22px; transition:border-color .2s, transform .2s}
+  .card:hover{border-color:rgba(255,176,32,.34); transform:translateY(-2px)}
+  .card .ico{width:38px;height:38px;border-radius:12px;background:var(--amber-soft); color:var(--amber);
+    display:grid; place-items:center; margin-bottom:14px}
+  .card h3{margin:0 0 8px; font-size:17.5px; letter-spacing:-.01em}
+  .card p{margin:0; color:var(--muted); font-size:15px}
+
+  /* missions */
+  .missions{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); margin-top:8px}
+  .mission{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-sm); padding:20px}
+  .mission h3{margin:0 0 6px; font-size:16.5px; display:flex; align-items:center; gap:9px}
+  .mission .tag{font-family:ui-monospace,monospace; font-size:11.5px; color:var(--amber);
+    background:var(--amber-soft); padding:3px 8px; border-radius:7px; font-weight:600}
+  .mission p{margin:0; color:var(--muted); font-size:14.5px}
+
+  /* shots */
+  .shots{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .shot{background:var(--surface); border:1px solid var(--line); border-radius:22px; overflow:hidden}
+  .shot img{width:100%; transition:transform .35s ease}
+  .shot:hover img{transform:scale(1.03)}
+  .shot figcaption{padding:12px 16px 15px; font-size:13.5px; color:var(--muted)}
+  figure{margin:0}
+
+  /* install */
+  .split{display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .pane{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:26px}
+  .pane h3{margin:0 0 6px; font-size:18px}
+  .pane .hint{color:var(--muted); font-size:14.5px; margin:0 0 16px}
+  pre{margin:0; background:#0E1013; border:1px solid var(--line); border-radius:14px; padding:16px 18px;
+    overflow-x:auto; font-size:13.2px; line-height:1.75; color:#D6DCE5}
+  pre .c{color:#6C7684}
+  pre .k{color:var(--amber)}
+
+  table{width:100%; border-collapse:collapse; font-size:14.6px; margin-top:6px}
+  th,td{text-align:left; padding:13px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{color:var(--muted); font-weight:600; font-size:13px; letter-spacing:.05em; text-transform:uppercase}
+  td code{color:#E8D8B4}
+  tr:last-child td{border-bottom:0}
+
+  .note{display:flex; gap:14px; align-items:flex-start; background:var(--amber-soft); border:1px solid rgba(255,176,32,.3);
+    border-radius:var(--radius-sm); padding:18px 20px; color:#F4E3C3; font-size:14.8px; margin-top:22px}
+
+  footer{border-top:1px solid rgba(255,255,255,.07); padding:40px 0 56px; color:var(--muted); font-size:14px}
+  .foot{display:flex; flex-wrap:wrap; gap:18px 32px; align-items:center}
+  .foot a:hover{color:var(--text)}
+  .foot .spacer{flex:1}
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr; gap:38px; padding-top:48px}
+    .phone{order:-1; width:min(300px,74%)}
+    nav.links{display:none}
+    section{padding:56px 0}
+  }
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top"><span class="dot">A</span> Awakr</a>
+    <nav class="links">
+      <a href="#features">Features</a>
+      <a href="#missions">Missions</a>
+      <a href="#screens">Screenshots</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/caendeith/awakr">GitHub</a>
+    </nav>
+    <a class="btn btn-amber" href="https://github.com/caendeith/awakr/releases/latest">Get Awakr</a>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <span class="eyebrow">Open source · MIT · no ads</span>
+        <h1>Wake up.<br><span class="amber">For real.</span></h1>
+        <p class="lede">
+          Awakr is an alarm clock that refuses to be dismissed half asleep: solve a mission, scan a code
+          from a cereal box, shake the phone or type a phrase. Your sounds, your design, no account, no tracking.
+        </p>
+        <div class="cta">
+          <a class="btn btn-amber" href="https://github.com/caendeith/awakr/releases/latest">Download APK</a>
+          <a class="btn btn-ghost" href="https://github.com/caendeith/awakr">View source</a>
+        </div>
+        <div class="hero-meta">
+          <span><b class="tick">✓</b> Android 8.0+ (API 26)</span>
+          <span><b class="tick">✓</b> 4.3 MB APK</span>
+          <span><b class="tick">✓</b> no INTERNET permission</span>
+          <span><b class="tick">✓</b> ru + en</span>
+        </div>
+      </div>
+      <div class="phone">
+        <span class="notch"></span>
+        <img src="screenshots/home-dark.webp" alt="Awakr home screen with the next alarm and a live countdown" width="540" height="1170">
+      </div>
+    </div>
+
+    <div class="badges">
+      <span class="chip"><b>100</b> unit tests</span>
+      <span class="chip">cold start <b>479 ms</b></span>
+      <span class="chip">Kotlin <b>2.2.21</b> · Compose <b>M3</b></span>
+      <span class="chip">release APK <b>4.3 MB</b></span>
+      <span class="chip">clean-room: no code or assets from Alarmy</span>
+    </div>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Everything an alarm should do, nothing an alarm app usually does</h2>
+        <p>No banner, no interstitial, no subscription screen, and no network stack to phone home with.</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">🔒</div>
+          <h3>No INTERNET permission</h3>
+          <p>The app literally cannot connect anywhere. CI fails the build if <code>INTERNET</code> appears in the merged manifest.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🧩</div>
+          <h3>Missions are plugins</h3>
+          <p>Math, code scanning, shake and typing are separate Gradle modules behind one <code>MissionPlugin</code> interface. New mission = one small PR.</p>
+        </div>
+        <div class="card">
+          <div class="ico">⏰</div>
+          <h3>Actually reliable</h3>
+          <p>Alarm-clock API, exact scheduling, rescheduling after reboot, app update and timezone change, full-screen ring screen over the lock screen.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🎵</div>
+          <h3>Your own music</h3>
+          <p>Seven built-in tones, or pick any audio file from storage — it is copied into the app, so it still plays if you delete the original.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🌗</div>
+          <h3>Both themes</h3>
+          <p>Dark by default, light on request, or follow the system. Amber-on-charcoal, motion and typography straight from Material 3.</p>
+        </div>
+        <div class="card">
+          <div class="ico">✋</div>
+          <h3>Made for sleepy hands</h3>
+          <p>Long-press selects several alarms at once, configurable swipe action, reorder mode with drag and drop, undo after delete.</p>
+        </div>
+        <div class="card">
+          <div class="ico">⏳</div>
+          <h3>Snooze limit</h3>
+          <p>Set how many times the alarm may be postponed. After the limit the snooze button disappears and only the mission remains.</p>
+        </div>
+        <div class="card">
+          <div class="ico">📋</div>
+          <h3>Missed alarms are reported</h3>
+          <p>If the phone was off or the app got force-stopped, a card and a notification tell you an alarm never rang — once, not on every launch.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="missions">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Four ways to prove you are awake</h2>
+        <p>Each mission has its own settings inside the alarm editor. Disable a plugin and the alarm falls back to “hold to dismiss” rather than ringing forever.</p>
+      </div>
+      <div class="missions">
+        <div class="mission">
+          <h3>Math <span class="tag">math</span></h3>
+          <p>Easy, medium or hard puzzles; 1 to 5 correct answers in a row before the alarm gives up.</p>
+        </div>
+        <div class="mission">
+          <h3>Code <span class="tag">code</span></h3>
+          <p>Scan a QR code or a real retail barcode: EAN-13, EAN-8, UPC-A, Code 128. Generate your own code, or bind any code you find — a product from the shelf works.</p>
+        </div>
+        <div class="mission">
+          <h3>Shake <span class="tag">shake</span></h3>
+          <p>Shake the phone for 10 to 100 seconds while the progress ring fills up.</p>
+        </div>
+        <div class="mission">
+          <h3>Typing <span class="tag">typing</span></h3>
+          <p>Type the phrase you configured, exactly. No “1234”, no accidental dismissal.</p>
+        </div>
+      </div>
+      <div class="note">
+        <span aria-hidden="true">🛠</span>
+        <span>Everything above is a plugin with a declarative manifest — id, localised name, version, capabilities, required permissions and settings fields. The registry is generated at build time by KSP, so there is no reflection and no dynamic code loading.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>What it looks like</h2>
+        <p>Amber on charcoal, tabular numerals for the countdown, one-hand reachable actions.</p>
+      </div>
+      <div class="shots">
+        <figure class="shot"><img src="screenshots/home-dark.webp" alt="Home with next alarm and list" loading="lazy"><figcaption>Home — next alarm, live countdown</figcaption></figure>
+        <figure class="shot"><img src="screenshots/selection-mode.webp" alt="Selection mode with several alarms selected" loading="lazy"><figcaption>Long-press — multi-select</figcaption></figure>
+        <figure class="shot"><img src="screenshots/editor.webp" alt="Alarm editor" loading="lazy"><figcaption>Editor — time, days, mission, sound</figcaption></figure>
+        <figure class="shot"><img src="screenshots/code-editor.webp" alt="Code mission editor with generated barcode" loading="lazy"><figcaption>Code mission — generate or scan</figcaption></figure>
+        <figure class="shot"><img src="screenshots/sound-sheet.webp" alt="Sound picker" loading="lazy"><figcaption>Sounds — built-in and your own</figcaption></figure>
+        <figure class="shot"><img src="screenshots/home-light.webp" alt="Light theme" loading="lazy"><figcaption>Light theme</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Install</h2>
+        <p>Grab the signed APK from the latest release, or build it yourself. The release key is not in the repository, so self-built builds install alongside.</p>
+      </div>
+      <div class="split">
+        <div class="pane">
+          <h3>From an APK</h3>
+          <p class="hint">Download <code>Awakr-1.2.0.apk</code>, allow installation from unknown sources, open it.</p>
+          <pre><span class="c"># or over USB</span>
+adb install -r Awakr-1.2.0.apk</pre>
+        </div>
+        <div class="pane">
+          <h3>From source</h3>
+          <p class="hint">JDK 17, Android SDK with platform 36 and build-tools 36.0.0.</p>
+          <pre>git clone https://github.com/caendeith/awakr.git
+cd awakr
+echo <span class="k">"sdk.dir=$HOME/Android/Sdk"</span> &gt; local.properties
+./gradlew :app:assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk</pre>
+        </div>
+      </div>
+      <div class="note">
+        <span aria-hidden="true">✅</span>
+        <span>After the first launch the app walks you through the three permissions it may need: notifications (API 33+), exact alarms (API 31+) and camera (only for the code mission). Nothing else is requested.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="permissions">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Permissions, in full</h2>
+        <p>This is the whole list from the merged manifest of the release build.</p>
+      </div>
+      <table>
+        <thead><tr><th>Permission</th><th>Why</th><th>When</th></tr></thead>
+        <tbody>
+          <tr><td><code>USE_EXACT_ALARM</code>, <code>SCHEDULE_EXACT_ALARM</code></td><td>Set an alarm-clock alarm that fires exactly, even in doze</td><td>granted at install</td></tr>
+          <tr><td><code>POST_NOTIFICATIONS</code></td><td>Foreground ring service, missed-alarm notification</td><td>Android 13+</td></tr>
+          <tr><td><code>RECEIVE_BOOT_COMPLETED</code></td><td>Reschedule alarms after reboot</td><td>install</td></tr>
+          <tr><td><code>WAKE_LOCK</code>, <code>VIBRATE</code></td><td>Keep the screen awake while ringing, vibrate</td><td>install</td></tr>
+          <tr><td><code>FOREGROUND_SERVICE</code> (+ <code>MEDIA_PLAYBACK</code>)</td><td>Play the sound while the ring screen is up</td><td>install</td></tr>
+          <tr><td><code>USE_FULL_SCREEN_INTENT</code>, <code>SYSTEM_ALERT_WINDOW</code></td><td>Bring the ring screen over the lock screen</td><td>install, optional</td></tr>
+          <tr><td><code>CAMERA</code></td><td>Scan a code for the code mission</td><td>asked on demand</td></tr>
+          <tr><td><code>INTERNET</code></td><td><b>not requested</b> — the app is fully offline</td><td>never</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tech">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Under the hood</h2>
+        <p>One application module, a handful of core modules, a plugin SDK and four mission modules. Room for storage, DataStore for settings, CameraX + ZXing for codes, no Google Play services.</p>
+      </div>
+      <div class="grid">
+        <div class="card"><h3>Kotlin 2.2.21 · Compose M3</h3><p>Material 3 with a small design system of its own: cards, pill shapes, tabular time text, amber accent.</p></div>
+        <div class="card"><h3>AGP 8.13.2 · Gradle 8.14.6</h3><p>compileSdk 36, targetSdk 36, minSdk 26 — Android 8.0 through 17.</p></div>
+        <div class="card"><h3>Room 2.8.5</h3><p>Alarms, alarm logs and per-plugin state, with an explicit v1→v2 migration for sounds and ordering.</p></div>
+        <div class="card"><h3>CameraX 1.5.3 + ZXing 3.5.4</h3><p>Live preview decoding on a background executor, frame rotation handled by hand, unit tests for rotated frames.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span><b>Awakr</b> · MIT © caendeith</span>
+    <a href="https://github.com/caendeith/awakr">GitHub</a>
+    <a href="https://github.com/caendeith/awakr/blob/main/README.md">README</a>
+    <a href="https://github.com/caendeith/awakr/blob/main/CONTRIBUTING.md">Contributing</a>
+    <a href="https://github.com/caendeith/awakr/blob/main/docs/manual-qa.md">Manual QA</a>
+    <a href="https://github.com/caendeith/awakr/releases">Releases</a>
+    <span class="spacer"></span>
+    <span>Built clean-room. Not affiliated with any other alarm app.</span>
+  </div>
+</footer>
+
+</body>
+</html>
