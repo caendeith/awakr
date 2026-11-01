@@ -90,6 +90,33 @@ class CodePayloadTest {
     }
 
     @Test
+    fun aNullExpectationAcceptsAnyWellFormedCode() {
+        assertTrue(CodePayload.accepts(null, "4006381333931", CodeFormat.EAN13))
+        assertFalse(CodePayload.accepts(null, "4006381333932", CodeFormat.EAN13))
+    }
+
+    @Test
+    fun aBoundProductCodeIsComparedAsTextNotAsAChecksum() {
+        // Whatever the user scanned becomes the key: a code with a broken check digit still works.
+        val scanned = "4006381333932"
+        assertFalse(CodePayload.isValid(scanned, CodeFormat.EAN13))
+        assertTrue(CodePayload.accepts(scanned, scanned, CodeFormat.EAN13))
+    }
+
+    @Test
+    fun upcAScannedAsAThirteenDigitEanStillMatches() {
+        // ZXing reports UPC-A as EAN-13 with a leading zero.
+        assertTrue(CodePayload.accepts("036000291452", "0036000291452", CodeFormat.EAN13))
+        assertTrue(CodePayload.matches("036000291452", "0036000291452"))
+    }
+
+    @Test
+    fun differentCodesDoNotMatch() {
+        assertFalse(CodePayload.accepts("036000291452", "036000291453", CodeFormat.UPCA))
+        assertFalse(CodePayload.matches("000", "0000"))
+    }
+
+    @Test
     fun numericFormatsRejectNonDigits() {
         assertFalse(CodePayload.accepts("", "ABC", CodeFormat.EAN8))
         assertTrue(CodePayload.accepts("", "some text", CodeFormat.CODE128))

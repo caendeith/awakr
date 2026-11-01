@@ -22,4 +22,11 @@
     <string name="code_shot_failed">The code was not recognised, try again</string>
     <string name="code_shot_saved">Picture saved to Pictures/Awakr</string>
     <string name="code_numeric_hint">Fixed-length digits with a check digit</string>
+    <string name="code_scan">Scan a code</string>
+    <string name="code_scan_title">Scan your own code</string>
+    <string name="code_scan_hint">Point the camera at any QR code or barcode — a product label works. This exact code is then required to dismiss the alarm.</string>
+    <string name="code_scanned">Code attached to this alarm</string>
+    <string name="code_scan_again">Scan another code</string>
+    <string name="code_scan_permission">The editor needs the camera to scan a code.</string>
+    <string name="code_close">Close</string>
 </resources>

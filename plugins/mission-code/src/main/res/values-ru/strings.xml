@@ -22,4 +22,11 @@
     <string name="code_shot_failed">Код не распознан, попробуйте ещё раз</string>
     <string name="code_shot_saved">Снимок сохранён в Pictures/Awakr</string>
     <string name="code_numeric_hint">Фиксированная длина, только цифры, с контрольной цифрой</string>
+    <string name="code_scan">Сканировать код</string>
+    <string name="code_scan_title">Сканировать свой код</string>
+    <string name="code_scan_hint">Наведите камеру на любой QR-код или штрихкод — подойдёт наклейка с товара. Именно этот код нужно будет отсканировать, чтобы выключить будильник.</string>
+    <string name="code_scanned">Код привязан к будильнику</string>
+    <string name="code_scan_again">Сканировать другой код</string>
+    <string name="code_scan_permission">Чтобы отсканировать код, редактору нужна камера.</string>
+    <string name="code_close">Закрыть</string>
 </resources>

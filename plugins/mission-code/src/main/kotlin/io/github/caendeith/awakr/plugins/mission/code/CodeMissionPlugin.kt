@@ -34,11 +34,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +46,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -55,6 +56,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import io.github.caendeith.awakr.sdk.Capability
@@ -84,7 +87,7 @@ class CodeMissionPlugin : MissionPlugin {
     override val manifest: PluginManifest = PluginManifest(
         id = "mission-code",
         name = StringRes(R.string.plugin_code_name),
-        version = "1.1.0",
+        version = "1.2.0",
         capabilities = setOf(Capability.MISSION),
         requiredPermissions = listOf(Manifest.permission.CAMERA),
     )
@@ -97,6 +100,17 @@ class CodeMissionPlugin : MissionPlugin {
         val format = CodePayload.format(config)
         val payload = CodePayload.payload(config)
         var message by remember { mutableStateOf(0) }
+        var scanning by remember { mutableStateOf(false) }
+        var cameraGranted by remember { mutableStateOf(hasCamera(context)) }
+        val cameraLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            cameraGranted = granted
+            if (granted) scanning = true
+        }
+        fun startScan() {
+            if (cameraGranted) scanning = true else cameraLauncher.launch(Manifest.permission.CAMERA)
+        }
         // Resolved up front through the compose environment: lint forbids reading resources from a
         // LocalContext captured in a callback.
         val shareTitle = stringResource(R.string.plugin_code_name)
@@ -146,16 +160,24 @@ class CodeMissionPlugin : MissionPlugin {
                 }
             }
             if (payload.isBlank()) {
-                Button(
-                    onClick = {
-                        onChange(
-                            config
-                                .with(CodePayload.KEY_FORMAT, format.id)
-                                .with(CodePayload.KEY_PAYLOAD, CodePayload.generate(format)),
-                        )
-                    },
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Text(stringResource(R.string.code_generate))
+                    Button(
+                        onClick = {
+                            onChange(
+                                config
+                                    .with(CodePayload.KEY_FORMAT, format.id)
+                                    .with(CodePayload.KEY_PAYLOAD, CodePayload.generate(format)),
+                            )
+                        },
+                    ) {
+                        Text(stringResource(R.string.code_generate))
+                    }
+                    TextButton(onClick = { startScan() }) {
+                        Text(stringResource(R.string.code_scan))
+                    }
                 }
             } else {
                 CodePreview(payload = payload, format = format, size = 180.dp)
@@ -174,6 +196,11 @@ class CodeMissionPlugin : MissionPlugin {
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalArrangement = Arrangement.spacedBy(0.dp),
                 ) {
+                    TextButton(
+                        onClick = { startScan() },
+                    ) {
+                        Text(stringResource(R.string.code_scan_again))
+                    }
                     TextButton(
                         onClick = {
                             onChange(
@@ -228,6 +255,67 @@ class CodeMissionPlugin : MissionPlugin {
                 )
             }
         }
+
+        if (scanning) {
+            // A full-screen dialog rather than a bottom sheet: the camera preview needs an
+            // undisturbed window of its own, and the goal is to fill the frame with the code.
+            Dialog(
+                onDismissRequest = { scanning = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = stringResource(R.string.code_scan_title),
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            TextButton(onClick = { scanning = false }) {
+                                Text(stringResource(R.string.code_close))
+                            }
+                        }
+                        Text(
+                            text = stringResource(R.string.code_scan_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        if (cameraGranted) {
+                            CodeScanner(expected = null, saveShot = false) { text, scannedFormat ->
+                                onChange(
+                                    config
+                                        .with(CodePayload.KEY_FORMAT, scannedFormat.id)
+                                        .with(CodePayload.KEY_PAYLOAD, text),
+                                )
+                                message = R.string.code_scanned
+                                scanning = false
+                            }
+                        } else {
+                            Text(
+                                text = stringResource(R.string.code_scan_permission),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Button(onClick = { cameraLauncher.launch(Manifest.permission.CAMERA) }) {
+                                Text(stringResource(R.string.code_grant))
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Composable
@@ -252,7 +340,7 @@ class CodeMissionPlugin : MissionPlugin {
                 textAlign = TextAlign.Center,
             )
             if (granted) {
-                CodeScanner(expected = expected, onSolved = onSolved)
+                CodeScanner(expected = expected, saveShot = true) { _, _ -> onSolved() }
             } else {
                 Text(
                     text = stringResource(R.string.code_permission),
@@ -300,7 +388,11 @@ private fun CodePreview(payload: String, format: CodeFormat, size: Dp) {
 }
 
 @Composable
-private fun CodeScanner(expected: String, onSolved: () -> Unit) {
+private fun CodeScanner(
+    expected: String?,
+    saveShot: Boolean,
+    onCode: (String, CodeFormat) -> Unit,
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val executor = remember { Executors.newSingleThreadExecutor() }
@@ -312,15 +404,14 @@ private fun CodeScanner(expected: String, onSolved: () -> Unit) {
     DisposableEffect(Unit) {
         onDispose { executor.shutdown() }
     }
-    LaunchedEffect(solved) {
-        if (solved) onSolved()
-    }
-
-    Box(modifier = Modifier.fillMaxWidth().height(320.dp)) {
+    Box(modifier = Modifier.fillMaxWidth().height(320.dp).clipToBounds()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { ctx ->
                 val previewView = PreviewView(ctx)
+                // A SurfaceView is composited by the system and ignores the Compose clip, so the
+                // preview has to go through a TextureView to stay inside its 320.dp box.
+                previewView.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
                 val providerFuture = ProcessCameraProvider.getInstance(ctx)
                 providerFuture.addListener(
                     {
@@ -352,12 +443,19 @@ private fun CodeScanner(expected: String, onSolved: () -> Unit) {
                                     image.imageInfo.rotationDegrees,
                                 )
                                 val result = CodeImage.decodeLuminance(data, width, height, reader)
-                                if (result != null) {
+                                if (result != null && !solved) {
                                     val codeFormat = CodeDecoder.formatOf(result)
                                     if (codeFormat != null &&
                                         CodePayload.accepts(expected, result.text, codeFormat)
                                     ) {
-                                        solved = true
+                                        // The analyzer runs on its own executor; report from the main thread.
+                                        val scannedText = result.text
+                                        ContextCompat.getMainExecutor(context).execute {
+                                            if (!solved) {
+                                                solved = true
+                                                onCode(scannedText, codeFormat)
+                                            }
+                                        }
                                     }
                                 }
                             } catch (error: Throwable) {
@@ -416,13 +514,21 @@ private fun CodeScanner(expected: String, onSolved: () -> Unit) {
                             val codeFormat = result?.let { CodeDecoder.formatOf(it) }
                             val accepted = result != null && codeFormat != null &&
                                 CodePayload.accepts(expected, result.text, codeFormat)
-                            if (accepted && bitmap != null) {
-                                CodeStorage.compress(bitmap)?.let { jpeg ->
-                                    CodeStorage.saveShot(context, jpeg)
+                            val scannedText = result?.text
+                            val scannedFormat = codeFormat
+                            if (
+                                accepted && bitmap != null && scannedText != null &&
+                                scannedFormat != null
+                            ) {
+                                if (saveShot) {
+                                    CodeStorage.compress(bitmap)?.let { jpeg ->
+                                        CodeStorage.saveShot(context, jpeg)
+                                    }
                                 }
                                 withContext(Dispatchers.Main) {
-                                    message = R.string.code_shot_saved
+                                    message = if (saveShot) R.string.code_shot_saved else 0
                                     solved = true
+                                    onCode(scannedText, scannedFormat)
                                 }
                             } else {
                                 withContext(Dispatchers.Main) {

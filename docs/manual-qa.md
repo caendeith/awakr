@@ -115,6 +115,31 @@ Also fixed while testing: recurring alarms were rescheduled only on boot/app sta
 | Saving a shot to `Pictures/Awakr` | needs a successful decode first | code path identical to the PNG export that was verified |
 | Importing a custom audio file from storage | picker opens, but there was no audio file on the device to choose | `SoundResolutionTest` (missing file falls back to the default sound) |
 
+## v1.2 pass — binding your own code
+
+Goal: an alarm can be dismissed by any QR code or barcode you already own (a product label), instead of a code Awakr generated.
+
+| # | Scenario | Result |
+|---|---|---|
+| 1 | Editor → mission "Code" with an empty payload shows **"Create my code"** and **"Scan a code"** | OK — both buttons on one FlowRow ([200,1817][496,1865] / [612,1817][912,1865]) |
+| 2 | "Scan a code" opens the scanner full screen | OK — title, hint, clipped 320 dp preview, "Scanning…", "Take a picture", "Close" — .notes/screens/v12-scan-dialog2.png |
+| 3 | Payload already set: the action row offers **"Scan another code"** first | OK |
+| 4 | Saving keeps the mission and closes the editor | OK — ring screen then showed "Point the camera at the code" with the live preview — .notes/screens/v12-code-ring.png |
+| 5 | "Take a picture" in a dark room | OK — after `5-9 s the hint switches to "Code not recognised, try again", the alarm keeps ringing, no crash — .notes/screens/v12-shot-fail2.png |
+| 6 | Snooze from the code mission | OK — `snooze for alarm 1 in 10 min`, `ring finished: SNOOZED`, then `alarm 1 rescheduled after SNOOZED` |
+| 7 | Device restored to the standard two alarms (07:30 weekdays math, 09:15 weekend shake) | OK — checked on Home |
+
+### Bugs found during the v1.2 pass (both fixed)
+
+1. **Camera preview escaped its box and covered the hint.** In PERFORMANCE mode `PreviewView` uses a `SurfaceView`, which the system composites and which ignores Compose clipping — the 320 dp box drew a 1298 px tall black rectangle. Fixed with `Modifier.clipToBounds()` plus `PreviewView.ImplementationMode.COMPATIBLE` (TextureView). The editor scanner is also a full-screen `Dialog` now instead of a `ModalBottomSheet`.
+2. **UPC-A scanned as EAN-13 did not match the bound code.** ZXing reports a UPC-A as a 13-digit EAN with a leading zero. `CodePayload.matches` now compares digits after stripping leading zeros, and a bound payload is compared as text rather than re-validated as a checksum.
+
+### Still not verified by hand (v1.2)
+
+| Item | Why | Covered instead by |
+|---|---|---|
+| Scanning a real product label into the editor | one phone, no second camera or printed label in reach | `CodePayloadTest` (bound code compared as text, UPC-A/EAN-13 equivalence), `CodeImageTest` (decode round-trip) |
+
 ## Not verified by hand (v1.0.0, and why)
 
 | Item | Why | Covered instead by |

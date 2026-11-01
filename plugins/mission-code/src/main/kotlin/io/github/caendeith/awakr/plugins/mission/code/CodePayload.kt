@@ -38,14 +38,25 @@ internal object CodePayload {
             CodeFormat.UPCA -> withCheckDigit(("20" + digits(9, random)).take(11))
         }
 
-    /** True when a decoded [text] of [format] solves the mission with [expected]. */
-    fun accepts(expected: String, text: String, format: CodeFormat): Boolean =
-        isValid(text, format) && matches(expected, text)
+    /**
+     * True when a decoded [text] of [format] solves the mission with [expected].
+     *
+     * With no expectation any well-formed code counts, so a broken checksum is rejected. With an
+     * expectation the payload is whatever the user bound — a product barcode or an arbitrary QR
+     * text — so it is compared as text instead of being re-validated.
+     */
+    fun accepts(expected: String?, text: String, format: CodeFormat): Boolean =
+        if (expected.isNullOrBlank()) isValid(text, format) else matches(expected, text)
 
     /** True when [scanned] satisfies [expected]; an empty expectation accepts anything. */
     fun matches(expected: String, scanned: String): Boolean {
         if (expected.isEmpty()) return true
-        return normalize(expected) == normalize(scanned)
+        val left = normalize(expected)
+        val right = normalize(scanned)
+        if (left == right) return true
+        // ZXing reports a UPC-A code as EAN-13 with a leading zero; that is the same barcode.
+        val leftDigits = left.trimStart('0')
+        return leftDigits.isNotEmpty() && leftDigits == right.trimStart('0')
     }
 
     fun normalize(value: String): String = value.trim().lowercase()

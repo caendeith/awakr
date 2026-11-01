@@ -2,7 +2,7 @@
 
 An open-source alarm clock for Android: reliable wake-ups, mission-based dismissal, no ads, no subscriptions, no trackers.
 
-> Status: **v1.1.0**. Clean-room implementation: no code, assets or sounds from any other alarm app.
+> Status: **v1.2.0**. Clean-room implementation: no code, assets or sounds from any other alarm app.
 
 ## Principles
 
@@ -71,6 +71,8 @@ Verified on a Pixel 7 Pro (Android 17 / API 37): alarms fire at the exact minute
 
 The v1.1 pass was re-checked on the same device: long press opens the selection mode, the ⋯ menu and the configurable swipe both work, drag-to-reorder writes `sort_order`, Undo brings a swiped alarm back, the editor's time bottom sheet and quick +5/+15/+30 chips apply, a built-in sound previews and is stored per alarm, both themes render, and the code mission shows a live scanner with the optional shutter (a dark room yields "code not recognised" instead of a crash). Generated QR and EAN-13 codes were saved as PNG through the system picker into `Download/`.
 
+The v1.2 pass adds binding a code you already own: in the editor, **Scan a code** opens a full-screen scanner, a product label is captured into the alarm config, and the ring screen accepts that same label. A dark-room shot reports "code not recognised" and keeps ringing, snooze still works.
+
 ### Missions
 
 | Mission | What it asks | Config |
@@ -78,7 +80,7 @@ The v1.1 pass was re-checked on the same device: long press opens the selection 
 | Math | 1-5 arithmetic problems, three difficulties | difficulty, problem count |
 | Shake | shake the phone until the progress ring fills | duration 10-100 s |
 | Typing | retype a phrase of your choice | phrase |
-| Code | aim the camera at a QR code or a barcode (QR, EAN-13, EAN-8, UPC-A, Code 128) | format + payload (the editor generates and prints one; you can also save it as PNG) |
+| Code | aim the camera at a QR code or a barcode (QR, EAN-13, EAN-8, UPC-A, Code 128) | format + payload — generate and save your own code as PNG, or scan any code you already have (a product label works) |
 
 Every mission is a plugin ([sdk/](sdk/)): it declares its manifest, its editor UI and the ring behaviour, and the registry rejects plugins built against a newer API version or with a duplicate id. The code mission deliberately uses CameraX + ZXing instead of ML Kit, so the app stays usable without Google services. Pointing the camera at the code dismisses the alarm; the shutter button is optional and exists for small, shiny or badly lit codes — a successful shot is saved to `Pictures/Awakr` so you can check later what the alarm accepted.
 
