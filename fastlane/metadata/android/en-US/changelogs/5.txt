@@ -1,0 +1,1 @@
+Distribution only: the Gradle wrapper now uses the upstream distribution instead of a regional mirror. No functional changes.

@@ -94,7 +94,7 @@ adds `metadata/io.github.caendeith.awakr.yml`.
 A ready-to-submit draft is kept in [`fdroid/io.github.caendeith.awakr.yml`](../fdroid/io.github.caendeith.awakr.yml):
 
 ```yaml
-Categories: Time
+Categories: Alarm Clock
 License: MIT
 AuthorName: caendeith
 WebSite: https://caendeith.github.io/awakr/
@@ -105,12 +105,12 @@ AutoName: Awakr
 RepoType: git
 Repo: https://github.com/caendeith/awakr.git
 Builds:
-  - versionName: 1.2.1
-    versionCode: 4
-    commit: v1.2.1
-    subdir: app
+  - versionName: 1.2.2
+    versionCode: 5
+    commit: v1.2.2
     gradle:
-      - yes
+      - 'yes'
+    output: app/build/outputs/apk/release/app-release.apk
 ```
 
 What the F-Droid build server expects:

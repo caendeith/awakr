@@ -11,7 +11,7 @@
 | platform-tools (adb) | 37.0.1 |
 | platforms | android-36 (`platform-36_r02.zip`) |
 | build-tools | 36.0.0 (`build-tools_r36_windows.zip`) |
-| Gradle | 8.14.6 (`mirrors.cloud.tencent.com/gradle/`, wrapper distributionUrl тоже на зеркало) |
+| Gradle | 8.14.6 (локальная копия из `mirrors.cloud.tencent.com/gradle/` в `tools/gradle`; `gradle-wrapper.properties` в репозитории указывает на официальный `services.gradle.org`, зеркало нужно только для локальной установки) |
 | Licenses | `tools/android-sdk/licenses/android-sdk-license` записан вручную (sdkmanager не смог: новый CLI качает `android-cli.exe` через прокси → 403) |
 
 ## Реальные версии, на которых собралось
