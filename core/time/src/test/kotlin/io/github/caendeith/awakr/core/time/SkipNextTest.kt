@@ -41,6 +41,16 @@ class SkipNextTest {
     }
 
     @Test
+    fun skippingTwiceInARowMovesTheAlarmTwoOccurrencesAhead() {
+        val first = NextOccurrence.next(monday, 7, 30, everyDay)!!
+        val second = NextOccurrence.next(monday, 7, 30, everyDay, millis(first))!!
+        // The home screen widget and the alarm list both store the moment being skipped, so a
+        // second press has to look past the whole skipped range instead of restarting from "now".
+        val third = NextOccurrence.next(monday, 7, 30, everyDay, millis(second))
+        assertEquals(ZonedDateTime.of(2026, 11, 4, 7, 30, 0, 0, zone), third)
+    }
+
+    @Test
     fun skippingTheOnlyOccurrenceOfAOneShotAlarmLeavesNothing() {
         val first = NextOccurrence.next(monday, 7, 30, daysMask = 0)!!
         assertNull(NextOccurrence.next(monday, 7, 30, daysMask = 0, skipNextAt = millis(first)))

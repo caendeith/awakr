@@ -14,10 +14,10 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 <img alt="Kotlin 2.2" src="https://img.shields.io/badge/Kotlin-2.2.21-7f52ff?logo=kotlin&logoColor=white">
 <img alt="Jetpack Compose" src="https://img.shields.io/badge/Compose-Material%203-4285f4">
 <img alt="No INTERNET permission" src="https://img.shields.io/badge/INTERNET-not%20requested-critical">
-<img alt="Version" src="https://img.shields.io/badge/version-1.2.2-informational">
+<img alt="Version" src="https://img.shields.io/badge/version-1.3.0-informational">
 </p>
 
-<p><sub>104 unit tests · release APK 4.3 MB · cold start 479 ms · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
+<p><sub>185 unit tests · release APK 5.2 MB · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
 
 <p>
 <a href="https://caendeith.github.io/awakr/"><b>Website</b></a> ·
@@ -35,7 +35,7 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 | Ads, subscriptions, analytics SDKs | MIT licensed, no ads, no in-app purchases, **no INTERNET permission at all** |
 | A snooze button you can press half-asleep | a **mission** you have to complete; snooze is finite (3 by default) and can be turned off per alarm |
 | Account, cloud sync, "wake-up insights" | everything stays on the device: Room + DataStore, nothing leaves the phone |
-| Closed source, opaque behaviour | `more than 8 000 lines of readable Kotlin, plugin architecture, every design decision written down in [docs/](docs/) |
+| Closed source, opaque behaviour | more than 10 700 lines of readable Kotlin, plugin architecture, every design decision written down in [docs/](docs/) |
 
 ## Screenshots
 
@@ -61,11 +61,15 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 - **Reliability first.** Exact alarms via `setAlarmClock` (no SCHEDULE_EXACT_ALARM dance), re-scheduled on boot and on timezone/time changes, a foreground service with an alarm-usage audio stream, a full-screen ring activity over the lock screen, a fallback notification if a background start is blocked, and a queue so two alarms in the same minute do not cancel each other.
 - **Snooze is honest.** 5-30 minutes per alarm, at most `max_snoozes` times (3 by default), and the counter travels with the alarm intent so a stray re-trigger cannot reset it.
 - **Missed alarms are visible.** The platform logs nothing when an alarm could not ring, so on start and on boot Awakr compares the last scheduled occurrence against its log and reports a missed alarm as a card plus one notification.
-- **Per-alarm sound.** Seven synthesized tones, or import any audio file from storage - it is copied into app storage, so the alarm still rings when the original file moves.
+- **Per-alarm sound.** Built-in tones grouped in "gentle" and "loud" packs, import any audio file from storage (copied into app storage, so the alarm still rings when the original moves), or record your own voice - 30 seconds, straight from the sound sheet.
 - **A mission has a time limit.** While a mission is on screen the alarm goes quiet and a 90 second countdown runs; if it expires the sound comes back and a fresh task is generated, so stalling never gets you out.
 - **No password to dismiss an alarm.** The ring screen is raised above the lock screen with the full-screen intent and never asks for the device PIN - it does not need the "display over other apps" permission either.
 - **Both themes.** Dark by default (background `#0B0C0E`, amber `#FFB020`), a warm light palette (`#FBF8F4` / `#B87500`), and "follow the system".
 - **Housekeeping gestures.** Long press to select many alarms, "..." menu for duplicate / skip-next / enable / delete, a configurable swipe, drag-to-reorder, and a five-second Undo on deletion.
+- **A widget for the next alarm.** A Glance widget on the home screen shows the next alarm, how it repeats, and a "Skip next" action; it redraws itself whenever an alarm changes and after every ring.
+- **Your data leaves in a file.** Export every alarm and setting to a JSON file through the system picker and restore it later - either merged into the current list or replacing it. Nothing is uploaded anywhere; the format is plain and documented.
+- **A heads-up before the alarm.** An optional low-priority notification N minutes before (10, 20, 30 or 60), scheduled in the same window as the alarm, so a 06:30 wake-up is not a surprise.
+- **Two languages, one switch, and Material You.** English and Russian, switchable inside the app without a restart (the mission screen follows), plus the system wallpaper palette on Android 12+ when you turn dynamic color on.
 
 ## Install
 
@@ -80,6 +84,14 @@ Requirements: Android 8.0 (API 26) or newer. Verified on a Pixel 7 Pro running A
 
 On first launch an onboarding screen asks for the permissions the app can actually use, and re-checks them every time you come back to the foreground.
 
+There is also a self-hosted F-Droid repository, so updates arrive like any other F-Droid app:
+
+```
+https://caendeith.github.io/awakr/fdroid/repo
+```
+
+Fingerprint (SHA-256): `09 B3 D4 E7 27 89 22 EC F8 3E 5B 8B 02 13 99 63 9D F3 E4 AD 83 E0 5A 5C 3F F1 C1 C7 95 E3 3D 01`. Add the URL in F-Droid under Settings → Repositories. The APKs there are signed with the same key as the GitHub releases, so the two installs are interchangeable; a build from f-droid.org (if it ever lands there) would be signed with F-Droid's key and would replace this one.
+
 ## Permissions
 
 | Permission | Why | Required |
@@ -87,6 +99,7 @@ On first launch an onboarding screen asks for the permissions the app can actual
 | Notifications (API 33+) | fallback ring notification and the missed-alarm summary | yes |
 | Exact alarms (API 31+) | `setAlarmClock` cannot schedule without it | yes |
 | Camera | only the code mission, while the alarm rings, and the optional shutter | when the code plugin is on |
+| Microphone | only while you record your own alarm sound from the sound sheet | when you use the recorder |
 
 No `INTERNET`, no location, no contacts, no storage permission. CI fails the build if `INTERNET` ever appears in the merged manifest.
 
@@ -129,7 +142,7 @@ Room v1 to v2 migrates in place (sound, sort order, skip-next, soft delete); the
 Requirements: JDK 17, Android SDK (platform 36, build-tools 36.0.0). The Gradle wrapper is included.
 
 ```bash
-./gradlew test                 # 100 unit tests
+./gradlew test                 # 185 unit tests
 ./gradlew :app:lintDebug       # hard-coded text, missing permissions, API misuse
 ./gradlew :app:assembleDebug   # debug build, installs beside release
 ./gradlew :app:assembleRelease # R8 + resource shrinking, signed if keystore.properties exists
@@ -137,7 +150,7 @@ Requirements: JDK 17, Android SDK (platform 36, build-tools 36.0.0). The Gradle 
 
 Dependencies come from the official repositories (Google Maven, Maven Central) by default, which is what CI and the F-Droid build server use. On networks where those are unreachable set `AWAKR_MIRRORS=true` to switch `settings.gradle.kts` to the aliyun/huaweicloud mirrors this project was originally developed against; [docs/toolchain.md](docs/toolchain.md) explains the exact pins and the traps behind them.
 
-Release signing is driven by an optional, git-ignored `keystore.properties`; without it the same task still succeeds and produces an unsigned APK. Measured release: **4.3 MB**, cold start **479 ms**.
+Release signing is driven by an optional, git-ignored `keystore.properties`; without it the same task still succeeds and produces an unsigned APK. Measured release: **5.2 MB**, cold start **479 ms**.
 
 ## Status
 
@@ -146,8 +159,9 @@ Release signing is driven by an optional, git-ignored `keystore.properties`; wit
 | 0-7 | Toolchain, skeleton, storage + plugin SDK, alarm engine, home + editor, missions, onboarding, QA + release + CI | done |
 | 8 | v1.1 UX pass: multi-select, per-alarm sounds, themes, code mission | done |
 | 9 | v1.2: bind any scanned code (product barcode) to an alarm | done |
+| 10 | v1.3: JSON backup and restore, Glance widget, sound packs and recording, Material You, pre-alarm notification, language switcher | done |
 
-Roadmap ideas for v2: dynamic color and widgets, sleep-cycle "smart wake", recording your own voice as a sound, more barcode formats, Wear OS, and runtime-loaded plugin APKs (deliberately postponed - Play and F-Droid forbid them).
+Roadmap ideas for the next versions: chained missions, a photo mission (compare a shot with a reference frame), step and squat missions from the sensors, sleep sounds with a sleep timer, wake-up statistics and streaks, more barcode formats, Wear OS, and runtime-loaded plugin APKs (deliberately postponed - Play and F-Droid forbid them).
 
 ## Docs
 

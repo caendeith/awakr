@@ -5,6 +5,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val PLUGINS = "plugins"
     const val ABOUT = "about"
+    const val BACKUP = "backup"
     const val ONBOARDING = "onboarding"
 
     const val EDITOR_ARG_ID = "alarmId"

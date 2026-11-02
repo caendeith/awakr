@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget picker preview: dark card, amber dot, two text bars. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="110dp"
+    android:viewportWidth="250"
+    android:viewportHeight="110">
+    <path
+        android:fillColor="#14161A"
+        android:pathData="M20,0h210a20,20 0 0 1 20,20v70a20,20 0 0 1 -20,20H20A20,20 0 0 1 0,90V20A20,20 0 0 1 20,0z" />
+    <path
+        android:fillColor="#FFB020"
+        android:pathData="M30,51m-5,0a5,5 0 1,0 10,0a5,5 0 1,0 -10,0" />
+    <path
+        android:fillColor="#E9EAEC"
+        android:pathData="M48,38h96v20H48z" />
+    <path
+        android:fillColor="#9AA0A8"
+        android:pathData="M48,68h64v8H48z" />
+    <path
+        android:fillColor="#FFB020"
+        android:pathData="M196,68h30v8h-30z" />
+</vector>

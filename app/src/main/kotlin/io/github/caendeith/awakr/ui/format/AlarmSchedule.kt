@@ -21,7 +21,9 @@ fun scheduleOf(alarm: Alarm, now: ZonedDateTime): AlarmSchedule =
     AlarmSchedule(
         alarm = alarm,
         next = if (alarm.enabled) {
-            NextOccurrence.next(now, alarm.hour, alarm.minute, alarm.daysMask)
+            // Honouring skipNextAt keeps the card, the list order and the countdown in agreement
+            // with the system alarm the scheduler actually set.
+            NextOccurrence.next(now, alarm.hour, alarm.minute, alarm.daysMask, alarm.skipNextAt)
         } else {
             null
         },

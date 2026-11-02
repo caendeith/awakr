@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Awakr" parent="android:Theme.Material.NoActionBar">
+    <!-- The UI itself is Compose, but both activities are AppCompatActivity: the per app language
+         switch (AppCompatDelegate.setApplicationLocales) only applies to AppCompat activities, and
+         those refuse to start with a plain platform theme. Every window attribute the app paints
+         is still set explicitly below. -->
+    <style name="Theme.Awakr" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">#0B0C0E</item>
         <item name="android:navigationBarColor">#0B0C0E</item>
         <item name="android:statusBarColor">#0B0C0E</item>

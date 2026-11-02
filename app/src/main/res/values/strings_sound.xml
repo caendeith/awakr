@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sound picker: pack chips and section headers. -->
+    <string name="sound_picker_close">Close</string>
+    <string name="sound_picker_pack_all">All</string>
+    <string name="sound_picker_pack_gentle">Gentle</string>
+    <string name="sound_picker_pack_loud">Loud</string>
+    <string name="sound_picker_pack_recorded">Recorded</string>
+    <string name="sound_picker_recorded_empty">No recordings yet. Record one below.</string>
+    <string name="sound_picker_import">Import a file…</string>
+    <string name="sound_picker_import_failed">Could not import this file.</string>
+    <string name="sound_picker_delete_failed">Could not delete the file.</string>
+    <string name="sound_picker_preview">Preview</string>
+    <string name="sound_picker_stop">Stop preview</string>
+
+    <!-- Recording a custom alarm sound. -->
+    <string name="sound_record_title">Record your own sound</string>
+    <string name="sound_record_hint">Up to 30 seconds. Stored on this device only.</string>
+    <string name="sound_record_start">Record</string>
+    <string name="sound_record_stop">Stop</string>
+    <string name="sound_record_again">Record again</string>
+    <string name="sound_record_use">Use this sound</string>
+    <string name="sound_record_elapsed">%1$s recorded, %2$s left</string>
+    <string name="sound_record_delete_title">Delete this recording?</string>
+    <string name="sound_record_delete_message">The file is removed from this device. Alarms using it fall back to the default sound.</string>
+    <string name="sound_record_delete_action">Delete recording</string>
+    <string name="sound_record_rationale">The microphone is used only while you record. Nothing leaves the device.</string>
+    <string name="sound_record_allow">Allow microphone</string>
+    <string name="sound_record_denied">Microphone access is off. Turn it on in settings to record a sound.</string>
+    <string name="sound_record_settings">Open settings</string>
+    <string name="sound_record_unsupported">This device has no microphone.</string>
+    <string name="sound_record_failed">Could not record. Try again.</string>
+    <string name="sound_record_too_short">Too short — hold the button a little longer.</string>
+    <string name="sound_record_saved">Saved to this device.</string>
+</resources>

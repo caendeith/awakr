@@ -4,10 +4,10 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,7 +26,7 @@ import io.github.caendeith.awakr.core.ui.theme.AwakrTheme
  * Full screen alarm UI. It is launched by the full screen intent of the ringing
  * notification, on top of the lock screen, and it owns the dismiss/snooze actions.
  */
-class RingActivity : ComponentActivity() {
+class RingActivity : AppCompatActivity() {
 
     /**
      * Alarm shown by this screen. It is state, not a plain intent read, so that a second alarm

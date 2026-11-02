@@ -164,3 +164,33 @@ cause that was found in the code and how it is now covered.
 Also in this release: `SYSTEM_ALERT_WINDOW` was removed from the manifest and from onboarding. It
 was declared but never used, and on Android 13+ an app installed outside a store cannot even grant
 it without "Allow restricted settings" — which is the dialog the user sent a screenshot of.
+
+## v1.3.0 pass — backup, widget, sounds, Material You, pre-alert, language
+
+Signed `release` 1.3.0 (versionCode 6) installed over 1.2.1 with `adb install -r`. A streamed
+reinstall leaves a stale widget provider registration in the system (`min=0x0 widgetCategory=0`,
+so the launcher does not list the widget); a clean `uninstall` + `install` fixes it. The new
+`AlarmWidgetReceiver` itself is fine — `aapt2 dump xmltree --file res/SG.xml` on the release APK
+shows `minWidth 250dp`, `minHeight 110dp`, `resizeMode 0x2`, `targetCell 4x2`.
+
+| Area | What was done | Result |
+|---|---|---|
+| Language | Settings → Language → English | ✅ the whole UI switched instantly (Settings, Backup, Plugins, About) without a process restart, and the ring screen came up in English too (`Time to solve`, `Problem 1 of 2`, `Snooze`); `AppLanguageTest` 5/5 |
+| Backup export | Settings → Backup → Export to file → SAF → `/sdcard/Download/awakr-backup-…json` | ✅ schema 1 with the alarms plus `settings{themeMode, swipeAction, defaultSnoozeMinutes, defaultMissionPluginId, defaultSoundId, dynamicColor, preAlertMinutes, language}` |
+| Backup import | same screen → Choose file → tap the file *name* (tapping the row opens a preview in Material Files) → Replace everything | ✅ the alarm came back with a new id; merge mode adds without touching existing ones |
+| Material You | Settings → Dynamic colors → on | ✅ the background went `#0b0c0e` → `#120d08` and the accent `#ffb020` → `#f0bd8d`, and the hero card follows the wallpaper palette |
+| Widget | long-press the home screen → Widgets → search "Awakr" → drag the 4x3 cell | ✅ shows the next alarm (`07:30`, its repeat days) and "Skip next"; tapping the body opens `MainActivity` |
+| Widget "Skip next" | tapped twice on the home screen | ✅ `dumpsys alarm` moved the RING 04.11 → 05.11 → 06.11 (one occurrence per tap), and the hero card follows — see the fixes below |
+| Pre-alert | Settings → Notify before → 10 min, alarm at 13:20 | ✅ `dumpsys alarm` held `action.PRE_ALERT` at 13:10 next to `action.RING` at 13:20; the shade showed `Будильник через 10 мин / Скоро 13:20` on the silent `pre_alert` channel (importance 2) |
+| Ring + mission | alarm at 13:20 answered on the ring screen | ✅ the ring screen came over the app, the mission timer counted down from `1:29`, the answer was accepted ("Problem 2 of 2") and `Snooze` logged `ring finished: SNOOZED` |
+| Microphone | sound sheet → record | ⚠️ only the permission flow and the "too short" path were exercised; adb cannot feed real audio into the emulator input |
+
+### Fixes made during this pass
+
+| Found | Cause | Fix |
+|---|---|---|
+| the hero card announced Tuesday while the system alarm was set for Friday | `scheduleOf()` in `app/…/ui/format/AlarmSchedule.kt` called `NextOccurrence.next()` without `alarm.skipNextAt`, so the card and the list order ignored a pending skip that `AlarmScheduler` honoured | the skip instant is passed through; the new `AlarmScheduleTest` covers the skipped, disabled, one-shot and ordering cases |
+| a second "Skip next" on the widget did nothing | `NextOccurrence.next()` suppressed only the occurrence equal to `skipNextAt`, so re-skipping recomputed the same instant (and could move the alarm *back*) | the parameter now means "nothing at or before this moment will ring": two taps move the alarm two occurrences ahead, and a one-shot alarm whose only occurrence is skipped still returns null (`SkipNextTest` +1) |
+| changing the pre-alert lead time did not affect alarms that were already scheduled | the reminder is armed next to every alarm at scheduling time, so only a re-arm picks up the new value | `AwakrNavHost` calls `scheduler.rescheduleAll(enabledAlarms())` after the setting changes |
+| a ring left on screen for ten minutes was logged as missed, and a later tap on "Snooze" wrote a second, contradictory row (`MISSED` then `SNOOZED`) plus a "Missed — the alarm never rang" card for an alarm that had rung | `RING_TIMEOUT_MS` was 10 minutes even though the mission can be failed and restarted many times, and `ACTION_DISMISS`/`ACTION_SNOOZE` were handled even when nothing was ringing | the ceiling is now 30 minutes, and both actions are ignored with a log line when no ring is active — the same guard `setSilenced` already had |
+| a backup did not carry the three newer settings | the settings section of the format predates `dynamicColor`, `preAlertMinutes` and `language` | the codec writes them when present, reads an absent key as "keep the current value" and merges against the live settings; `BackupCodecTest` +4 and the new `BackupSettingsMergeTest` |

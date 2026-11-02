@@ -12,10 +12,12 @@ object AwakrNotifications {
     const val CHANNEL_ALARM = "alarm"
     const val CHANNEL_MISSED = "missed"
     const val CHANNEL_SERVICE = "alarm_service"
+    const val CHANNEL_PRE_ALERT = "pre_alert"
 
     /** Id of the ongoing notification that keeps the ringing service alive. */
     const val NOTIFICATION_RINGING = 1001
     const val NOTIFICATION_MISSED = 1002
+    const val NOTIFICATION_PRE_ALERT = 1003
 
     fun ensureChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -41,6 +43,19 @@ object AwakrNotifications {
                 NotificationManager.IMPORTANCE_DEFAULT,
             ).apply {
                 description = context.getString(R.string.channel_missed_description)
+            },
+        )
+
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_PRE_ALERT,
+                context.getString(R.string.channel_pre_alert_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = context.getString(R.string.channel_pre_alert_description)
+                setSound(null, null)
+                enableVibration(false)
+                setShowBadge(false)
             },
         )
 

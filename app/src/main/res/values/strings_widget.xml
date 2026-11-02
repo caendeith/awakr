@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home screen widget: the next alarm. -->
+    <string name="widget_label">Awakr alarm</string>
+    <string name="widget_description">Shows the next alarm that will ring</string>
+    <string name="widget_no_alarms">No alarms</string>
+    <string name="widget_no_alarms_hint">Tap to add one</string>
+    <string name="widget_skip_next">Skip next</string>
+</resources>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_title">Backup</string>
+    <string name="backup_section_export">Export</string>
+    <string name="backup_section_import">Import</string>
+
+    <string name="backup_export_title">Save a copy</string>
+    <string name="backup_export_desc">Writes your alarms and preferences to a JSON file in a folder you pick.</string>
+    <string name="backup_export_action">Export to file</string>
+
+    <string name="backup_import_title">Restore from a file</string>
+    <string name="backup_import_desc">Reads an Awakr backup and adds it to your alarms or replaces them.</string>
+    <string name="backup_import_action">Choose file</string>
+
+    <string name="backup_mode_title">How should the backup be restored?</string>
+    <string name="backup_mode_replace">Replace everything</string>
+    <string name="backup_mode_replace_desc">Deletes the alarms on this device, then restores the backup.</string>
+    <string name="backup_mode_merge">Add to existing alarms</string>
+    <string name="backup_mode_merge_desc">Keeps the current alarms and appends the ones from the backup.</string>
+    <string name="backup_mode_cancel">Cancel</string>
+
+    <string name="backup_exported">Backup saved: %1$d alarms.</string>
+    <string name="backup_imported">Imported %1$d alarms.</string>
+    <string name="backup_imported_skipped">Imported %1$d alarms, skipped %2$d unreadable entries.</string>
+    <string name="backup_import_empty">The file contains no alarms.</string>
+    <string name="backup_working">Working…</string>
+
+    <string name="backup_error_read">The file could not be read.</string>
+    <string name="backup_error_write">The file could not be written.</string>
+    <string name="backup_error_not_awakr">This is not an Awakr backup file.</string>
+    <string name="backup_error_schema">This backup was made by a newer version of Awakr.</string>
+    <string name="backup_error_malformed">The file is damaged or not valid JSON.</string>
+    <string name="backup_note">Backups stay on this device unless you share them yourself.</string>
+</resources>

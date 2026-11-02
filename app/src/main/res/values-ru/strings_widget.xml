@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Виджет на главном экране: ближайший будильник. -->
+    <string name="widget_label">Будильник Awakr</string>
+    <string name="widget_description">Показывает ближайший будильник</string>
+    <string name="widget_no_alarms">Нет будильников</string>
+    <string name="widget_no_alarms_hint">Нажмите, чтобы добавить</string>
+    <string name="widget_skip_next">Пропустить</string>
+</resources>

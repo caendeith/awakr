@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Awakr — будильник, который действительно будит</title>
+<meta name="description" content="Awakr — открытый будильник для Android: миссии, которые не пропустить, свои звуки, QR-коды и штрихкоды, без рекламы, без подписки, без разрешения INTERNET.">
+<meta name="theme-color" content="#0B0C0E">
+<meta property="og:title" content="Awakr — будильник, который действительно будит">
+<meta property="og:description" content="Миссии, которые не пропустить, свои звуки, QR-коды и штрихкоды. Без рекламы, без подписки, без разрешения INTERNET.">
+<meta property="og:image" content="screenshots/home-dark.webp">
+<meta property="og:type" content="website">
+<link rel="alternate" hreflang="en" href="index.html">
+<link rel="alternate" hreflang="ru" href="ru.html">
+<link rel="alternate" hreflang="x-default" href="index.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230B0C0E'/%3E%3Ccircle cx='32' cy='36' r='15' fill='none' stroke='%23FFB020' stroke-width='4'/%3E%3Cpath d='M27 8l-8 7M37 8l8 7' stroke='%23FFB020' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M32 27v10l7 4' stroke='%23FFB020' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --bg:#0B0C0E; --surface:#14161A; --container:#1B1E24; --line:#262A31;
+    --text:#ECEFF3; --muted:#98A1AD; --amber:#FFB020; --on-amber:#241800; --amber-soft:rgba(255,176,32,.12);
+    --radius:28px; --radius-sm:20px;
+    --max:1160px;
+  }
+  html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    letter-spacing:.01em; overflow-x:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:-30% -10% auto -10%; height:80vh; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(45% 45% at 78% 8%, rgba(255,176,32,.16), transparent 70%),
+      radial-gradient(40% 40% at 12% 0%, rgba(96,140,255,.10), transparent 70%);
+    filter:blur(6px);
+  }
+  a{color:inherit; text-decoration:none}
+  img{max-width:100%; display:block}
+  .wrap{width:min(var(--max),calc(100% - 48px)); margin-inline:auto; position:relative; z-index:1}
+  code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92em}
+
+  /* nav */
+  header.nav{position:sticky; top:0; z-index:20; backdrop-filter:blur(14px);
+    background:rgba(11,12,14,.72); border-bottom:1px solid rgba(255,255,255,.06)}
+  .nav-inner{display:flex; align-items:center; gap:28px; height:68px}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.02em; font-size:19px}
+  .brand .dot{width:26px;height:26px;border-radius:9px;background:var(--amber);display:grid;place-items:center;color:var(--on-amber);font-size:15px;font-weight:800}
+  nav.links{display:flex; gap:26px; margin-left:auto; font-size:14.5px; color:var(--muted)}
+  nav.links a:hover{color:var(--text)}
+  .btn{display:inline-flex; align-items:center; gap:9px; border-radius:999px; padding:12px 22px;
+    font-weight:650; font-size:15px; border:1px solid transparent; transition:transform .15s ease, background .2s ease, border-color .2s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-amber{background:var(--amber); color:var(--on-amber)}
+  .btn-ghost{border-color:rgba(255,255,255,.16); color:var(--text); background:rgba(255,255,255,.03)}
+  .btn-ghost:hover{background:rgba(255,255,255,.07)}
+
+  /* hero */
+  .hero{display:grid; grid-template-columns:1.05fr .95fr; gap:56px; align-items:center; padding:76px 0 40px}
+  .eyebrow{display:inline-flex; align-items:center; gap:8px; font-size:13px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--amber); background:var(--amber-soft); border:1px solid rgba(255,176,32,.28);
+    padding:7px 14px; border-radius:999px; font-weight:650}
+  h1{font-size:clamp(40px,5.4vw,68px); line-height:1.03; letter-spacing:-.03em; margin:22px 0 0; font-weight:800}
+  h1 .amber{color:var(--amber)}
+  .lede{font-size:clamp(17px,1.6vw,19.5px); color:var(--muted); margin:22px 0 0; max-width:33em}
+  .cta{display:flex; flex-wrap:wrap; gap:14px; margin-top:34px}
+  .hero-meta{display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:26px; color:var(--muted); font-size:14px}
+  .hero-meta span{display:inline-flex; align-items:center; gap:7px}
+  .tick{color:var(--amber)}
+  .phone{position:relative; justify-self:center; width:min(330px,86%)}
+  .phone::after{content:""; position:absolute; inset:-14% -18% -18%; z-index:-1; border-radius:50%;
+    background:radial-gradient(closest-side, rgba(255,176,32,.22), transparent 72%); filter:blur(18px)}
+  .phone img{border-radius:34px; border:1px solid rgba(255,255,255,.1); box-shadow:0 40px 90px rgba(0,0,0,.62)}
+  .phone .notch{position:absolute; top:10px; left:50%; transform:translateX(-50%); width:88px; height:20px;
+    background:#000; border-radius:999px; opacity:.85}
+
+  /* strip of badges */
+  .badges{display:flex; flex-wrap:wrap; gap:10px; padding:26px 0 6px; border-top:1px solid rgba(255,255,255,.06); margin-top:26px}
+  .chip{font-size:13px; color:var(--muted); border:1px solid var(--line); background:var(--surface);
+    padding:7px 13px; border-radius:999px}
+  .chip b{color:var(--text); font-weight:650}
+
+  section{padding:76px 0}
+  .section-head{max-width:44em; margin-bottom:40px}
+  h2{font-size:clamp(27px,3.2vw,38px); letter-spacing:-.025em; line-height:1.12; margin:0; font-weight:750}
+  .section-head p{color:var(--muted); margin:14px 0 0}
+
+  .grid{display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+  .card{background:linear-gradient(180deg,var(--surface),rgba(20,22,26,.72)); border:1px solid var(--line);
+    border-radius:var(--radius-sm); padding:24px 22px; transition:border-color .2s, transform .2s}
+  .card:hover{border-color:rgba(255,176,32,.34); transform:translateY(-2px)}
+  .card .ico{width:38px;height:38px;border-radius:12px;background:var(--amber-soft); color:var(--amber);
+    display:grid; place-items:center; margin-bottom:14px}
+  .card h3{margin:0 0 8px; font-size:17.5px; letter-spacing:-.01em}
+  .card p{margin:0; color:var(--muted); font-size:15px}
+
+  /* missions */
+  .missions{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); margin-top:8px}
+  .mission{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-sm); padding:20px}
+  .mission h3{margin:0 0 6px; font-size:16.5px; display:flex; align-items:center; gap:9px}
+  .mission .tag{font-family:ui-monospace,monospace; font-size:11.5px; color:var(--amber);
+    background:var(--amber-soft); padding:3px 8px; border-radius:7px; font-weight:600}
+  .mission p{margin:0; color:var(--muted); font-size:14.5px}
+
+  /* shots */
+  .shots{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .shot{background:var(--surface); border:1px solid var(--line); border-radius:22px; overflow:hidden}
+  .shot img{width:100%; transition:transform .35s ease}
+  .shot:hover img{transform:scale(1.03)}
+  .shot figcaption{padding:12px 16px 15px; font-size:13.5px; color:var(--muted)}
+  figure{margin:0}
+
+  /* install */
+  .split{display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .pane{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:26px}
+  .pane h3{margin:0 0 6px; font-size:18px}
+  .pane .hint{color:var(--muted); font-size:14.5px; margin:0 0 16px}
+  pre{margin:0; background:#0E1013; border:1px solid var(--line); border-radius:14px; padding:16px 18px;
+    overflow-x:auto; font-size:13.2px; line-height:1.75; color:#D6DCE5}
+  pre .c{color:#6C7684}
+  pre .k{color:var(--amber)}
+
+  table{width:100%; border-collapse:collapse; font-size:14.6px; margin-top:6px}
+  th,td{text-align:left; padding:13px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{color:var(--muted); font-weight:600; font-size:13px; letter-spacing:.05em; text-transform:uppercase}
+  td code{color:#E8D8B4}
+  tr:last-child td{border-bottom:0}
+
+  .note{display:flex; gap:14px; align-items:flex-start; background:var(--amber-soft); border:1px solid rgba(255,176,32,.3);
+    border-radius:var(--radius-sm); padding:18px 20px; color:#F4E3C3; font-size:14.8px; margin-top:22px}
+
+  footer{border-top:1px solid rgba(255,255,255,.07); padding:40px 0 56px; color:var(--muted); font-size:14px}
+  .foot{display:flex; flex-wrap:wrap; gap:18px 32px; align-items:center}
+  .foot a:hover{color:var(--text)}
+  .foot .spacer{flex:1}
+
+  /* language switcher */
+  .lang{display:flex; align-items:center; gap:7px; font-size:13.5px; font-weight:650; letter-spacing:.06em; white-space:nowrap}
+  .lang a{color:var(--muted); padding:6px 1px; border-bottom:2px solid transparent}
+  .lang a:hover{color:var(--text)}
+  .lang a[aria-current]{color:var(--amber); border-bottom-color:rgba(255,176,32,.5)}
+  .lang .sep{color:var(--line)}
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr; gap:38px; padding-top:48px}
+    .phone{order:-1; width:min(300px,74%)}
+    nav.links{display:none}
+    .nav-inner{gap:16px}
+    .lang{gap:5px; font-size:12.5px}
+    section{padding:56px 0}
+  }
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top"><span class="dot">A</span> Awakr</a>
+    <nav class="links">
+      <a href="#features">Возможности</a>
+      <a href="#missions">Миссии</a>
+      <a href="#screens">Скриншоты</a>
+      <a href="#install">Установка</a>
+      <a href="https://github.com/caendeith/awakr">GitHub</a>
+    </nav>
+    <nav class="lang" aria-label="Язык">
+      <a href="index.html" hreflang="en" lang="en">EN</a>
+      <span class="sep" aria-hidden="true">|</span>
+      <a href="ru.html" hreflang="ru" lang="ru" aria-current="true">RU</a>
+    </nav>
+    <a class="btn btn-amber" href="https://github.com/caendeith/awakr/releases/latest">Скачать Awakr</a>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <span class="eyebrow">Открытый код · MIT · без рекламы</span>
+        <h1>Проснитесь.<br><span class="amber">По-настоящему.</span></h1>
+        <p class="lede">
+          Awakr — будильник, который не даст отключиться спросонья: решите миссию, отсканируйте код
+          с коробки хлопьев, потрясите телефон или введите фразу. Ваши звуки, ваш дизайн, без аккаунта и без слежки.
+        </p>
+        <div class="cta">
+          <a class="btn btn-amber" href="https://github.com/caendeith/awakr/releases/latest">Скачать APK</a>
+          <a class="btn btn-ghost" href="https://github.com/caendeith/awakr">Исходный код</a>
+        </div>
+        <div class="hero-meta">
+          <span><b class="tick">✓</b> Android 8.0+ (API 26)</span>
+          <span><b class="tick">✓</b> APK 5,2 МБ</span>
+          <span><b class="tick">✓</b> без разрешения INTERNET</span>
+          <span><b class="tick">✓</b> ru + en</span>
+        </div>
+      </div>
+      <div class="phone">
+        <span class="notch"></span>
+        <img src="screenshots/home-dark.webp" alt="Главный экран Awakr: следующий будильник и обратный отсчёт" width="540" height="1170">
+      </div>
+    </div>
+
+    <div class="badges">
+      <span class="chip"><b>185</b> юнит-тестов</span>
+      <span class="chip">холодный старт <b>479 мс</b></span>
+      <span class="chip">Kotlin <b>2.2.21</b> · Compose <b>M3</b></span>
+      <span class="chip">релизный APK <b>5,2 МБ</b></span>
+      <span class="chip">clean-room: ни кода, ни ресурсов из Alarmy</span>
+    </div>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Всё, что должен уметь будильник, и ничего из того, чем обычно грешат приложения-будильники</h2>
+        <p>Ни баннера, ни межстраничной рекламы, ни экрана подписки — и никакой сети, чтобы «звонить домой».</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">🔒</div>
+          <h3>Без разрешения INTERNET</h3>
+          <p>Приложение физически не может никуда подключиться. CI роняет сборку, если в объединённом манифесте появляется <code>INTERNET</code>.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🧩</div>
+          <h3>Миссии — это плагины</h3>
+          <p>Математика, сканирование кодов, тряска и ввод текста — отдельные Gradle-модули за одним интерфейсом <code>MissionPlugin</code>. Новая миссия — это один небольшой PR.</p>
+        </div>
+        <div class="card">
+          <div class="ico">⏰</div>
+          <h3>Действительно надёжно</h3>
+          <p>API будильника, точное планирование, перепланирование после перезагрузки, обновления приложения и смены часового пояса, звонок на весь экран поверх экрана блокировки.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🎵</div>
+          <h3>Своя музыка</h3>
+          <p>Семь встроенных сигналов или любой аудиофайл из памяти: он копируется в приложение и звучит, даже если удалить оригинал.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🌗</div>
+          <h3>Обе темы</h3>
+          <p>Тёмная по умолчанию, светлая по желанию или как в системе. Янтарь на угле, анимация и типографика — прямо из Material 3.</p>
+        </div>
+        <div class="card">
+          <div class="ico">✋</div>
+          <h3>Сделано для сонных рук</h3>
+          <p>Долгое нажатие выделяет несколько будильников сразу, действие свайпа настраивается, есть режим перестановки с перетаскиванием и отмена после удаления.</p>
+        </div>
+        <div class="card">
+          <div class="ico">⏳</div>
+          <h3>Лимит отложек</h3>
+          <p>Задайте, сколько раз будильник можно отложить. После лимита кнопка «Отложить» исчезает, и остаётся только миссия.</p>
+        </div>
+        <div class="card">
+          <div class="ico">📋</div>
+          <h3>О пропущенных будильниках сообщается</h3>
+          <p>Если телефон был выключен или приложение принудительно остановили, карточка и уведомление скажут, что будильник не прозвенел — один раз, а не при каждом запуске.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="missions">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Четыре способа доказать, что вы проснулись</h2>
+        <p>У каждой миссии свои настройки в редакторе будильника. Отключите плагин — и будильник предложит отключить его удержанием, а не будет звонить бесконечно.</p>
+      </div>
+      <div class="missions">
+        <div class="mission">
+          <h3>Математика <span class="tag">math</span></h3>
+          <p>Лёгкие, средние или сложные примеры; от 1 до 5 верных ответов подряд, прежде чем будильник сдастся.</p>
+        </div>
+        <div class="mission">
+          <h3>Код <span class="tag">code</span></h3>
+          <p>Сканируйте QR-код или настоящий товарный штрихкод: EAN-13, EAN-8, UPC-A, Code 128. Сгенерируйте свой код или привяжите любой найденный — подойдёт товар с полки.</p>
+        </div>
+        <div class="mission">
+          <h3>Тряска <span class="tag">shake</span></h3>
+          <p>Трясите телефон от 10 до 100 секунд, пока заполняется кольцо прогресса.</p>
+        </div>
+        <div class="mission">
+          <h3>Ввод текста <span class="tag">typing</span></h3>
+          <p>Введите заданную фразу точно. Никаких «1234» и случайных отключений.</p>
+        </div>
+      </div>
+      <div class="note">
+        <span aria-hidden="true">🛠</span>
+        <span>Всё перечисленное — плагины с декларативным манифестом: id, локализованное имя, версия, возможности, нужные разрешения и поля настроек. Реестр генерируется на этапе сборки через KSP, поэтому здесь нет ни рефлексии, ни динамической загрузки кода.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Как это выглядит</h2>
+        <p>Янтарь на угле, моноширинные цифры для обратного отсчёта, действия, до которых легко дотянуться одной рукой.</p>
+      </div>
+      <div class="shots">
+        <figure class="shot"><img src="screenshots/home-dark.webp" alt="Главный экран со следующим будильником и списком" loading="lazy"><figcaption>Главный экран — следующий будильник, обратный отсчёт</figcaption></figure>
+        <figure class="shot"><img src="screenshots/selection-mode.webp" alt="Режим выбора, выделено несколько будильников" loading="lazy"><figcaption>Долгое нажатие — выбор нескольких</figcaption></figure>
+        <figure class="shot"><img src="screenshots/editor.webp" alt="Редактор будильника" loading="lazy"><figcaption>Редактор — время, дни, миссия, звук</figcaption></figure>
+        <figure class="shot"><img src="screenshots/code-editor.webp" alt="Редактор миссии «Код» со сгенерированным штрихкодом" loading="lazy"><figcaption>Миссия «Код» — создать или отсканировать</figcaption></figure>
+        <figure class="shot"><img src="screenshots/sound-sheet.webp" alt="Выбор звука" loading="lazy"><figcaption>Звуки — встроенные и свои</figcaption></figure>
+        <figure class="shot"><img src="screenshots/home-light.webp" alt="Светлая тема" loading="lazy"><figcaption>Светлая тема</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Установка</h2>
+        <p>Возьмите подписанный APK из последнего релиза или соберите сами. Ключ релиза не хранится в репозитории, поэтому самостоятельно собранные сборки устанавливаются параллельно с релизной.</p>
+      </div>
+      <div class="split">
+        <div class="pane">
+          <h3>Из APK</h3>
+          <p class="hint">Скачайте <a href="https://github.com/caendeith/awakr/releases/download/v1.3.0/Awakr-1.3.0.apk"><code>Awakr-1.3.0.apk</code></a>, разрешите установку из неизвестных источников, откройте файл.</p>
+          <pre><span class="c"># или по USB</span>
+adb install -r Awakr-1.3.0.apk</pre>
+        </div>
+        <div class="pane">
+          <h3>Из исходников</h3>
+          <p class="hint">JDK 17, Android SDK с platform 36 и build-tools 36.0.0.</p>
+          <pre>git clone https://github.com/caendeith/awakr.git
+cd awakr
+echo <span class="k">"sdk.dir=$HOME/Android/Sdk"</span> &gt; local.properties
+./gradlew :app:assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk</pre>
+        </div>
+      </div>
+      <div class="note">
+        <span aria-hidden="true">✅</span>
+        <span>После первого запуска приложение проведёт вас по разрешениям, которые действительно могут понадобиться: уведомления (API 33+), точные будильники (API 31+), камера (только для миссии «Код») и микрофон (только пока вы записываете свой звук). Больше ничего не запрашивается.</span>
+      </div>
+      <div class="note">
+        <span aria-hidden="true">🛍️</span>
+        <span>Хотите обновляться как обычно? Добавьте собственный F-Droid-репозиторий <a href="https://caendeith.github.io/awakr/fdroid/repo"><code>https://caendeith.github.io/awakr/fdroid/repo</code></a> в F-Droid → Настройки → Репозитории. Отпечаток (SHA-256): <code>09 B3 D4 E7 27 89 22 EC F8 3E 5B 8B 02 13 99 63 9D F3 E4 AD 83 E0 5A 5C 3F F1 C1 C7 95 E3 3D 01</code>. Он подписан тем же ключом, что и APK на GitHub, поэтому обе установки взаимозаменяемы.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="permissions">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Разрешения, целиком</h2>
+        <p>Это весь список из объединённого манифеста релизной сборки.</p>
+      </div>
+      <table>
+        <thead><tr><th>Разрешение</th><th>Зачем</th><th>Когда</th></tr></thead>
+        <tbody>
+          <tr><td><code>USE_EXACT_ALARM</code>, <code>SCHEDULE_EXACT_ALARM</code></td><td>Ставить будильник, который срабатывает точно, даже в режиме Doze</td><td>выдаётся при установке</td></tr>
+          <tr><td><code>POST_NOTIFICATIONS</code></td><td>Фоновый сервис звонка, уведомление о пропущенном будильнике</td><td>Android 13+</td></tr>
+          <tr><td><code>RECEIVE_BOOT_COMPLETED</code></td><td>Перепланировать будильники после перезагрузки</td><td>установка</td></tr>
+          <tr><td><code>WAKE_LOCK</code>, <code>VIBRATE</code></td><td>Держать экран включённым во время звонка, вибрация</td><td>установка</td></tr>
+          <tr><td><code>FOREGROUND_SERVICE</code> (+ <code>MEDIA_PLAYBACK</code>)</td><td>Проигрывать звук, пока открыт экран звонка</td><td>установка</td></tr>
+          <tr><td><code>USE_FULL_SCREEN_INTENT</code></td><td>Показывать экран звонка поверх экрана блокировки (разрешение «поверх других приложений» не используется)</td><td>установка</td></tr>
+          <tr><td><code>CAMERA</code></td><td>Сканировать код для миссии «Код»</td><td>запрашивается при необходимости</td></tr>
+          <tr><td><code>RECORD_AUDIO</code></td><td>Записать свой звук будильника — он хранится внутри приложения</td><td>запрашивается при необходимости</td></tr>
+          <tr><td><code>INTERNET</code></td><td><b>не запрашивается</b> — приложение полностью офлайн</td><td>никогда</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tech">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Под капотом</h2>
+        <p>Один модуль приложения, несколько основных модулей, SDK плагинов и четыре модуля миссий. Room для хранения, DataStore для настроек, CameraX + ZXing для кодов, без сервисов Google Play.</p>
+      </div>
+      <div class="grid">
+        <div class="card"><h3>Kotlin 2.2.21 · Compose M3</h3><p>Material 3 с небольшой собственной дизайн-системой: карточки, «таблетки», моноширинный текст времени, янтарный акцент.</p></div>
+        <div class="card"><h3>AGP 8.13.2 · Gradle 8.14.6</h3><p>compileSdk 36, targetSdk 36, minSdk 26 — от Android 8.0 до 17.</p></div>
+        <div class="card"><h3>Room 2.8.5</h3><p>Будильники, журналы будильников и состояние каждого плагина, с явной миграцией v1→v2 для звуков и порядка.</p></div>
+        <div class="card"><h3>CameraX 1.5.3 + ZXing 3.5.4</h3><p>Декодирование живого превью в фоновом потоке, поворот кадра обрабатывается вручную, юнит-тесты для повёрнутых кадров.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span><b>Awakr</b> · MIT © caendeith</span>
+    <a href="https://github.com/caendeith/awakr">GitHub</a>
+    <a href="https://github.com/caendeith/awakr/blob/main/README.md">README</a>
+    <a href="https://github.com/caendeith/awakr/blob/main/CONTRIBUTING.md">Участие</a>
+    <a href="https://github.com/caendeith/awakr/blob/main/docs/faq.md">Вопросы и ответы</a>
+    <a href="https://github.com/caendeith/awakr/blob/main/docs/manual-qa.md">Ручное тестирование</a>
+    <a href="https://github.com/caendeith/awakr/releases">Релизы</a>
+    <span class="spacer"></span>
+    <span>Сделано clean-room. Не связано с другими приложениями-будильниками.</span>
+  </div>
+</footer>
+</body>
+</html>

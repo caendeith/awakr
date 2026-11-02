@@ -1,6 +1,7 @@
 package io.github.caendeith.awakr.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -18,13 +19,16 @@ import io.github.caendeith.awakr.core.audio.SoundResolver
 import io.github.caendeith.awakr.core.time.NextOccurrence
 import io.github.caendeith.awakr.data.AwakrData
 import io.github.caendeith.awakr.data.settings.AppSettings
+import io.github.caendeith.awakr.locale.AppLanguage
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 import io.github.caendeith.awakr.ui.about.AboutScreen
 import io.github.caendeith.awakr.ui.editor.AlarmEditorScreen
 import io.github.caendeith.awakr.ui.home.HomeScreen
 import io.github.caendeith.awakr.ui.onboarding.OnboardingScreen
 import io.github.caendeith.awakr.ui.plugins.PluginsScreen
+import io.github.caendeith.awakr.ui.settings.BackupScreen
 import io.github.caendeith.awakr.ui.settings.SettingsScreen
+import io.github.caendeith.awakr.ui.widget.AlarmWidgetUpdater
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -98,6 +102,8 @@ fun AwakrNavHost(
         }
         composable(Routes.HOME) {
             val alarms by data.alarms.observeAll().collectAsState(initial = emptyList<Alarm>())
+            // The widget has no periodic update: repaint it whenever the alarm list changes.
+            LaunchedEffect(alarms) { AlarmWidgetUpdater.update(app) }
             HomeScreen(
                 alarms = alarms,
                 missionLabel = missionLabel,
@@ -223,12 +229,29 @@ fun AwakrNavHost(
                 onOpenPermissions = { navController.navigate(Routes.ONBOARDING) },
                 onOpenPlugins = { navController.navigate(Routes.PLUGINS) },
                 onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                onOpenBackup = { navController.navigate(Routes.BACKUP) },
                 onThemeChange = { mode -> scope.launch { data.settings.setThemeMode(mode) } },
                 onSwipeChange = { action -> scope.launch { data.settings.setSwipeAction(action) } },
                 onDefaultSoundChange = { soundId ->
                     scope.launch { data.settings.setDefaultSound(soundId) }
                 },
                 onSnoozeChange = { minutes -> scope.launch { data.settings.setDefaultSnoozeMinutes(minutes) } },
+                onDynamicColorChange = { value -> scope.launch { data.settings.setDynamicColor(value) } },
+                onPreAlertChange = { minutes ->
+                    scope.launch {
+                        data.settings.setPreAlertMinutes(minutes)
+                        // Each alarm carries its own pre-alert trigger, so the new lead time only
+                        // takes effect for alarms that are re-armed now.
+                        app.scheduler.rescheduleAll(data.alarms.enabledAlarms())
+                    }
+                },
+                onLanguageChange = { language ->
+                    scope.launch {
+                        // Store first: AppCompat recreates the screen for the new locale right away.
+                        data.settings.setLanguage(language)
+                        AppLanguage.apply(language)
+                    }
+                },
             )
         }
         composable(Routes.PLUGINS) {
@@ -238,6 +261,9 @@ fun AwakrNavHost(
                 missionLabel = missionLabel,
                 onBack = { navController.popBackStack() },
             )
+        }
+        composable(Routes.BACKUP) {
+            BackupScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.ABOUT) {
             AboutScreen(

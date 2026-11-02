@@ -1,6 +1,7 @@
 package io.github.caendeith.awakr.core.time
 
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
@@ -22,8 +23,11 @@ object NextOccurrence {
 
     /**
      * @param daysMask repeat mask, or 0 for a one-shot alarm
-     * @param skipNextAt epoch millis of a single occurrence the user asked to skip, or null
-     * @return the earliest instant strictly after [now], or null when it cannot be computed
+     * @param skipNextAt epoch millis of the last occurrence the user asked to skip, or null;
+     *   every occurrence at or before this moment is suppressed, so pressing "skip next" twice
+     *   moves the alarm two occurrences ahead instead of landing on the same instant again
+     * @return the earliest instant strictly after [now] and after [skipNextAt], or null when it
+     *   cannot be computed (a one-shot alarm whose only occurrence was skipped)
      */
     fun next(
         now: ZonedDateTime,
@@ -34,11 +38,12 @@ object NextOccurrence {
     ): ZonedDateTime? {
         val first = nextAfter(now, hour, minute, daysMask) ?: return null
         if (skipNextAt == null) return first
-        if (first.toInstant().toEpochMilli() != skipNextAt) return first
+        if (first.toInstant().toEpochMilli() > skipNextAt) return first
         // A one-shot alarm has nothing left to skip to: it is effectively done.
         if (daysMask == 0) return null
-        // The skipped occurrence is the immediate next one: look one minute past it.
-        return nextAfter(first.plusMinutes(1), hour, minute, daysMask)
+        // Everything up to the skipped moment is gone: continue one minute past it.
+        val after = ZonedDateTime.ofInstant(Instant.ofEpochMilli(skipNextAt), now.zone)
+        return nextAfter(after.plusMinutes(1), hour, minute, daysMask)
     }
 
     private fun nextAfter(now: ZonedDateTime, hour: Int, minute: Int, daysMask: Int): ZonedDateTime? {

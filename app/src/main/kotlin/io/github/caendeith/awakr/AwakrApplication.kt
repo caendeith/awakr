@@ -7,6 +7,7 @@ import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.alarm.Days
 import io.github.caendeith.awakr.core.notify.AwakrNotifications
 import io.github.caendeith.awakr.data.AwakrData
+import io.github.caendeith.awakr.locale.AppLanguage
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 import io.github.caendeith.awakr.plugins.mission.math.MathMissionPlugin
 import io.github.caendeith.awakr.plugins.mission.code.CodeMissionPlugin
@@ -60,6 +61,8 @@ class AwakrApplication : Application() {
         super.onCreate()
         AwakrNotifications.ensureChannels(this)
         data = AwakrData.create(this)
+        // Before the first activity is created: AppCompat then attaches the stored locale to it.
+        AppLanguage.applyStored(data.settings)
         appScope.launch {
             seedSampleAlarms()
             // Soft-deleted alarms only live until the next start; the undo window is a few seconds.

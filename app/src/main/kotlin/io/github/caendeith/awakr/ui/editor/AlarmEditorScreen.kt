@@ -82,6 +82,7 @@ import io.github.caendeith.awakr.ui.format.formatTime
 import io.github.caendeith.awakr.ui.format.parseMissionConfig
 import io.github.caendeith.awakr.ui.format.rememberNow
 import kotlinx.coroutines.Dispatchers
+import io.github.caendeith.awakr.ui.sound.SoundPickerSheet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -436,59 +437,12 @@ fun AlarmEditorScreen(
         }
 
         if (showSoundSheet) {
-            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-            ModalBottomSheet(
-                onDismissRequest = { showSoundSheet = false },
-                sheetState = sheetState,
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .padding(bottom = 24.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.editor_sound_choose),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp),
-                    )
-                    SoundRow(
-                        title = stringResource(R.string.editor_sound_default),
-                        selected = current.soundId.isBlank(),
-                        onClick = {
-                            player.stop()
-                            draft = current.copy(soundId = "")
-                            showSoundSheet = false
-                        },
-                    )
-                    BuiltinSounds.all.forEach { sound ->
-                        val id = BuiltinSounds.idOf(sound)
-                        SoundRow(
-                            title = stringResource(sound.nameRes),
-                            selected = current.soundId == id,
-                            onClick = {
-                                player.play(
-                                    uri = SoundResolver.uri(context, id, defaultSoundId),
-                                    rampSeconds = 0,
-                                    startVolumePercent = 100,
-                                    scope = scope,
-                                )
-                                draft = current.copy(soundId = id)
-                            },
-                        )
-                    }
-                    SoundRow(
-                        title = stringResource(R.string.editor_sound_custom),
-                        selected = current.soundId.startsWith("file:"),
-                        onClick = {
-                            player.stop()
-                            showSoundSheet = false
-                            importSound.launch(arrayOf("audio/*"))
-                        },
-                    )
-                }
-            }
+            SoundPickerSheet(
+                currentSoundId = current?.soundId ?: "",
+                defaultSoundId = defaultSoundId,
+                onPick = { draft = draft?.copy(soundId = it) },
+                onDismiss = { showSoundSheet = false },
+            )
         }
 
         if (showDeleteDialog) {

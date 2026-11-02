@@ -53,6 +53,7 @@ class AlarmScheduler(private val context: Context) {
                 manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)
                 Log.w(TAG, "inexact fallback for alarm ${alarm.id} at $next")
             }
+            PreAlert.schedule(context, alarm, triggerAt)
         } catch (e: SecurityException) {
             Log.e(TAG, "cannot schedule alarm ${alarm.id}", e)
         }
@@ -83,6 +84,7 @@ class AlarmScheduler(private val context: Context) {
     fun cancel(alarmId: Long) {
         alarmManager?.cancel(AlarmIntents.ringPendingIntent(context, alarmId))
         alarmManager?.cancel(AlarmIntents.ringPendingIntent(context, alarmId, snooze = true))
+        PreAlert.cancel(context, alarmId)
     }
 
     fun rescheduleAll(alarms: List<Alarm>) {

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_title">Резервная копия</string>
+    <string name="backup_section_export">Экспорт</string>
+    <string name="backup_section_import">Импорт</string>
+
+    <string name="backup_export_title">Сохранить копию</string>
+    <string name="backup_export_desc">Запишет будильники и настройки в JSON-файл в выбранную папку.</string>
+    <string name="backup_export_action">Экспорт в файл</string>
+
+    <string name="backup_import_title">Восстановить из файла</string>
+    <string name="backup_import_desc">Прочитает копию Awakr и добавит будильники или заменит ими текущие.</string>
+    <string name="backup_import_action">Выбрать файл</string>
+
+    <string name="backup_mode_title">Как восстановить копию?</string>
+    <string name="backup_mode_replace">Заменить всё</string>
+    <string name="backup_mode_replace_desc">Удалит будильники на этом устройстве и восстановит копию.</string>
+    <string name="backup_mode_merge">Добавить к текущим</string>
+    <string name="backup_mode_merge_desc">Оставит текущие будильники и добавит будильники из копии.</string>
+    <string name="backup_mode_cancel">Отмена</string>
+
+    <string name="backup_exported">Копия сохранена: будильников — %1$d.</string>
+    <string name="backup_imported">Импортировано будильников: %1$d.</string>
+    <string name="backup_imported_skipped">Импортировано будильников: %1$d, пропущено записей: %2$d.</string>
+    <string name="backup_import_empty">В файле нет будильников.</string>
+    <string name="backup_working">Выполняется…</string>
+
+    <string name="backup_error_read">Не удалось прочитать файл.</string>
+    <string name="backup_error_write">Не удалось записать файл.</string>
+    <string name="backup_error_not_awakr">Это не файл резервной копии Awakr.</string>
+    <string name="backup_error_schema">Копия создана более новой версией Awakr.</string>
+    <string name="backup_error_malformed">Файл повреждён или не является корректным JSON.</string>
+    <string name="backup_note">Копии остаются на этом устройстве, если вы сами ими не поделитесь.</string>
+</resources>

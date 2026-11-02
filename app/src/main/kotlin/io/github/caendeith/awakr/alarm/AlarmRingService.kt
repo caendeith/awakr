@@ -24,6 +24,7 @@ import io.github.caendeith.awakr.core.audio.AlarmSoundPlayer
 import io.github.caendeith.awakr.core.audio.SoundResolver
 import io.github.caendeith.awakr.core.notify.AwakrNotifications
 import io.github.caendeith.awakr.ui.format.formatTime
+import io.github.caendeith.awakr.ui.widget.AlarmWidgetUpdater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -89,13 +90,25 @@ class AlarmRingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             AlarmIntents.ACTION_DISMISS -> {
-                finish(
-                    outcome = AlarmOutcome.DISMISSED,
-                    missionPassed = intent.getBooleanExtra(AlarmIntents.EXTRA_MISSION_PASSED, false),
-                )
+                // A late tap (the ring already timed out) must not write a second, contradictory
+                // log row for an occurrence that has been finished once.
+                if (!ringing) {
+                    Log.i(TAG, "dismiss without a ring, ignoring")
+                    if (pendingRings.isEmpty()) stopSelf()
+                } else {
+                    finish(
+                        outcome = AlarmOutcome.DISMISSED,
+                        missionPassed = intent.getBooleanExtra(AlarmIntents.EXTRA_MISSION_PASSED, false),
+                    )
+                }
             }
             AlarmIntents.ACTION_SNOOZE -> {
-                snooze()
+                if (!ringing) {
+                    Log.i(TAG, "snooze without a ring, ignoring")
+                    if (pendingRings.isEmpty()) stopSelf()
+                } else {
+                    snooze()
+                }
             }
             AlarmIntents.ACTION_SET_SILENCED -> {
                 setSilenced(intent.getBooleanExtra(AlarmIntents.EXTRA_SILENCED, false))
@@ -309,6 +322,8 @@ class AlarmRingService : Service() {
         ringingAlarmId = 0L
         currentAlarm = null
         stopForeground(STOP_FOREGROUND_REMOVE)
+        // A finished ring disables a one-shot or re-arms a repeating alarm: repaint the widget.
+        AlarmWidgetUpdater.requestUpdate(this)
         val next = pendingRings.removeFirstOrNull()
         if (next != null) {
             Log.i(TAG, "starting queued alarm ${next.alarmId}")
@@ -407,7 +422,14 @@ class AlarmRingService : Service() {
 
     companion object {
         private const val TAG = "AlarmRingService"
-        private const val RING_TIMEOUT_MS = 10 * 60_000L
+        /**
+         * How long a ring may stay unanswered before it is recorded as missed.
+         *
+         * The mission has its own 90 second timer, and a user can fail it many times in a row, so
+         * the ceiling has to be generous: a ring that is still being worked on must not turn into
+         * a "missed" entry while the screen is up.
+         */
+        private const val RING_TIMEOUT_MS = 30 * 60_000L
 
         /** Longest time the mission timer may keep the ring silent before the sound comes back. */
         private const val MAX_SILENCE_MS = 3 * 60_000L

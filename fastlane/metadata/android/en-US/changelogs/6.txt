@@ -1,0 +1,7 @@
+New in 1.3.0:
+- Backup and restore: export your alarms and settings to a JSON file and import them back (replace or merge).
+- Home screen widget: the next alarm with a one-tap "Skip next".
+- Sound packs: choose a gentle or a loud tone, or record your own (up to 30 seconds).
+- Material You colours on Android 12 and newer.
+- A quiet heads-up notification before an alarm, 10 to 60 minutes ahead.
+- English and Russian: switch the app language in Settings without a restart (System / English / Русский).

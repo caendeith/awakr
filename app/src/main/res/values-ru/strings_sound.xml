@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sound picker: pack chips and section headers. -->
+    <string name="sound_picker_close">Закрыть</string>
+    <string name="sound_picker_pack_all">Все</string>
+    <string name="sound_picker_pack_gentle">Мягкие</string>
+    <string name="sound_picker_pack_loud">Громкие</string>
+    <string name="sound_picker_pack_recorded">Записанные</string>
+    <string name="sound_picker_recorded_empty">Пока ничего нет. Запишите звук ниже.</string>
+    <string name="sound_picker_import">Импорт файла…</string>
+    <string name="sound_picker_import_failed">Не удалось импортировать файл.</string>
+    <string name="sound_picker_delete_failed">Не удалось удалить файл.</string>
+    <string name="sound_picker_preview">Прослушать</string>
+    <string name="sound_picker_stop">Остановить</string>
+
+    <!-- Recording a custom alarm sound. -->
+    <string name="sound_record_title">Записать свой звук</string>
+    <string name="sound_record_hint">До 30 секунд. Хранится только на этом устройстве.</string>
+    <string name="sound_record_start">Записать</string>
+    <string name="sound_record_stop">Стоп</string>
+    <string name="sound_record_again">Записать заново</string>
+    <string name="sound_record_use">Использовать звук</string>
+    <string name="sound_record_elapsed">Записано %1$s, осталось %2$s</string>
+    <string name="sound_record_delete_title">Удалить запись?</string>
+    <string name="sound_record_delete_message">Файл будет удалён с устройства. Будильники с этим звуком будут использовать звук по умолчанию.</string>
+    <string name="sound_record_delete_action">Удалить запись</string>
+    <string name="sound_record_rationale">Микрофон используется только во время записи. Ничего не отправляется в сеть.</string>
+    <string name="sound_record_allow">Разрешить микрофон</string>
+    <string name="sound_record_denied">Доступ к микрофону выключен. Включите его в настройках, чтобы записать звук.</string>
+    <string name="sound_record_settings">Открыть настройки</string>
+    <string name="sound_record_unsupported">На этом устройстве нет микрофона.</string>
+    <string name="sound_record_failed">Не удалось записать. Попробуйте снова.</string>
+    <string name="sound_record_too_short">Слишком коротко — держите кнопку чуть дольше.</string>
+    <string name="sound_record_saved">Сохранено на этом устройстве.</string>
+</resources>
