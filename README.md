@@ -14,10 +14,10 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 <img alt="Kotlin 2.2" src="https://img.shields.io/badge/Kotlin-2.2.21-7f52ff?logo=kotlin&logoColor=white">
 <img alt="Jetpack Compose" src="https://img.shields.io/badge/Compose-Material%203-4285f4">
 <img alt="No INTERNET permission" src="https://img.shields.io/badge/INTERNET-not%20requested-critical">
-<img alt="Version" src="https://img.shields.io/badge/version-1.2.0-informational">
+<img alt="Version" src="https://img.shields.io/badge/version-1.2.2-informational">
 </p>
 
-<p><sub>100 unit tests · release APK 4.3 MB · cold start 479 ms · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
+<p><sub>104 unit tests · release APK 4.3 MB · cold start 479 ms · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
 
 <p>
 <a href="https://caendeith.github.io/awakr/"><b>Website</b></a> ·
