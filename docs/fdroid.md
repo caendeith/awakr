@@ -128,14 +128,55 @@ What the F-Droid build server expects:
   up to date before each release.
 
 The merge request can only be opened by the account that owns the fork, so it is a manual step for the
-maintainer:
+maintainer.
 
-1. Fork `https://gitlab.com/fdroid/fdroiddata`.
-2. Add `metadata/io.github.caendeith.awakr.yml` (copy of the draft above, with the newest tag).
-3. Commit as `io.github.caendeith.awakr: add Awakr <version>` and open a merge request against
-   `master`, describing what the app does and confirming it builds without proprietary dependencies.
-4. Answer the reviewer questions (usually about the GNSS/network permissions – there are none, and
-   about the missions' camera use).
+### Click by click (GitLab web UI)
+
+1. Fork: open <https://gitlab.com/fdroid/fdroiddata/-/forks/new>, pick your namespace, name the project
+   `fdroiddata`, visibility *Public*, press **Fork project**. Wait a minute for the fork to finish.
+2. Open your fork: `https://gitlab.com/<your-user>/fdroiddata`.
+3. **Code → branches → New branch**, name it `io.github.caendeith.awakr`, create from `master`.
+4. With that branch selected press **+ → New file**, path
+   `metadata/io.github.caendeith.awakr.yml`, and paste the YAML block above.
+5. Commit message `New app: io.github.caendeith.awakr`, keep *Commit to branch
+   io.github.caendeith.awakr*, tick **Start a new merge request**.
+6. On the merge request form keep the target `fdroid/fdroiddata` `master`, title
+   `New app: Awakr (io.github.caendeith.awakr)`, and use the description template below.
+7. Submit. Their CI runs `fdroid lint` (metadata schema, fastlane, screenshots) and a test build; fix
+   anything reported in red before asking for review.
+8. Answer the reviewers. After the merge the app is built on their server and shows up on
+   <https://f-droid.org> with the next index update (usually a few days).
+
+### Merge request description
+
+```text
+Awakr is an alarm clock that makes you solve a mission before it lets you out of bed: math, a QR or
+barcode you stick in the bathroom, shaking the phone, or typing a phrase. Alarmy asks 100 EUR a year
+for that; Awakr is MIT, has no ads, no subscription, no account and no INTERNET permission at all, so
+nothing can leave the device.
+
+Why it is a good fit for F-Droid:
+- no network permission, no proprietary SDKs (Compose, Room, DataStore, WorkManager, CameraX, ZXing),
+- no ads, no tracking, no analytics, no crash reporting, no anti-features,
+- 100% free software, MIT, source and releases on GitHub,
+- missions live in separate Gradle modules behind a public plugin API, so the core has no idea what
+  a mission is.
+
+Build notes:
+- the repository builds with `./gradlew assembleRelease` straight from the tag, it does not need a
+  signing config (the release type stays unsigned when `keystore.properties` is absent),
+- dependencies come from Google Maven and Maven Central; regional mirrors are opt-in and off by
+  default,
+- `app/build.gradle.kts` pins compileSdk/targetSdk 36, minSdk 26 and build-tools 36.0.0.
+
+Upstream: https://github.com/caendeith/awakr
+```
 
 Until that merge request is merged, updates for users come from GitHub Releases and from our own
 repository described above.
+
+### One thing to warn users about
+
+F-Droid builds the app on its own server and signs it with **its** key, so an APK from f-droid.org
+cannot be installed over the one from our repository or from GitHub Releases (and the other way
+round). Pick one source per device; switching means uninstalling first, which deletes the alarms.
