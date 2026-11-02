@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "d6354e5e404dddb5d9415213eef7dc49",
+    "identityHash": "668d9d61769ec13ed79ae2d85cf50378",
     "entities": [
       {
         "tableName": "alarms",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `hour` INTEGER NOT NULL, `minute` INTEGER NOT NULL, `days_mask` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `label` TEXT NOT NULL, `sound_uri` TEXT, `sound_pack_id` TEXT, `sound_id` TEXT NOT NULL, `ramp_seconds` INTEGER NOT NULL, `volume_start` INTEGER NOT NULL, `vibrate` INTEGER NOT NULL, `snooze_enabled` INTEGER NOT NULL, `snooze_minutes` INTEGER NOT NULL, `max_snoozes` INTEGER NOT NULL, `mission_plugin_id` TEXT NOT NULL, `mission_config` TEXT NOT NULL, `sort_order` INTEGER NOT NULL, `skip_next_at` INTEGER, `deleted_at` INTEGER, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `hour` INTEGER NOT NULL, `minute` INTEGER NOT NULL, `days_mask` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `label` TEXT NOT NULL, `sound_uri` TEXT, `sound_pack_id` TEXT, `sound_id` TEXT NOT NULL, `ramp_seconds` INTEGER NOT NULL, `volume_start` INTEGER NOT NULL, `vibrate` INTEGER NOT NULL, `snooze_enabled` INTEGER NOT NULL, `snooze_minutes` INTEGER NOT NULL, `max_snoozes` INTEGER NOT NULL, `mission_plugin_id` TEXT NOT NULL, `mission_config` TEXT NOT NULL, `mission_chain` TEXT NOT NULL, `sort_order` INTEGER NOT NULL, `skip_next_at` INTEGER, `deleted_at` INTEGER, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -105,6 +105,12 @@
           {
             "fieldPath": "missionConfig",
             "columnName": "mission_config",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "missionChain",
+            "columnName": "mission_chain",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -245,7 +251,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd6354e5e404dddb5d9415213eef7dc49')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '668d9d61769ec13ed79ae2d85cf50378')"
     ]
   }
 }

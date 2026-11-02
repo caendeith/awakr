@@ -2,6 +2,7 @@ package io.github.caendeith.awakr.ui.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
@@ -102,6 +104,7 @@ fun HomeScreen(
     onAddAlarm: () -> Unit,
     onEditAlarm: (Long) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenStats: () -> Unit = {},
     missedLabels: List<String> = emptyList(),
     swipeAction: SwipeAction = SwipeAction.DELETE,
     onDelete: (List<Long>) -> Unit = {},
@@ -278,6 +281,12 @@ fun HomeScreen(
                         now = now,
                     )
                 }
+                // Hidden while rows are being selected so the shortcut cannot leave the screen.
+                if (!selectMode) {
+                    item(key = "stats") {
+                        StatsShortcutCard(onClick = onOpenStats)
+                    }
+                }
                 if (missedLabels.isNotEmpty()) {
                     item(key = "missed") { MissedCard(missedLabels) }
                 }
@@ -378,6 +387,41 @@ private fun Pill(text: String) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+/** Quiet entry point to the history screen, sitting right under the next-alarm card. */
+@Composable
+private fun StatsShortcutCard(onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.stats_shortcut_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text = stringResource(R.string.stats_shortcut_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

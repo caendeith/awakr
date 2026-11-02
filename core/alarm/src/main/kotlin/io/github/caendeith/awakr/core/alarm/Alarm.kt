@@ -28,6 +28,8 @@ data class Alarm(
     val maxSnoozes: Int = 3,
     val missionPluginId: String = "math",
     val missionConfig: String = "{}",
+    /** Several missions in a row as a JSON array of steps: [{kind, config}]. Empty means one mission. */
+    val missionChain: String = "[]",
     val sortOrder: Int = 0,
     val skipNextAt: Long? = null,
     val deletedAt: Long? = null,

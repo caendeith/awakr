@@ -3,6 +3,7 @@ package io.github.caendeith.awakr.core.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -61,6 +62,28 @@ private val LightScheme = lightColorScheme(
     outlineVariant = OutlineLight,
 )
 
+/** The accent the user picked in Settings. Amber is the brand default. */
+enum class AccentColor {
+    AMBER,
+    BLUE,
+    GREEN,
+    VIOLET,
+    ;
+
+    companion object {
+        fun of(preference: String?): AccentColor =
+            entries.firstOrNull { it.name.equals(preference, ignoreCase = true) } ?: AMBER
+    }
+}
+
+/** Swaps only the primary family, so the ink surfaces and the typography stay untouched. */
+private fun ColorScheme.withAccent(accent: AccentColor): ColorScheme = when (accent) {
+    AccentColor.AMBER -> this
+    AccentColor.BLUE -> copy(primary = Blue, onPrimary = OnBlue, primaryContainer = BlueContainer, secondary = Blue, onSecondary = OnBlue)
+    AccentColor.GREEN -> copy(primary = Green, onPrimary = OnGreen, primaryContainer = GreenContainer, secondary = Green, onSecondary = OnGreen)
+    AccentColor.VIOLET -> copy(primary = Violet, onPrimary = OnViolet, primaryContainer = VioletContainer, secondary = Violet, onSecondary = OnViolet)
+}
+
 /**
  * Awakr theme. Dark by default: the app is used in the dark, minutes after waking up.
  * Dynamic color is opt-in and never the default brand experience.
@@ -69,6 +92,7 @@ private val LightScheme = lightColorScheme(
 fun AwakrTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
+    accent: AccentColor = AccentColor.AMBER,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -76,8 +100,8 @@ fun AwakrTheme(
     val colorScheme = when {
         dynamicColor && supportsDynamic ->
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        darkTheme -> DarkScheme
-        else -> LightScheme
+        darkTheme -> DarkScheme.withAccent(accent)
+        else -> LightScheme.withAccent(accent)
     }
 
     val view = LocalView.current

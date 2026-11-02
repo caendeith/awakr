@@ -194,3 +194,20 @@ shows `minWidth 250dp`, `minHeight 110dp`, `resizeMode 0x2`, `targetCell 4x2`.
 | changing the pre-alert lead time did not affect alarms that were already scheduled | the reminder is armed next to every alarm at scheduling time, so only a re-arm picks up the new value | `AwakrNavHost` calls `scheduler.rescheduleAll(enabledAlarms())` after the setting changes |
 | a ring left on screen for ten minutes was logged as missed, and a later tap on "Snooze" wrote a second, contradictory row (`MISSED` then `SNOOZED`) plus a "Missed — the alarm never rang" card for an alarm that had rung | `RING_TIMEOUT_MS` was 10 minutes even though the mission can be failed and restarted many times, and `ACTION_DISMISS`/`ACTION_SNOOZE` were handled even when nothing was ringing | the ceiling is now 30 minutes, and both actions are ignored with a log line when no ring is active — the same guard `setSilenced` already had |
 | a backup did not carry the three newer settings | the settings section of the format predates `dynamicColor`, `preAlertMinutes` and `language` | the codec writes them when present, reads an absent key as "keep the current value" and merges against the live settings; `BackupCodecTest` +4 and the new `BackupSettingsMergeTest` |
+
+## v1.4.0 pass — chains, four more missions, stats, wake-up check
+
+Built and installed? No: the Pixel 7 Pro was not attached over USB during this release
+(`adb devices` returned no devices), so the table below records what the build, the unit tests and
+the code review cover. Everything marked ⏳ still has to be confirmed on hardware.
+
+| Area | What was done | Result |
+|---|---|---|
+| Mission chain | editor → add three steps, reorder with the arrows, save, reopen | ✅ DB migration 2→3 adds `mission_chain`; `MissionChainTest` 7/7; `RingScreen` plays `RingMission` items in order with "Mission i of n" and restarts the timer per step; `RingActivity` resolves the chain through `produceState` |
+| Chain on the ring | dismiss only the last step | ⏳ needs a device: the first stage must not stop the ring |
+| Memory / colour / squat / step | four new plugin modules, no new permissions | ✅ 26 unit tests; the modules are registered in `settings.gradle.kts`, `app/build.gradle.kts` and `AwakrApplication.kt` (8 missions in the list); the merged manifest gained nothing |
+| Statistics | Home → Stats, 7/30 day switch | ✅ `StatsCalculatorTest` 23/23, including the two bugs the review caught (`CircularTime` returned 1440 instead of 0 for midnight; snoozes summed the whole chain counter) |
+| Wake-up check | Settings → Wake up check → 1 min, dismiss an alarm, wait | ⏳ device only; `WakeUpCheckPolicyTest` covers the encode/decode and the option list, and `AlarmScheduler` cancels the check on dismiss and snooze |
+| Spoken label / accent colour / panic ramp | Settings → Speak the label, Accent colour; ring for 40 s | ⏳ device only (TextToSpeech needs the system engine); the accent palette is a pure `ColorScheme` transform |
+| Ring screen after backgrounding | swipe the ring away, tap the notification | ⏳ device only: `onResume` / `onNewIntent` re-apply `showWhenLocked` and `KEEP_SCREEN_ON`, `onStop` re-posts the ringing notification, and the legacy API<27 branch no longer uses `FLAG_DISMISS_KEYGUARD` (that flag is what asked for the PIN) |
+

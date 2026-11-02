@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="stats_title">Statistics</string>
+    <string name="stats_range_week">7 days</string>
+    <string name="stats_range_month">30 days</string>
+
+    <string name="stats_value_none" translatable="false">—</string>
+    <string name="stats_value_percent">%1$d%%</string>
+
+    <string name="stats_kpi_successful">Wake-ups</string>
+    <string name="stats_kpi_missed">Missed</string>
+    <string name="stats_kpi_snoozes">Snoozes</string>
+    <string name="stats_kpi_rate">Success rate</string>
+
+    <string name="stats_average_title">Average wake-up time</string>
+    <string name="stats_average_basis">Wake-ups: %1$d</string>
+    <string name="stats_average_empty">No wake-ups in this period</string>
+
+    <string name="stats_chart_title">Wake-up times</string>
+    <string name="stats_chart_subtitle">Each dot is one day</string>
+    <string name="stats_chart_empty">No wake-up times yet</string>
+    <string name="stats_chart_description">Chart of wake-up times for the last %1$d days</string>
+
+    <string name="stats_streak_title">Current streak</string>
+    <string name="stats_streak_body">Days in a row with a wake-up</string>
+    <string name="stats_streak_value">%1$d d</string>
+
+    <string name="stats_empty_title">No history for this period</string>
+    <string name="stats_empty_body">Statistics appear after your alarms ring. Pick a longer range if your history is older.</string>
+
+    <string name="stats_shortcut_title">Statistics</string>
+    <string name="stats_shortcut_body">Wake-ups, misses and times</string>
+</resources>

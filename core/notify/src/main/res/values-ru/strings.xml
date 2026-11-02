@@ -7,4 +7,6 @@
     <string name="channel_service_name">Движок будильников</string>
     <string name="channel_pre_alert_name">Скоро будильник</string>
     <string name="channel_pre_alert_description">Тихое напоминание за несколько минут до будильника</string>
+    <string name="channel_wake_up_check_name">Проверка на пробуждение</string>
+    <string name="channel_wake_up_check_description">Просит подтвердить, что вы проснулись, после отключения будильника</string>
 </resources>

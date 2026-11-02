@@ -189,7 +189,7 @@
         </div>
         <div class="hero-meta">
           <span><b class="tick">✓</b> Android 8.0+ (API 26)</span>
-          <span><b class="tick">✓</b> APK 5,2 МБ</span>
+          <span><b class="tick">✓</b> APK 5,3 МБ</span>
           <span><b class="tick">✓</b> без разрешения INTERNET</span>
           <span><b class="tick">✓</b> ru + en</span>
         </div>
@@ -201,10 +201,10 @@
     </div>
 
     <div class="badges">
-      <span class="chip"><b>185</b> юнит-тестов</span>
+      <span class="chip"><b>254</b> юнит-теста</span>
       <span class="chip">холодный старт <b>479 мс</b></span>
       <span class="chip">Kotlin <b>2.2.21</b> · Compose <b>M3</b></span>
-      <span class="chip">релизный APK <b>5,2 МБ</b></span>
+      <span class="chip">релизный APK <b>5,3 МБ</b></span>
       <span class="chip">clean-room: ни кода, ни ресурсов из Alarmy</span>
     </div>
   </div>
@@ -256,6 +256,21 @@
           <h3>О пропущенных будильниках сообщается</h3>
           <p>Если телефон был выключен или приложение принудительно остановили, карточка и уведомление скажут, что будильник не прозвенел — один раз, а не при каждом запуске.</p>
         </div>
+        <div class="card">
+          <div class="ico">🔗</div>
+          <h3>Три миссии подряд</h3>
+          <p>До трёх разных миссий в цепочке на одном будильнике. Каждый этап даёт новое задание, а будильник замолкает только после последнего.</p>
+        </div>
+        <div class="card">
+          <div class="ico">📈</div>
+          <h3>Видно, как вы просыпаетесь</h3>
+          <p>Каждый звонок пишется в журнал. Экран статистики показывает стрик за 7 или 30 дней, число выключений, отложек и пропусков и среднее время подъёма.</p>
+        </div>
+        <div class="card">
+          <div class="ico">👀</div>
+          <h3>Проверка пробуждения</h3>
+          <p>Необязательное напоминание через 100 секунд после выключения - для утр, когда «я встал» оказывается неправдой.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -263,7 +278,7 @@
   <section id="missions">
     <div class="wrap">
       <div class="section-head">
-        <h2>Четыре способа доказать, что вы проснулись</h2>
+        <h2>Восемь способов доказать, что вы проснулись</h2>
         <p>У каждой миссии свои настройки в редакторе будильника. Отключите плагин — и будильник предложит отключить его удержанием, а не будет звонить бесконечно.</p>
       </div>
       <div class="missions">
@@ -282,6 +297,22 @@
         <div class="mission">
           <h3>Ввод текста <span class="tag">typing</span></h3>
           <p>Введите заданную фразу точно. Никаких «1234» и случайных отключений.</p>
+        </div>
+        <div class="mission">
+          <h3>Память <span class="tag">memory</span></h3>
+          <p>Сетка 4x4 вспыхивает короткой последовательностью; повторите её по порядку.</p>
+        </div>
+        <div class="mission">
+          <h3>Цвет <span class="tag">color</span></h3>
+          <p>Найдите плитки заданного цвета среди отвлекающих.</p>
+        </div>
+        <div class="mission">
+          <h3>Приседания <span class="tag">squat</span></h3>
+          <p>Настоящие приседания по акселерометру - без камеры и лишних разрешений.</p>
+        </div>
+        <div class="mission">
+          <h3>Шаги <span class="tag">step</span></h3>
+          <p>Пройдите заданное число шагов. Считается по акселерометру, а не по счётчику шагов.</p>
         </div>
       </div>
       <div class="note">
@@ -317,9 +348,9 @@
       <div class="split">
         <div class="pane">
           <h3>Из APK</h3>
-          <p class="hint">Скачайте <a href="https://github.com/caendeith/awakr/releases/download/v1.3.0/Awakr-1.3.0.apk"><code>Awakr-1.3.0.apk</code></a>, разрешите установку из неизвестных источников, откройте файл.</p>
+          <p class="hint">Скачайте <a href="https://github.com/caendeith/awakr/releases/download/v1.4.0/Awakr-1.4.0.apk"><code>Awakr-1.4.0.apk</code></a>, разрешите установку из неизвестных источников, откройте файл.</p>
           <pre><span class="c"># или по USB</span>
-adb install -r Awakr-1.3.0.apk</pre>
+adb install -r Awakr-1.4.0.apk</pre>
         </div>
         <div class="pane">
           <h3>Из исходников</h3>

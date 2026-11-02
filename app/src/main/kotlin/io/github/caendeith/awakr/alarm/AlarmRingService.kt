@@ -12,6 +12,7 @@ import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -33,6 +34,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Locale
 
 /**
  * Keeps an alarm ringing in the foreground: plays the sound, vibrates and shows the
@@ -47,6 +50,8 @@ class AlarmRingService : Service() {
     private var vibrator: Vibrator? = null
     private var currentAlarm: Alarm? = null
     private var timeoutJob: Job? = null
+    private var panicJob: Job? = null
+    private var speech: TextToSpeech? = null
 
     /** Safety net that un-mutes the sound if the ring screen disappears without doing it. */
     private var silenceWatchdog: Job? = null
@@ -55,6 +60,12 @@ class AlarmRingService : Service() {
 
     /** How many times the current occurrence has already been snoozed. */
     private var snoozeCount = 0
+
+    /**
+     * True while the current ring repeats an occurrence the user already dismissed (wake-up
+     * check). Such a ring is part of the earlier occurrence, not a new one.
+     */
+    private var reRingFromCheck = false
 
     /** Id of the alarm that is ringing right now; 0 when nothing rings. */
     private var ringingAlarmId = 0L
@@ -66,7 +77,12 @@ class AlarmRingService : Service() {
      */
     private val pendingRings = ArrayDeque<PendingRing>()
 
-    private data class PendingRing(val alarmId: Long, val triggerAt: Long, val snoozeCount: Int)
+    private data class PendingRing(
+        val alarmId: Long,
+        val triggerAt: Long,
+        val snoozeCount: Int,
+        val wakeUpCheck: Boolean,
+    )
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -110,6 +126,11 @@ class AlarmRingService : Service() {
                     snooze()
                 }
             }
+            AlarmIntents.ACTION_REPOST -> {
+                // The user pushed the ring screen away: keep the notification (and its full-screen
+                // intent) authoritative so the way back is always one tap.
+                currentAlarm?.let { alarm -> scope.launch { notifyRinging(alarm) } }
+            }
             AlarmIntents.ACTION_SET_SILENCED -> {
                 setSilenced(intent.getBooleanExtra(AlarmIntents.EXTRA_SILENCED, false))
             }
@@ -120,6 +141,8 @@ class AlarmRingService : Service() {
                         alarmId = alarmId,
                         triggerAt = intent?.getLongExtra(AlarmIntents.EXTRA_TRIGGER_AT, 0L) ?: 0L,
                         snoozeCount = intent?.getIntExtra(AlarmIntents.EXTRA_SNOOZE_COUNT, 0) ?: 0,
+                        wakeUpCheck = intent?.getBooleanExtra(AlarmIntents.EXTRA_WAKE_UP_CHECK, false)
+                            ?: false,
                     )
                 }
             }
@@ -127,7 +150,12 @@ class AlarmRingService : Service() {
         return START_STICKY
     }
 
-    private fun startRinging(alarmId: Long, triggerAt: Long = 0L, snoozeCount: Int = 0) {
+    private fun startRinging(
+        alarmId: Long,
+        triggerAt: Long = 0L,
+        snoozeCount: Int = 0,
+        wakeUpCheck: Boolean = false,
+    ) {
         if (ringingAlarmId == alarmId || pendingRings.any { it.alarmId == alarmId }) {
             // Duplicate delivery for an alarm that is already ringing or queued (full-screen intent
             // retry, repeated broadcast): the user must not hear it twice, and a stray trigger must
@@ -138,7 +166,7 @@ class AlarmRingService : Service() {
         if (ringing) {
             // Another alarm is ringing right now. Do not interrupt it and do not drop this one:
             // queue it and start it as soon as the current ring is finished.
-            pendingRings.addLast(PendingRing(alarmId, triggerAt, snoozeCount))
+            pendingRings.addLast(PendingRing(alarmId, triggerAt, snoozeCount, wakeUpCheck))
             Log.i(TAG, "queued alarm $alarmId until the current ring is finished")
             return
         }
@@ -146,6 +174,7 @@ class AlarmRingService : Service() {
         ringingAlarmId = alarmId
         this.triggerAtMillis = triggerAt
         this.snoozeCount = snoozeCount
+        this.reRingFromCheck = wakeUpCheck
         val app = application as AwakrApplication
         scope.launch {
             val alarm = runCatching { app.data.alarms.get(alarmId) }.getOrNull()
@@ -163,6 +192,17 @@ class AlarmRingService : Service() {
             launchRingActivity(alarm)
             // Resolving the sound id touches settings storage, so the UI above comes first.
             startSound(alarm)
+            speakLabelIfEnabled(alarm)
+            panicJob?.cancel()
+            panicJob = scope.launch {
+                // Alarmy calls this the backup sound: if nothing happened for a while, stop being
+                // polite and ring at full volume.
+                delay(PANIC_AFTER_MS)
+                if (ringing) {
+                    Log.i(TAG, "panic stage: ringing at full volume")
+                    soundPlayer.boost()
+                }
+            }
             timeoutJob?.cancel()
             timeoutJob = scope.launch {
                 delay(RING_TIMEOUT_MS)
@@ -191,6 +231,35 @@ class AlarmRingService : Service() {
      * settings default and finally to a shipped tone, so a deleted import can never end with a
      * silent alarm. The legacy soundUri/soundPackId columns are deliberately ignored here.
      */
+    /**
+     * Speaks the alarm label once the ring starts, when the user asked for it in Settings.
+     *
+     * Text-to-speech runs on the on-device engine, so this stays offline; when no engine is
+     * installed the utterance is dropped and the ring continues as usual.
+     */
+    private fun speakLabelIfEnabled(alarm: Alarm) {
+        if (alarm.label.isBlank()) return
+        val app = application as AwakrApplication
+        scope.launch {
+            val settings = runCatching { app.data.settings.settings.first() }.getOrNull() ?: return@launch
+            if (!settings.speakLabel) return@launch
+            val label = alarm.label
+            withContext(Dispatchers.Main) {
+                runCatching { speech?.shutdown() }
+                speech = TextToSpeech(this@AlarmRingService) { status ->
+                    if (status == TextToSpeech.SUCCESS) {
+                        runCatching {
+                            speech?.language = Locale.getDefault()
+                            speech?.speak(label, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_LABEL)
+                        }.onFailure { Log.w(TAG, "cannot speak the label", it) }
+                    } else {
+                        Log.w(TAG, "text-to-speech is unavailable ($status)")
+                    }
+                }
+            }
+        }
+    }
+
     private suspend fun startSound(alarm: Alarm) {
         val uri = SoundResolver.uri(this, alarm.soundId, defaultSoundId())
         // Logged so a support log shows which tone the alarm actually used: the user picks it in
@@ -269,26 +338,35 @@ class AlarmRingService : Service() {
 
     private fun finish(outcome: AlarmOutcome, missionPassed: Boolean) {
         Log.i(TAG, "ring finished: $outcome")
+        panicJob?.cancel()
+        panicJob = null
         val alarm = currentAlarm
+        // Read the ring state before the fields below are cleared; the work below is asynchronous.
+        val fromCheck = reRingFromCheck
+        val ringSnoozeCount = snoozeCount
         if (alarm != null) {
             val app = application as AwakrApplication
             val firedAt = System.currentTimeMillis()
             val scheduledAt = if (triggerAtMillis > 0L) triggerAtMillis else firedAt
-            // Read the counter before the fields below are cleared; the log write is asynchronous.
             val loggedSnoozeCount = if (outcome == AlarmOutcome.SNOOZED) snoozeCount + 1 else 0
             app.appScope.launch {
-                runCatching {
-                    app.data.alarmLogs.append(
-                        AlarmLog(
-                            alarmId = alarm.id,
-                            scheduledAt = scheduledAt,
-                            firedAt = firedAt,
-                            missionPluginId = alarm.missionPluginId,
-                            missionPassed = missionPassed,
-                            snoozeCount = loggedSnoozeCount,
-                            outcome = outcome,
-                        ),
-                    )
+                // A wake-up-check re-ring repeats an occurrence that is already in the history: a
+                // second row would make one alarm look like two fires in the log and in the
+                // missed-alarm sweep.
+                if (!fromCheck) {
+                    runCatching {
+                        app.data.alarmLogs.append(
+                            AlarmLog(
+                                alarmId = alarm.id,
+                                scheduledAt = scheduledAt,
+                                firedAt = firedAt,
+                                missionPluginId = alarm.missionPluginId,
+                                missionPassed = missionPassed,
+                                snoozeCount = loggedSnoozeCount,
+                                outcome = outcome,
+                            ),
+                        )
+                    }
                 }
                 // Register the next occurrence: a repeating alarm keeps coming back on its own,
                 // a one-shot alarm switches itself off once it has rung.
@@ -305,10 +383,18 @@ class AlarmRingService : Service() {
                         Log.i(TAG, "alarm ${latest.id} rescheduled after ${outcome.name}")
                     }
                 }.onFailure { Log.w(TAG, "could not reschedule alarm ${alarm.id}", it) }
+
+                if (outcome == AlarmOutcome.DISMISSED && !fromCheck) {
+                    // Dismissing is the "I am up" claim that the wake-up check verifies. Runs after
+                    // the reschedule above, which must not cancel the check it just placed.
+                    runCatching { WakeUpCheck.arm(app, alarm, ringSnoozeCount) }
+                        .onFailure { Log.w(TAG, "could not arm the wake-up check for ${alarm.id}", it) }
+                }
             }
         }
         triggerAtMillis = 0L
         snoozeCount = 0
+        reRingFromCheck = false
         timeoutJob?.cancel()
         timeoutJob = null
         silenceWatchdog?.cancel()
@@ -327,7 +413,7 @@ class AlarmRingService : Service() {
         val next = pendingRings.removeFirstOrNull()
         if (next != null) {
             Log.i(TAG, "starting queued alarm ${next.alarmId}")
-            startRinging(next.alarmId, next.triggerAt, next.snoozeCount)
+            startRinging(next.alarmId, next.triggerAt, next.snoozeCount, next.wakeUpCheck)
         } else {
             stopSelf()
         }
@@ -407,8 +493,12 @@ class AlarmRingService : Service() {
         // vibration or the "already ringing" flag behind.
         timeoutJob?.cancel()
         timeoutJob = null
+        panicJob?.cancel()
+        panicJob = null
         silenceWatchdog?.cancel()
         silenceWatchdog = null
+        runCatching { speech?.shutdown() }
+        speech = null
         runCatching { soundPlayer.stop() }
         runCatching { vibrator?.cancel() }
         runCatching { if (wakeLock?.isHeld == true) wakeLock?.release() }
@@ -431,16 +521,29 @@ class AlarmRingService : Service() {
          */
         private const val RING_TIMEOUT_MS = 30 * 60_000L
 
+        /** How long a ring stays polite before it jumps to full volume ("backup sound"). */
+        private const val PANIC_AFTER_MS = 40_000L
+
+        /** Utterance id for the spoken label; reused so a re-ring replaces the previous line. */
+        private const val UTTERANCE_LABEL = "awakr-label"
+
         /** Longest time the mission timer may keep the ring silent before the sound comes back. */
         private const val MAX_SILENCE_MS = 3 * 60_000L
         private val VIBRATION_PATTERN = longArrayOf(0, 800, 600, 800, 600, 800)
 
-        fun start(context: Context, alarmId: Long, triggerAt: Long = 0L, snoozeCount: Int = 0) {
+        fun start(
+            context: Context,
+            alarmId: Long,
+            triggerAt: Long = 0L,
+            snoozeCount: Int = 0,
+            wakeUpCheck: Boolean = false,
+        ) {
             val intent = Intent(context, AlarmRingService::class.java).apply {
                 action = AlarmIntents.ACTION_RING
                 putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
                 if (triggerAt > 0L) putExtra(AlarmIntents.EXTRA_TRIGGER_AT, triggerAt)
                 if (snoozeCount > 0) putExtra(AlarmIntents.EXTRA_SNOOZE_COUNT, snoozeCount)
+                if (wakeUpCheck) putExtra(AlarmIntents.EXTRA_WAKE_UP_CHECK, true)
             }
             ContextCompat.startForegroundService(context, intent)
         }
@@ -455,6 +558,15 @@ class AlarmRingService : Service() {
             val intent = AlarmIntents.silencedIntent(context, silenced)
             runCatching { context.startService(intent) }
                 .onFailure { Log.w(TAG, "could not set silenced=$silenced", it) }
+        }
+
+        /** Re-posts the ringing notification so its full-screen intent can bring the ring back. */
+        fun repostNotification(context: Context) {
+            val intent = Intent(context, AlarmRingService::class.java).apply {
+                action = AlarmIntents.ACTION_REPOST
+            }
+            runCatching { context.startService(intent) }
+                .onFailure { Log.w(TAG, "could not repost the ringing notification", it) }
         }
 
         fun sendAction(context: Context, action: String, missionPassed: Boolean = false) {

@@ -12,6 +12,17 @@ internal val OutlineDark = Color(0xFF2E333B)
 internal val Amber = Color(0xFFFFB020)
 internal val OnAmber = Color(0xFF241800)
 
+// Optional accent colours. Only the primary family moves; the ink surfaces stay the brand.
+internal val Blue = Color(0xFF6FA8FF)
+internal val OnBlue = Color(0xFF0B1B33)
+internal val BlueContainer = Color(0xFF1B2B45)
+internal val Green = Color(0xFF6FD08C)
+internal val OnGreen = Color(0xFF0C2317)
+internal val GreenContainer = Color(0xFF17301F)
+internal val Violet = Color(0xFFB79CFF)
+internal val OnViolet = Color(0xFF190F33)
+internal val VioletContainer = Color(0xFF241C3A)
+
 internal val TextPrimaryDark = Color(0xFFE9EAEC)
 internal val TextSecondaryDark = Color(0xFF9AA0A8)
 

@@ -25,8 +25,8 @@ android {
         applicationId = "io.github.caendeith.awakr"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.3.1"
+        versionCode = 8
+        versionName = "1.4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -91,6 +91,10 @@ dependencies {
     implementation(project(":plugins:mission-code"))
     implementation(project(":plugins:mission-shake"))
     implementation(project(":plugins:mission-typing"))
+    implementation(project(":plugins:mission-memory"))
+    implementation(project(":plugins:mission-color"))
+    implementation(project(":plugins:mission-squat"))
+    implementation(project(":plugins:mission-step"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_step_name">Steps</string>
+    <string name="step_goal">Steps: %1$d</string>
+    <string name="step_hint">Walk until the ring is full</string>
+    <string name="step_progress">%1$d / %2$d</string>
+    <string name="step_no_sensor">This device has no working accelerometer — count each step by tapping</string>
+    <string name="step_tap">Count one step</string>
+</resources>

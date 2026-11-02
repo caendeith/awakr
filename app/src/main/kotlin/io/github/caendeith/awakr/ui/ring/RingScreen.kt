@@ -59,7 +59,8 @@ import kotlinx.serialization.json.JsonObject
  * replaced by a fresh task and the countdown starts again.
  *
  * @param alarm the ringing alarm, or null when it could not be loaded.
- * @param mission mission that unlocks the dismiss action, or null when it is not available.
+ * @param missions the mission chain that unlocks the dismiss action, played in order; an empty
+ *   list means no plugin is available and the safety fallback takes over.
  * @param showSnooze whether the snooze button is offered for this occurrence.
  * @param onDismiss called when the mission was passed.
  * @param onSnooze called when the user snoozes.
@@ -68,7 +69,7 @@ import kotlinx.serialization.json.JsonObject
 @Composable
 fun RingScreen(
     alarm: Alarm?,
-    mission: MissionPlugin?,
+    missions: List<RingMission>,
     showSnooze: Boolean,
     onDismiss: () -> Unit,
     onSnooze: () -> Unit,
@@ -78,14 +79,20 @@ fun RingScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        RingContent(alarm, mission, showSnooze, onDismiss, onSnooze, onSilenceChanged)
+        RingContent(alarm, missions, showSnooze, onDismiss, onSnooze, onSilenceChanged)
     }
 }
+
+/** One mission of the ring screen, already resolved against the plugin registry. */
+data class RingMission(
+    val plugin: MissionPlugin,
+    val config: JsonObject,
+)
 
 @Composable
 private fun RingContent(
     alarm: Alarm?,
-    mission: MissionPlugin?,
+    missions: List<RingMission>,
     showSnooze: Boolean,
     onDismiss: () -> Unit,
     onSnooze: () -> Unit,
@@ -93,13 +100,13 @@ private fun RingContent(
 ) {
     val time = alarm?.let { formatTime(it.hour, it.minute) } ?: "--:--"
     val label = alarm?.label.orEmpty()
-    val missionConfig = remember(alarm?.missionConfig) {
-        parseMissionConfig(alarm?.missionConfig ?: "{}")
-    }
     val silenceChange by rememberUpdatedState(onSilenceChanged)
-    val missionKind = mission?.kind
+    var stepIndex by remember(missions) { mutableIntStateOf(0) }
+    val step = missions.getOrNull(stepIndex)
+    val stepConfig = step?.config ?: parseMissionConfig("{}")
+    val missionKind = step?.plugin?.kind
     // The "mission unavailable" fallback is the last resort to end a ring, so it keeps ringing.
-    val missionOnScreen = mission != null
+    val missionOnScreen = missions.isNotEmpty()
     val resumed = rememberResumed()
 
     var missionAttempt by remember(missionKind) { mutableIntStateOf(0) }
@@ -159,6 +166,18 @@ private fun RingContent(
             )
         }
         if (missionOnScreen) {
+            if (missions.size > 1) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(
+                        R.string.ring_mission_step,
+                        (stepIndex + 1).coerceAtMost(missions.size),
+                        missions.size,
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Spacer(Modifier.height(16.dp))
             MissionCountdown(remainingMillis = remainingMillis, remainingIsGone = timeIsUp)
         }
@@ -168,8 +187,20 @@ private fun RingContent(
         ) {
             // A new attempt really re-creates the mission state, so math and typing hand out a
             // different task instead of keeping the previous answer on screen.
-            key(missionKind, missionAttempt) {
-                MissionHost(mission = mission, config = missionConfig, onSolved = onDismiss)
+            key(missionKind, missionAttempt, stepIndex) {
+                MissionHost(
+                    mission = step?.plugin,
+                    config = stepConfig,
+                    onSolved = {
+                        // Passing a step only advances the chain; the last one ends the ring.
+                        if (stepIndex < missions.lastIndex) {
+                            stepIndex++
+                            countdownRound++
+                        } else {
+                            onDismiss()
+                        }
+                    },
+                )
             }
         }
         if (showSnooze) {

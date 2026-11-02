@@ -14,10 +14,10 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 <img alt="Kotlin 2.2" src="https://img.shields.io/badge/Kotlin-2.2.21-7f52ff?logo=kotlin&logoColor=white">
 <img alt="Jetpack Compose" src="https://img.shields.io/badge/Compose-Material%203-4285f4">
 <img alt="No INTERNET permission" src="https://img.shields.io/badge/INTERNET-not%20requested-critical">
-<img alt="Version" src="https://img.shields.io/badge/version-1.3.0-informational">
+<img alt="Version" src="https://img.shields.io/badge/version-1.4.0-informational">
 </p>
 
-<p><sub>185 unit tests · release APK 5.2 MB · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
+<p><sub>254 unit tests · release APK 5.3 MB · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
 
 <p>
 <a href="https://caendeith.github.io/awakr/"><b>Website</b></a> ·
@@ -56,7 +56,8 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 
 ## Highlights
 
-- **Missions instead of a snooze button.** Four plugins ship in the app: math, camera code (QR / EAN-13 / EAN-8 / UPC-A / Code 128), shake and typing. A disabled or broken mission falls back to a "hold to dismiss" safety screen so an alarm can never get stuck ringing.
+- **Missions instead of a snooze button.** Eight plugins ship in the app: math, camera code (QR / EAN-13 / EAN-8 / UPC-A / Code 128), shake, typing, memory (Simon-style 4x4), find-the-colour, squats and steps (accelerometer, no step-counter permission). A disabled or broken mission falls back to a "hold to dismiss" safety screen so an alarm can never get stuck ringing.
+- **Several missions in a row.** Chain up to three different missions on one alarm; each stage gets its own fresh task, the counter keeps counting and the alarm only stops after the last one.
 - **A code you already own.** Rather than printing a generated QR, scan the barcode of a product you keep away from the bed and bind it to the alarm. Pointing the camera at it dismisses the alarm; an optional shutter saves the frame for later.
 - **Reliability first.** Exact alarms via `setAlarmClock` (no SCHEDULE_EXACT_ALARM dance), re-scheduled on boot and on timezone/time changes, a foreground service with an alarm-usage audio stream, a full-screen ring activity over the lock screen, a fallback notification if a background start is blocked, and a queue so two alarms in the same minute do not cancel each other.
 - **Snooze is honest.** 5-30 minutes per alarm, at most `max_snoozes` times (3 by default), and the counter travels with the alarm intent so a stray re-trigger cannot reset it.
@@ -70,6 +71,8 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 - **Your data leaves in a file.** Export every alarm and setting to a JSON file through the system picker and restore it later - either merged into the current list or replacing it. Nothing is uploaded anywhere; the format is plain and documented.
 - **A heads-up before the alarm.** An optional low-priority notification N minutes before (10, 20, 30 or 60), scheduled in the same window as the alarm, so a 06:30 wake-up is not a surprise.
 - **Two languages, one switch, and Material You.** English and Russian, switchable inside the app without a restart (the mission screen follows), plus the system wallpaper palette on Android 12+ when you turn dynamic color on.
+- **You find out how you actually wake up.** Every ring is logged; the stats screen shows a 7 or 30 day streak, how many you dismissed, snoozed or missed, your average wake-up time and the distribution across the day.
+- **Two more ways to make sure you are awake.** An optional wake-up check that reminds you 100 seconds after dismissing ("did you really get up?") and a panic ramp that jumps the volume to full after 40 seconds of ringing. The label can be read out loud, and the accent colour is yours to pick.
 
 ## Install
 
@@ -142,7 +145,7 @@ Room v1 to v2 migrates in place (sound, sort order, skip-next, soft delete); the
 Requirements: JDK 17, Android SDK (platform 36, build-tools 36.0.0). The Gradle wrapper is included.
 
 ```bash
-./gradlew test                 # 185 unit tests
+./gradlew test                 # 254 unit tests
 ./gradlew :app:lintDebug       # hard-coded text, missing permissions, API misuse
 ./gradlew :app:assembleDebug   # debug build, installs beside release
 ./gradlew :app:assembleRelease # R8 + resource shrinking, signed if keystore.properties exists
@@ -150,7 +153,7 @@ Requirements: JDK 17, Android SDK (platform 36, build-tools 36.0.0). The Gradle 
 
 Dependencies come from the official repositories (Google Maven, Maven Central) by default, which is what CI and the F-Droid build server use. On networks where those are unreachable set `AWAKR_MIRRORS=true` to switch `settings.gradle.kts` to the aliyun/huaweicloud mirrors this project was originally developed against; [docs/toolchain.md](docs/toolchain.md) explains the exact pins and the traps behind them.
 
-Release signing is driven by an optional, git-ignored `keystore.properties`; without it the same task still succeeds and produces an unsigned APK. Measured release: **5.2 MB**, cold start **479 ms**.
+Release signing is driven by an optional, git-ignored `keystore.properties`; without it the same task still succeeds and produces an unsigned APK. Measured release: **5.3 MB**, cold start **479 ms**.
 
 ## Status
 
@@ -160,8 +163,9 @@ Release signing is driven by an optional, git-ignored `keystore.properties`; wit
 | 8 | v1.1 UX pass: multi-select, per-alarm sounds, themes, code mission | done |
 | 9 | v1.2: bind any scanned code (product barcode) to an alarm | done |
 | 10 | v1.3: JSON backup and restore, Glance widget, sound packs and recording, Material You, pre-alarm notification, language switcher | done |
+| 11 | v1.4: mission chains (up to 3), memory / colour / squat / step missions, wake-up check, statistics, spoken label, accent colours, panic volume | done |
 
-Roadmap ideas for the next versions: chained missions, a photo mission (compare a shot with a reference frame), step and squat missions from the sensors, sleep sounds with a sleep timer, wake-up statistics and streaks, more barcode formats, Wear OS, and runtime-loaded plugin APKs (deliberately postponed - Play and F-Droid forbid them).
+Roadmap ideas for the next versions: a photo mission (compare a shot with a reference frame), sleep sounds with a sleep timer, alarm-linked habits, more barcode formats, Wear OS, and runtime-loaded plugin APKs (deliberately postponed - Play and F-Droid forbid them).
 
 ## Docs
 

@@ -79,6 +79,25 @@
             </intent-filter>
         </receiver>
 
+        <!-- Wake-up check: the "are you up?" question and the "I am up!" answer. -->
+        <receiver
+            android:name=".alarm.WakeUpCheckReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="io.github.caendeith.awakr.action.WAKE_UP_CHECK" />
+                <action android:name="io.github.caendeith.awakr.action.WAKE_UP_CHECK_CONFIRM" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Wake-up check: the deadline passed without an answer, the alarm rings again. -->
+        <receiver
+            android:name=".alarm.WakeUpEscalationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="io.github.caendeith.awakr.action.WAKE_UP_CHECK_ESCALATE" />
+            </intent-filter>
+        </receiver>
+
         <receiver
             android:name="io.github.caendeith.awakr.ui.widget.AlarmWidgetReceiver"
             android:label="@string/widget_label"

@@ -21,6 +21,8 @@ import io.github.caendeith.awakr.alarm.AlarmIntents
 import io.github.caendeith.awakr.alarm.AlarmRingService
 import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.ui.theme.AwakrTheme
+import io.github.caendeith.awakr.mission.MissionChain
+import io.github.caendeith.awakr.ui.format.parseMissionConfig
 
 /**
  * Full screen alarm UI. It is launched by the full screen intent of the ringing
@@ -68,24 +70,33 @@ class RingActivity : AppCompatActivity() {
                     value = if (alarm == null) RingState.Missing else RingState.Ready(alarm)
                 }
                 val current = (state as? RingState.Ready)?.alarm
-                val plugin = remember(current) {
-                    current?.let { app.plugins.mission(it.missionPluginId) }
+                val steps = remember(current) {
+                    current?.let { MissionChain.stepsOf(it) }.orEmpty()
                 }
-                val enabled by produceState(initialValue = true, plugin) {
-                    value = plugin?.let { mission ->
-                        runCatching {
-                            app.data.pluginStates.get(mission.manifest.id)?.enabled
-                        }.getOrNull() ?: true
-                    } ?: false
+                // The chain is resolved once per alarm: each step becomes a mission instance with
+                // its own config, and a disabled plugin is skipped instead of blocking the ring.
+                val resolved by produceState<List<RingMission>?>(initialValue = null, current, steps) {
+                    value = if (current == null) {
+                        emptyList()
+                    } else {
+                        steps.mapNotNull { step ->
+                            val mission = app.plugins.mission(step.kind) ?: return@mapNotNull null
+                            val enabled = runCatching {
+                                app.data.pluginStates.get(mission.manifest.id)?.enabled
+                            }.getOrNull() ?: true
+                            if (enabled) RingMission(mission, parseMissionConfig(step.config)) else null
+                        }
+                    }
                 }
+                val missions = resolved
                 // Loading is a distinct state: rendering the ready screen with a null alarm would
                 // flash the fallback mission ("mission unavailable") for a frame or two.
-                if (state == RingState.Loading) {
+                if (state == RingState.Loading || missions == null) {
                     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {}
                 } else {
                     RingScreen(
                         alarm = current,
-                        mission = plugin.takeIf { enabled },
+                        missions = missions,
                         // The snooze allowance is per occurrence: after maxSnoozes the only way
                         // out is passing the mission.
                         showSnooze = current != null &&
@@ -109,8 +120,19 @@ class RingActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        // A ring screen that comes back from the background (notification tap, recents) must show
+        // over the keyguard again instead of turning into a PIN prompt.
+        showOverLockScreen()
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val request = RingRequest.from(intent)
         if (request.alarmId != 0L) ringRequest.value = request
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Some OEM builds drop the show-when-locked flags once the activity was stopped.
+        showOverLockScreen()
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     override fun onStop() {
@@ -119,6 +141,9 @@ class RingActivity : AppCompatActivity() {
         // must be audible again rather than staying muted forever.
         if (!isChangingConfigurations) {
             AlarmRingService.setSilenced(this, silenced = false)
+            // Keep the way back obvious: the notification (and its full-screen intent) is the only
+            // supported route while the ring screen is in the background.
+            AlarmRingService.repostNotification(this)
         }
         super.onStop()
     }
@@ -161,10 +186,11 @@ class RingActivity : AppCompatActivity() {
             setTurnScreenOn(true)
         } else {
             @Suppress("DEPRECATION")
+            // Dismissing the keyguard would ask for the device PIN, which is exactly what the ring
+            // screen must never do: show on top of it instead.
             window.addFlags(
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD,
+                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
             )
         }
     }

@@ -26,6 +26,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -75,6 +78,8 @@ import io.github.caendeith.awakr.core.ui.component.PrimaryButton
 import io.github.caendeith.awakr.core.ui.component.SecondaryButton
 import io.github.caendeith.awakr.core.ui.component.TimeText
 import io.github.caendeith.awakr.data.repository.AlarmRepository
+import io.github.caendeith.awakr.mission.MissionChain
+import io.github.caendeith.awakr.mission.MissionStep
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 import io.github.caendeith.awakr.ui.format.countdownText
 import io.github.caendeith.awakr.ui.format.dateLabel
@@ -249,32 +254,100 @@ fun AlarmEditorScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    missions.forEach { plugin ->
-                        FilterChip(
-                            selected = current.missionPluginId == plugin.kind,
-                            onClick = {
-                                draft = current.copy(
-                                    missionPluginId = plugin.kind,
-                                    missionConfig = "{}",
+                val steps = MissionChain.parse(current.missionChain)
+                    .ifEmpty { MissionChain.stepsOf(current) }
+
+                // The first step stays mirrored into missionPluginId/missionConfig so that old
+                // readers (backups, widget, logs) keep seeing the mission the alarm starts with.
+                fun applyChain(next: List<MissionStep>) {
+                    val first = next.firstOrNull()
+                    draft = current.copy(
+                        missionPluginId = first?.kind ?: current.missionPluginId,
+                        missionConfig = first?.config ?: "{}",
+                        missionChain = MissionChain.encode(next),
+                    )
+                }
+
+                steps.forEachIndexed { index, step ->
+                    Spacer(Modifier.height(8.dp))
+                    AwakrCard {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = missionLabel(step.kind),
+                                    style = MaterialTheme.typography.titleMedium,
                                 )
-                            },
-                            label = { Text(missionLabel(plugin.kind)) },
-                        )
+                                if (steps.size > 1) {
+                                    Text(
+                                        text = stringResource(
+                                            R.string.editor_mission_step,
+                                            index + 1,
+                                            steps.size,
+                                        ),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                            if (index > 0) {
+                                IconButton(onClick = { applyChain(MissionChain.moved(steps, index, -1)) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowUp,
+                                        contentDescription = stringResource(R.string.editor_mission_up),
+                                    )
+                                }
+                            }
+                            if (index < steps.lastIndex) {
+                                IconButton(onClick = { applyChain(MissionChain.moved(steps, index, 1)) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                        contentDescription = stringResource(R.string.editor_mission_down),
+                                    )
+                                }
+                            }
+                            if (steps.size > 1) {
+                                IconButton(onClick = { applyChain(MissionChain.removed(steps, index)) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.editor_mission_remove),
+                                    )
+                                }
+                            }
+                        }
+                        val plugin = missions.firstOrNull { it.kind == step.kind }
+                        if (plugin != null) {
+                            Spacer(Modifier.height(12.dp))
+                            plugin.Editor(
+                                parseMissionConfig(step.config),
+                            ) { next ->
+                                applyChain(MissionChain.withConfig(steps, index, next.toString()))
+                            }
+                        }
                     }
                 }
-                val selectedMission = missions.firstOrNull { it.kind == current.missionPluginId }
-                if (selectedMission != null) {
+
+                if (steps.size < MissionChain.MAX_STEPS) {
                     Spacer(Modifier.height(12.dp))
-                    AwakrCard {
-                        selectedMission.Editor(
-                            parseMissionConfig(current.missionConfig),
-                        ) { next ->
-                            draft = current.copy(missionConfig = next.toString())
-                        }
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        missions
+                            .filter { plugin -> steps.none { it.kind == plugin.kind } }
+                            .forEach { plugin ->
+                                FilterChip(
+                                    selected = false,
+                                    onClick = { applyChain(MissionChain.added(steps, plugin.kind)) },
+                                    label = {
+                                        Text(
+                                            stringResource(
+                                                R.string.editor_mission_add,
+                                                missionLabel(plugin.kind),
+                                            ),
+                                        )
+                                    },
+                                )
+                            }
                     }
                 }
             }

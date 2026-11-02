@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.caendeith.awakr.AwakrApplication
+import io.github.caendeith.awakr.alarm.WakeUpCheck
 import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.audio.SoundResolver
 import io.github.caendeith.awakr.core.time.NextOccurrence
@@ -28,12 +29,16 @@ import io.github.caendeith.awakr.ui.onboarding.OnboardingScreen
 import io.github.caendeith.awakr.ui.plugins.PluginsScreen
 import io.github.caendeith.awakr.ui.settings.BackupScreen
 import io.github.caendeith.awakr.ui.settings.SettingsScreen
+import io.github.caendeith.awakr.ui.stats.StatsScreen
 import io.github.caendeith.awakr.ui.widget.AlarmWidgetUpdater
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+
+/** Enough history for the 30-day statistics screen without loading the whole table. */
+private const val STATS_LOG_LIMIT = 2_000
 
 @Composable
 fun AwakrNavHost(
@@ -122,6 +127,7 @@ fun AwakrNavHost(
                 onAddAlarm = { navController.navigate(Routes.editor(0L)) },
                 onEditAlarm = { id -> navController.navigate(Routes.editor(id)) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                onOpenStats = { navController.navigate(Routes.STATS) },
                 missedLabels = missedLabels,
                 onDelete = { ids ->
                     scope.launch {
@@ -176,6 +182,14 @@ fun AwakrNavHost(
                 onReorder = { orderedIds -> scope.launch { data.alarms.reorder(orderedIds) } },
             )
         }
+        composable(Routes.STATS) {
+            val logFlow = remember { data.alarmLogs.observeRecent(limit = STATS_LOG_LIMIT) }
+            val logEntries by logFlow.collectAsState(initial = emptyList())
+            StatsScreen(
+                logs = logEntries,
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable(
             route = Routes.EDITOR,
             arguments = listOf(navArgument(Routes.EDITOR_ARG_ID) {
@@ -199,6 +213,9 @@ fun AwakrNavHost(
                         val savedId = data.alarms.save(alarm)
                         val id = if (alarm.id == 0L) savedId else alarm.id
                         data.alarms.get(id)?.let { app.scheduler.schedule(it) }
+                        // The alarm was re-scheduled: a pending "are you up?" check belongs to the
+                        // old schedule and must not ring for the edited one.
+                        WakeUpCheck.cancel(app, id)
                         navController.popBackStack()
                     }
                 },
@@ -245,12 +262,23 @@ fun AwakrNavHost(
                         app.scheduler.rescheduleAll(data.alarms.enabledAlarms())
                     }
                 },
+                onWakeUpCheckChange = { minutes ->
+                    // Read at dismissal time, so no alarm has to be re-armed for this.
+                    scope.launch { data.settings.setWakeUpCheckMinutes(minutes) }
+                },
                 onLanguageChange = { language ->
                     scope.launch {
                         // Store first: AppCompat recreates the screen for the new locale right away.
                         data.settings.setLanguage(language)
                         AppLanguage.apply(language)
                     }
+                },
+                onAccentChange = { accent ->
+                    scope.launch { data.settings.setAccentColor(accent) }
+                },
+                onSpeakLabelChange = { speak ->
+                    // Read at ring time, so no alarm has to be re-armed for this.
+                    scope.launch { data.settings.setSpeakLabel(speak) }
                 },
             )
         }

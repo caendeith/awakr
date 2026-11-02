@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import io.github.caendeith.awakr.core.ui.theme.AccentColor
 import io.github.caendeith.awakr.core.ui.theme.AwakrTheme
 import io.github.caendeith.awakr.data.settings.ThemeMode
 import io.github.caendeith.awakr.navigation.AwakrNavHost
@@ -30,7 +31,11 @@ class MainActivity : AppCompatActivity() {
                 ThemeMode.LIGHT -> false
                 else -> isSystemInDarkTheme()
             }
-            AwakrTheme(darkTheme = darkTheme, dynamicColor = settings?.dynamicColor == true) {
+            AwakrTheme(
+                darkTheme = darkTheme,
+                dynamicColor = settings?.dynamicColor == true,
+                accent = AccentColor.of(settings?.accentColor),
+            ) {
                 val loaded = settings
                 if (loaded == null) {
                     Surface(

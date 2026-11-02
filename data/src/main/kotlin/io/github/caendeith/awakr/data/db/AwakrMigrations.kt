@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * Schema migrations, written by hand so the upgrade path stays explicit.
  *
  * v2 adds the sound choice, the manual order, the "skip the next one" marker and soft deletion,
- * and renames the QR mission to the broader code mission.
+ * and renames the QR mission to the broader code mission. v3 adds the mission chain.
  */
 internal object AwakrMigrations {
 
@@ -21,5 +21,11 @@ internal object AwakrMigrations {
         }
     }
 
-    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2)
+    val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE alarms ADD COLUMN mission_chain TEXT NOT NULL DEFAULT '[]'")
+        }
+    }
+
+    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 }

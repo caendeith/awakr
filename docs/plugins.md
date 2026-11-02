@@ -91,6 +91,14 @@ them and stores the JSON blob; you never draw a settings screen yourself.
 - Do not ask for permissions the app does not declare. `requiredPermissions` is checked against the
   merged manifest at startup; a mismatch shows up as a plugin issue instead of a silent denial.
 
+## Chaining missions
+
+The alarm editor lets the user stack up to three missions (the `missionChain` field on `Alarm`).
+The host plays them in order on one ring screen, giving every stage a fresh task and restarting the
+90 s timer, and only the last stage dismisses the alarm. A plugin does not need to know about this:
+each instance receives its own `config` JSON, and the first stage is mirrored into the legacy
+`missionPluginId` / `missionConfig` fields so older backups and the widget keep working.
+
 ## Sharing your mission
 
 Open a pull request against https://github.com/caendeith/awakr — a mission module is a

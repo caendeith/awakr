@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_squat_name">Squats</string>
+    <string name="squat_goal">Squats: %1$d</string>
+    <string name="squat_hint">Squat until the ring is full</string>
+    <string name="squat_progress">%1$d / %2$d</string>
+    <string name="squat_no_sensor">This device has no working accelerometer — count each squat by tapping</string>
+    <string name="squat_tap">Count one squat</string>
+</resources>

@@ -13,6 +13,10 @@ import io.github.caendeith.awakr.plugins.mission.math.MathMissionPlugin
 import io.github.caendeith.awakr.plugins.mission.code.CodeMissionPlugin
 import io.github.caendeith.awakr.plugins.mission.shake.ShakeMissionPlugin
 import io.github.caendeith.awakr.plugins.mission.typing.TypingMissionPlugin
+import io.github.caendeith.awakr.plugins.mission.memory.MemoryMissionPlugin
+import io.github.caendeith.awakr.plugins.mission.color.ColorMissionPlugin
+import io.github.caendeith.awakr.plugins.mission.squat.SquatMissionPlugin
+import io.github.caendeith.awakr.plugins.mission.step.StepMissionPlugin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,6 +44,10 @@ class AwakrApplication : Application() {
                 ShakeMissionPlugin(),
                 TypingMissionPlugin(),
                 CodeMissionPlugin(),
+                MemoryMissionPlugin(),
+                ColorMissionPlugin(),
+                SquatMissionPlugin(),
+                StepMissionPlugin(),
             ),
             declaredPermissions = declaredPermissions(),
         )

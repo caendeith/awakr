@@ -36,7 +36,16 @@ data class AppSettings(
     val defaultSoundId: String = "builtin:chime",
     val seeded: Boolean = false,
     val dynamicColor: Boolean = false,
+    /** Accent colour name: AMBER, BLUE, GREEN or VIOLET; see AccentColor in core:ui. */
+    val accentColor: String = "AMBER",
+    /** Reads the alarm label aloud when the alarm starts ringing (offline text-to-speech). */
+    val speakLabel: Boolean = false,
     val preAlertMinutes: Int = 30,
+    /**
+     * Minutes after a dismissal before the app asks "are you up?"; 0 switches the check off.
+     * Only supported values are offered in Settings, see WakeUpCheckPolicy in the app module.
+     */
+    val wakeUpCheckMinutes: Int = 0,
     /** App language: [LANGUAGE_SYSTEM], [LANGUAGE_ENGLISH] or [LANGUAGE_RUSSIAN]. */
     val language: String = LANGUAGE_SYSTEM,
 )
@@ -64,7 +73,10 @@ class AppSettingsRepository(context: Context) {
             defaultSoundId = prefs[KEY_SOUND] ?: "builtin:chime",
             seeded = prefs[KEY_SEEDED] ?: false,
             dynamicColor = prefs[KEY_DYNAMIC] ?: false,
+            accentColor = prefs[KEY_ACCENT]?.uppercase() ?: "AMBER",
+            speakLabel = prefs[KEY_SPEAK_LABEL] ?: false,
             preAlertMinutes = prefs[KEY_PRE_ALERT] ?: 30,
+            wakeUpCheckMinutes = prefs[KEY_WAKE_UP_CHECK] ?: 0,
             language = normalizeLanguage(prefs[KEY_LANGUAGE]),
         )
     }
@@ -85,7 +97,13 @@ class AppSettingsRepository(context: Context) {
 
     suspend fun setDynamicColor(value: Boolean) = store.edit { it[KEY_DYNAMIC] = value }
 
+    suspend fun setAccentColor(value: String) = store.edit { it[KEY_ACCENT] = value.uppercase() }
+
+    suspend fun setSpeakLabel(value: Boolean) = store.edit { it[KEY_SPEAK_LABEL] = value }
+
     suspend fun setPreAlertMinutes(minutes: Int) = store.edit { it[KEY_PRE_ALERT] = minutes }
+
+    suspend fun setWakeUpCheckMinutes(minutes: Int) = store.edit { it[KEY_WAKE_UP_CHECK] = minutes }
 
     /**
      * Blocking copy of [AppSettings.language], for the process start only.
@@ -115,7 +133,10 @@ class AppSettingsRepository(context: Context) {
         val KEY_SOUND = stringPreferencesKey("default_sound")
         val KEY_SEEDED = booleanPreferencesKey("sample_alarms_seeded")
         val KEY_DYNAMIC = booleanPreferencesKey("dynamic_color")
+        val KEY_ACCENT = stringPreferencesKey("accent_color")
+        val KEY_SPEAK_LABEL = booleanPreferencesKey("speak_label")
         val KEY_PRE_ALERT = intPreferencesKey("pre_alert_minutes")
+        val KEY_WAKE_UP_CHECK = intPreferencesKey("wake_up_check_minutes")
         val KEY_LANGUAGE = stringPreferencesKey("language")
 
         const val LANGUAGE_MIRROR_NAME = "awakr_language"

@@ -14,10 +14,16 @@ object AwakrNotifications {
     const val CHANNEL_SERVICE = "alarm_service"
     const val CHANNEL_PRE_ALERT = "pre_alert"
 
+    /** Asks the user to confirm being awake after a dismissed alarm; silent, but heads-up. */
+    const val CHANNEL_WAKE_UP_CHECK = "wake_up_check"
+
     /** Id of the ongoing notification that keeps the ringing service alive. */
     const val NOTIFICATION_RINGING = 1001
     const val NOTIFICATION_MISSED = 1002
     const val NOTIFICATION_PRE_ALERT = 1003
+
+    /** Base id of the "are you up?" question; one notification per alarm. */
+    const val NOTIFICATION_WAKE_UP_CHECK = 1004
 
     fun ensureChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -56,6 +62,20 @@ object AwakrNotifications {
                 setSound(null, null)
                 enableVibration(false)
                 setShowBadge(false)
+            },
+        )
+
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_WAKE_UP_CHECK,
+                context.getString(R.string.channel_wake_up_check_name),
+                // High, so the question pops up over whatever the user opened after dismissing
+                // the alarm; the sound is off because the alarm already made enough noise.
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = context.getString(R.string.channel_wake_up_check_description)
+                setSound(null, null)
+                enableVibration(false)
             },
         )
 

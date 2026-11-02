@@ -105,6 +105,17 @@ recipe. The Plugins screen therefore only lets you enable or disable what is alr
 Writing your own mission is still supported and takes one module — the guide is in
 [docs/plugins.md](plugins.md). Runtime-loaded plugins are on the roadmap for a later version.
 
+## Can I put more than one mission on an alarm?
+Yes. In the editor, under *Mission*, add up to three steps and reorder them with the arrows. The ring
+screen plays them one after another ("Mission 1 of 3"): each step gets a new task and its own 90
+second timer, and the alarm stops only when the last one is solved. Chains are stored per alarm and
+travel in the JSON backup.
+
+## The alarm rang again after I dismissed it — what was that?
+That is the optional *wake-up check*. If you turn it on (Settings → Wake-up check), Awakr reminds you
+100 seconds after you dismiss an alarm and keeps escalating until you confirm that you are really up.
+It is off by default; set it to *Off* to get a plain alarm.
+
 ## Does Awakr need internet access?
 
 No. The app has no `INTERNET` permission at all — CI fails the build if it ever appears in the merged

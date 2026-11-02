@@ -25,6 +25,12 @@ class BootReceiver : BroadcastReceiver() {
                 app.scheduler.rescheduleAll(alarms)
             }.onFailure { Log.e(TAG, "reschedule failed", it) }
 
+            // A pending "are you up?" check is a platform alarm like any other: it is lost with the
+            // reboot. Re-armed from the stored state, and after rescheduleAll because re-scheduling
+            // an alarm must not be able to cancel the check placed here.
+            runCatching { WakeUpCheck.rearm(app) }
+                .onFailure { Log.e(TAG, "wake-up check re-arm failed", it) }
+
             // The widget reads the database, so it must be repainted after the alarm set changed.
             runCatching { AlarmWidgetUpdater.update(app) }
 

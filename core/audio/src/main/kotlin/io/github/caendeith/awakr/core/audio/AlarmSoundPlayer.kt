@@ -102,6 +102,14 @@ class AlarmSoundPlayer(private val context: Context) {
         applyVolume()
     }
 
+    /** Jumps straight to full volume: the "you are still asleep" stage of a long ring. */
+    fun boost() {
+        rampJob?.cancel()
+        rampJob = null
+        rampLevel = MAX_LEVEL
+        applyVolume()
+    }
+
     fun stop() {
         rampJob?.cancel()
         rampJob = null

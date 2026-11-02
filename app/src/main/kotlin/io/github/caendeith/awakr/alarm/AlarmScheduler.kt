@@ -53,6 +53,10 @@ class AlarmScheduler(private val context: Context) {
                 manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)
                 Log.w(TAG, "inexact fallback for alarm ${alarm.id} at $next")
             }
+            // A pending "wake up check" is deliberately left alone here: this method also runs on
+            // every app start and on reboot (see rescheduleAll), and cancelling the check there
+            // would silently drop one that was placed a minute ago. Editing an alarm cancels its
+            // check explicitly, see AwakrNavHost.
             PreAlert.schedule(context, alarm, triggerAt)
         } catch (e: SecurityException) {
             Log.e(TAG, "cannot schedule alarm ${alarm.id}", e)
@@ -75,6 +79,8 @@ class AlarmScheduler(private val context: Context) {
             } else {
                 manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, operation)
             }
+            // Snoozing answers "are you up?" for now: the alarm rings again on its own.
+            WakeUpCheck.cancel(context, alarm.id)
             Log.i(TAG, "snooze for alarm ${alarm.id} in $minutes min")
         } catch (e: SecurityException) {
             Log.e(TAG, "cannot schedule snooze for alarm ${alarm.id}", e)
@@ -85,6 +91,7 @@ class AlarmScheduler(private val context: Context) {
         alarmManager?.cancel(AlarmIntents.ringPendingIntent(context, alarmId))
         alarmManager?.cancel(AlarmIntents.ringPendingIntent(context, alarmId, snooze = true))
         PreAlert.cancel(context, alarmId)
+        WakeUpCheck.cancel(context, alarmId)
     }
 
     fun rescheduleAll(alarms: List<Alarm>) {

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_step_name">Шаги</string>
+    <string name="step_goal">Шагов: %1$d</string>
+    <string name="step_hint">Ходите, пока кольцо не заполнится</string>
+    <string name="step_progress">%1$d / %2$d</string>
+    <string name="step_no_sensor">На устройстве нет рабочего акселерометра — считайте шаги нажатиями</string>
+    <string name="step_tap">Засчитать шаг</string>
+</resources>

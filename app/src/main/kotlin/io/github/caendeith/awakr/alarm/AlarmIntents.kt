@@ -14,6 +14,9 @@ object AlarmIntents {
     const val ACTION_SNOOZE = "io.github.caendeith.awakr.action.SNOOZE"
     const val ACTION_STOP_SERVICE = "io.github.caendeith.awakr.action.STOP_SERVICE"
 
+    /** Re-posts the ringing notification, e.g. when the ring screen went to the background. */
+    const val ACTION_REPOST = "io.github.caendeith.awakr.action.REPOST"
+
     /**
      * Mutes or un-mutes the ringing sound without touching the ring session.
      *
@@ -34,6 +37,14 @@ object AlarmIntents {
 
     /** Target mute state for [ACTION_SET_SILENCED]. */
     const val EXTRA_SILENCED = "silenced"
+
+    /**
+     * Marks a ring that repeats an occurrence the user already dismissed (wake-up check).
+     *
+     * Such a ring belongs to the same occurrence: it must not write a second history row, and it
+     * must not start another wake-up check once it is dismissed.
+     */
+    const val EXTRA_WAKE_UP_CHECK = "wake_up_check"
 
     /** Request code of the alarm trigger PendingIntent; snooze uses the next range. */
     fun triggerRequestCode(alarmId: Long): Int = (alarmId xor (alarmId ushr 32)).toInt()

@@ -13,7 +13,7 @@ import io.github.caendeith.awakr.data.db.entity.PluginStateEntity
 
 @Database(
     entities = [AlarmEntity::class, AlarmLogEntity::class, PluginStateEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class AwakrDatabase : RoomDatabase() {

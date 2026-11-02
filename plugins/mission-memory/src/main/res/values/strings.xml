@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_memory_name">Tile order</string>
+    <string name="memory_length">Order length: %1$d</string>
+    <string name="memory_watch">Watch the order</string>
+    <string name="memory_input">Repeat the order</string>
+    <string name="memory_progress">%1$d / %2$d</string>
+    <string name="memory_wrong">Wrong tile — the order starts again</string>
+</resources>

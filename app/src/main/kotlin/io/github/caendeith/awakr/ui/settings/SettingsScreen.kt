@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.caendeith.awakr.R
+import io.github.caendeith.awakr.alarm.WakeUpCheckPolicy
 import io.github.caendeith.awakr.core.audio.BuiltinSounds
 import io.github.caendeith.awakr.data.settings.AppSettings
 import io.github.caendeith.awakr.data.settings.LANGUAGE_ENGLISH
@@ -60,7 +61,10 @@ fun SettingsScreen(
     onSnoozeChange: (Int) -> Unit = {},
     onDynamicColorChange: (Boolean) -> Unit = {},
     onPreAlertChange: (Int) -> Unit = {},
+    onWakeUpCheckChange: (Int) -> Unit = {},
     onLanguageChange: (String) -> Unit = {},
+    onAccentChange: (String) -> Unit = {},
+    onSpeakLabelChange: (Boolean) -> Unit = {},
 ) {
     var dialog by remember { mutableStateOf<SettingsDialog?>(null) }
 
@@ -97,6 +101,16 @@ fun SettingsScreen(
                 },
                 onClick = { dialog = SettingsDialog.Theme },
             )
+            SettingsRow(
+                title = stringResource(R.string.settings_accent),
+                value = when (settings.accentColor) {
+                    "BLUE" -> stringResource(R.string.settings_accent_blue)
+                    "GREEN" -> stringResource(R.string.settings_accent_green)
+                    "VIOLET" -> stringResource(R.string.settings_accent_violet)
+                    else -> stringResource(R.string.settings_accent_amber)
+                },
+                onClick = { dialog = SettingsDialog.Accent },
+            )
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 SettingsSwitchRow(
                     title = stringResource(R.string.settings_dynamic_color),
@@ -129,6 +143,21 @@ fun SettingsScreen(
                     stringResource(R.string.settings_pre_alert_minutes, settings.preAlertMinutes)
                 },
                 onClick = { dialog = SettingsDialog.PreAlert },
+            )
+            SettingsRow(
+                title = stringResource(R.string.settings_wake_up_check),
+                value = if (settings.wakeUpCheckMinutes <= 0) {
+                    stringResource(R.string.settings_wake_up_check_off)
+                } else {
+                    stringResource(R.string.settings_wake_up_check_minutes, settings.wakeUpCheckMinutes)
+                },
+                onClick = { dialog = SettingsDialog.WakeUpCheck },
+            )
+            SettingsSwitchRow(
+                title = stringResource(R.string.settings_speak_label),
+                subtitle = stringResource(R.string.settings_speak_label_hint),
+                checked = settings.speakLabel,
+                onCheckedChange = onSpeakLabelChange,
             )
 
             SettingsSection(stringResource(R.string.settings_sound))
@@ -211,6 +240,19 @@ fun SettingsScreen(
             onDismiss = { dialog = null },
             onSelect = { selected -> onPreAlertChange(selected); dialog = null },
         )
+        SettingsDialog.WakeUpCheck -> ChoiceDialog(
+            title = stringResource(R.string.settings_wake_up_check),
+            options = WakeUpCheckPolicy.OPTIONS_MINUTES.map { minutes ->
+                val label = if (minutes == 0) {
+                    stringResource(R.string.settings_wake_up_check_off)
+                } else {
+                    stringResource(R.string.settings_wake_up_check_minutes, minutes)
+                }
+                Triple(minutes, label, settings.wakeUpCheckMinutes == minutes)
+            },
+            onDismiss = { dialog = null },
+            onSelect = { selected -> onWakeUpCheckChange(selected); dialog = null },
+        )
         SettingsDialog.Language -> ChoiceDialog(
             title = stringResource(R.string.settings_language),
             options = AppLanguage.supported.map { language ->
@@ -222,6 +264,19 @@ fun SettingsScreen(
             },
             onDismiss = { dialog = null },
             onSelect = { selected -> onLanguageChange(selected); dialog = null },
+        )
+        SettingsDialog.Accent -> ChoiceDialog(
+            title = stringResource(R.string.settings_accent),
+            options = listOf(
+                "AMBER" to R.string.settings_accent_amber,
+                "BLUE" to R.string.settings_accent_blue,
+                "GREEN" to R.string.settings_accent_green,
+                "VIOLET" to R.string.settings_accent_violet,
+            ).map { (value, label) ->
+                Triple(value, stringResource(label), settings.accentColor == value)
+            },
+            onDismiss = { dialog = null },
+            onSelect = { selected -> onAccentChange(selected); dialog = null },
         )
         SettingsDialog.Sound -> ChoiceDialog(
             title = stringResource(R.string.settings_default_sound),
@@ -244,7 +299,9 @@ private sealed interface SettingsDialog {
     data object Snooze : SettingsDialog
     data object Sound : SettingsDialog
     data object PreAlert : SettingsDialog
+    data object WakeUpCheck : SettingsDialog
     data object Language : SettingsDialog
+    data object Accent : SettingsDialog
 }
 
 /** Picker label of the stored language preference. */

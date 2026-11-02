@@ -1,0 +1,12 @@
+Missions
+- Chain up to three missions in a row: the alarm stops only after the last one.
+- Four new missions: tile order (memory), colour hunt, squats and steps. All offline, no new permissions.
+
+Sleep and wake-up
+- Wake-up check: a quiet "are you up?" question a few minutes after you dismiss the alarm; miss it within 100 seconds and the alarm rings again.
+- Panic stage: if the alarm is still unanswered after 40 seconds it jumps to full volume.
+
+Insights and looks
+- Statistics screen: 7 or 30 days of wake-ups, missed alarms, snoozes, success rate, average wake-up time and a daily chart.
+- Accent colour choice (amber, blue, green, violet) next to Material You.
+- "Speak the label": the alarm reads your label aloud when it rings.

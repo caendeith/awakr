@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plugin_squat_name">Приседания</string>
+    <string name="squat_goal">Приседаний: %1$d</string>
+    <string name="squat_hint">Приседайте, пока кольцо не заполнится</string>
+    <string name="squat_progress">%1$d / %2$d</string>
+    <string name="squat_no_sensor">На устройстве нет рабочего акселерометра — считайте приседания нажатиями</string>
+    <string name="squat_tap">Засчитать приседание</string>
+</resources>

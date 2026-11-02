@@ -23,6 +23,7 @@ data class AlarmEntity(
     @ColumnInfo(name = "max_snoozes") val maxSnoozes: Int = 3,
     @ColumnInfo(name = "mission_plugin_id") val missionPluginId: String = "math",
     @ColumnInfo(name = "mission_config") val missionConfig: String = "{}",
+    @ColumnInfo(name = "mission_chain") val missionChain: String = "[]",
     @ColumnInfo(name = "sort_order") val sortOrder: Int = 0,
     @ColumnInfo(name = "skip_next_at") val skipNextAt: Long? = null,
     @ColumnInfo(name = "deleted_at") val deletedAt: Long? = null,

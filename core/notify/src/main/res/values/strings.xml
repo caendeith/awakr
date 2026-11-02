@@ -7,4 +7,6 @@
     <string name="channel_service_name">Alarm engine</string>
     <string name="channel_pre_alert_name">Upcoming alarms</string>
     <string name="channel_pre_alert_description">A quiet reminder a few minutes before an alarm</string>
+    <string name="channel_wake_up_check_name">Wake-up check</string>
+    <string name="channel_wake_up_check_description">Asks you to confirm that you are awake after an alarm is dismissed</string>
 </resources>
