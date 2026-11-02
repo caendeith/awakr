@@ -37,6 +37,9 @@
 
     <string name="plugins_empty_title">Плагинов нет</string>
     <string name="plugins_empty_body">Здесь появятся миссии, наборы звуков и темы.</string>
+    <string name="plugins_builtin_title">Миссии встроены в приложение</string>
+    <string name="plugins_builtin_body">Скачиваемых плагинов нет: миссия — это небольшой Gradle-модуль, который собирается вместе с Awakr. Поэтому ничего нельзя подменить втихую, а приложению не нужна сеть. Своя миссия — это один модуль.</string>
+    <string name="plugins_builtin_action">Как написать миссию</string>
 
     <string name="repeat_once">Один раз</string>
     <string name="repeat_every_day">Каждый день</string>

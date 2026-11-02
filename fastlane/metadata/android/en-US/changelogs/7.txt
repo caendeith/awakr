@@ -1,0 +1,1 @@
+Awakr 1.3.1: the Plugins screen now explains that missions are compiled into the app and links to the guide on writing your own. No functional changes.

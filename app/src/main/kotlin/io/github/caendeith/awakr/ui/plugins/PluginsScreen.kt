@@ -2,6 +2,7 @@ package io.github.caendeith.awakr.ui.plugins
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -35,6 +37,7 @@ import io.github.caendeith.awakr.core.ui.component.AwakrCard
 import io.github.caendeith.awakr.data.repository.PluginStateRepository
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
 import io.github.caendeith.awakr.plugin.runtime.SettingsForm
+import androidx.compose.ui.platform.LocalUriHandler
 import io.github.caendeith.awakr.ui.format.parseMissionConfig
 import kotlinx.coroutines.launch
 
@@ -48,6 +51,7 @@ fun PluginsScreen(
 ) {
     val states by pluginStates.observeAll().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
+    val uriHandler = LocalUriHandler.current
     val byId = states.associateBy { it.pluginId }
 
     LaunchedEffect(Unit) {
@@ -83,6 +87,31 @@ fun PluginsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // The plugin list looks like a store without an "add" button, so say out loud that
+            // plugins are compiled in and where the guide is.
+            AwakrCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = stringResource(R.string.plugins_builtin_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.plugins_builtin_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TextButton(
+                        onClick = { uriHandler.openUri(PLUGIN_GUIDE_URL) },
+                        contentPadding = PaddingValues(0.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.plugins_builtin_action),
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
             if (plugins.missions.isEmpty()) {
                 AwakrCard(modifier = Modifier.fillMaxWidth()) {
                     Column {
@@ -164,3 +193,5 @@ fun PluginsScreen(
         }
     }
 }
+
+private const val PLUGIN_GUIDE_URL = "https://github.com/caendeith/awakr/blob/main/docs/plugins.md"

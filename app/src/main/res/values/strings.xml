@@ -39,6 +39,9 @@
 
     <string name="plugins_empty_title">No plugins installed</string>
     <string name="plugins_empty_body">Missions, sound packs and themes will show up here.</string>
+    <string name="plugins_builtin_title">Missions are compiled into the app</string>
+    <string name="plugins_builtin_body">There is no plugin download: a mission is a small Gradle module built together with Awakr, so nothing can be swapped behind your back and the app needs no network. Writing your own takes one module.</string>
+    <string name="plugins_builtin_action">How to write a mission</string>
 
     <string name="repeat_once">Once</string>
     <string name="repeat_every_day">Every day</string>

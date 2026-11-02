@@ -95,6 +95,16 @@ Yes. Editor → sound card → **Import** (Импорт), pick any audio file. T
 private storage, so it keeps working after the original is deleted; uninstalling the app removes the
 copy. The alarm always rings even if the copy is missing (default sound fallback).
 
+## I see a plugin list but no button to add a plugin
+
+By design. Missions are plugins in the source tree, not downloads: each one is a small Gradle
+module compiled into the APK. Awakr deliberately has no way to load code at runtime — that would
+need the `INTERNET` permission, would be rejected by Google Play, and could break the F-Droid
+recipe. The Plugins screen therefore only lets you enable or disable what is already built in.
+
+Writing your own mission is still supported and takes one module — the guide is in
+[docs/plugins.md](plugins.md). Runtime-loaded plugins are on the roadmap for a later version.
+
 ## Does Awakr need internet access?
 
 No. The app has no `INTERNET` permission at all — CI fails the build if it ever appears in the merged
