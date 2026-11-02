@@ -3,6 +3,9 @@ package io.github.caendeith.awakr.ui.ring
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -36,6 +39,10 @@ class RingActivity : AppCompatActivity() {
      * forcing a recreate (the ring session state lives in the service).
      */
     private val ringRequest = mutableStateOf(RingRequest(alarmId = 0L, snoozeCount = 0))
+
+    /** Posts [bringBack] after the platform signalled that the user tried to leave the ring. */
+    private val returnHandler = Handler(Looper.getMainLooper())
+    private val bringBack = Runnable { launchRingAgain() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -135,17 +142,50 @@ class RingActivity : AppCompatActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
+    /**
+     * "Like Alarmy": a ringing alarm must not let you walk away.
+     *
+     * Home, recents and the notification shade are user-initiated departures, so the platform
+     * calls this hook while the ring screen is still the visible activity - which is exactly the
+     * moment where starting an activity again is allowed. The ring is brought back immediately;
+     * solving the mission (or snoozing, when the alarm still allows it) stays the only way out.
+     * A screen that goes dark, an incoming call or the system moving us away do not come through
+     * this hook, so the alarm simply keeps ringing there instead of fighting the platform.
+     */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (isFinishing) return
+        Log.i(TAG, "leaving the ring is not allowed, bringing it back")
+        returnHandler.removeCallbacks(bringBack)
+        returnHandler.post(bringBack)
+    }
+
     override fun onStop() {
         // Safety net for the mission timer: whenever the ring screen leaves the foreground (the
         // device was locked again, another app was opened, the system moved us away) the alarm
         // must be audible again rather than staying muted forever.
         if (!isChangingConfigurations) {
             AlarmRingService.setSilenced(this, silenced = false)
-            // Keep the way back obvious: the notification (and its full-screen intent) is the only
-            // supported route while the ring screen is in the background.
+            // Keep the way back obvious even if the platform refused the re-launch: the ring
+            // notification carries the full-screen intent and the dismiss/snooze actions.
             AlarmRingService.repostNotification(this)
         }
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        returnHandler.removeCallbacksAndMessages(null)
+        super.onDestroy()
+    }
+
+    /** Re-opens the ring screen over whatever the user switched to. */
+    private fun launchRingAgain() {
+        if (isFinishing) return
+        val request = ringRequest.value
+        if (request.alarmId == 0L) return
+        val intent = AlarmIntents.ringActivityIntent(this, request.alarmId, request.snoozeCount)
+        runCatching { startActivity(intent) }
+            .onFailure { Log.w(TAG, "could not bring the ring back", it) }
     }
 
     private data class RingRequest(val alarmId: Long, val snoozeCount: Int) {
@@ -170,6 +210,10 @@ class RingActivity : AppCompatActivity() {
         // The ring shares the app task, so removing the whole task would also close the user's
         // alarm list. Only a ring that owns its task should take the task down with it.
         if (isTaskRoot) finishAndRemoveTask() else finish()
+    }
+
+    private companion object {
+        private const val TAG = "RingActivity"
     }
 
     /**

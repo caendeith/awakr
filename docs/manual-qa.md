@@ -211,3 +211,20 @@ the code review cover. Everything marked ⏳ still has to be confirmed on hardwa
 | Spoken label / accent colour / panic ramp | Settings → Speak the label, Accent colour; ring for 40 s | ⏳ device only (TextToSpeech needs the system engine); the accent palette is a pure `ColorScheme` transform |
 | Ring screen after backgrounding | swipe the ring away, tap the notification | ⏳ device only: `onResume` / `onNewIntent` re-apply `showWhenLocked` and `KEEP_SCREEN_ON`, `onStop` re-posts the ringing notification, and the legacy API<27 branch no longer uses `FLAG_DISMISS_KEYGUARD` (that flag is what asked for the PIN) |
 
+## v1.4.1 pass — the ring screen over a dark display
+
+Reported on a GrapheneOS Pixel 7 Pro (release APK over adb): "the alarm rings, but the screen stays
+black and the only way in is the notification shade". The alarm answered that with a silent
+notification, and the system never opens a silent notification's full screen intent, so the display
+stayed off.
+
+| Area | What was done | Result |
+|---|---|---|
+| Full screen ring, display off | alarm set, screen off and dozing, then ring | ✅ `mWakefulness=Awake`, `RingActivity` resumed, five ring windows, no PIN prompt. Before the fix: `mWakefulness=Dozing`, zero ring windows, `START … (BAL_BLOCK)` in logcat and `flags=…SILENT` in the notification record |
+| The silent flag | `buildNotification()` no longer calls `setSilent(true)`; the channel has no sound and the service plays the audio, so the notification stays quiet | ✅ notification record without `SILENT`, full screen intent honoured with `USE_FULL_SCREEN_INTENT: default` (a fresh install, no appop tweak) |
+| Wake lock attempt (reverted) | a `SCREEN_BRIGHT_WAKE_LOCK` with `ACQUIRE_CAUSES_WAKEUP` did turn the panel on, but it made the display interactive before the notification was posted, so the system downgraded the full screen intent to a heads-up notification | ❌ removed; the display is woken by the full screen intent instead |
+| Mission chain on the ring screen | alarm with two missions (math, colour hunt) | ✅ "Миссия 1 из 2" → two maths examples → "Миссия 2 из 2" → three tiles → `ring finished: DISMISSED`, back to the home screen |
+| Leaving the ring screen | Home, then Recents | ✅ `RingActivity: leaving the ring is not allowed, bringing it back`, the ring screen returns; an alarm is dismissed by the mission or by snoozing |
+| Timer while a mission runs | watching the ring screen | ✅ "Время на задание" counts down from 1:30, the sound stays muted, and the board resets to a new target when it expires |
+
+

@@ -31,6 +31,26 @@ silent.
 go away and ended up behind it. From 1.2.1 the ring screen stays in front before and after unlocking,
 and the full-screen intent brings it back if you leave it.
 
+## The alarm rang, but the screen stayed black — there was nothing to tap
+
+**Fixed in 1.4.1.** The ring notification was marked *silent* (the sound is played by Awakr's own
+alarm player, so the notification itself keeps quiet). Android never opens a silent notification full
+screen, so with the display off the alarm rang into a black screen and the only way in was the
+notification shade — if you managed to find it. From 1.4.1 the ring notification is a normal alarm
+notification again and the ring screen opens by itself over the lock screen, display off or not.
+
+If the full screen ring still does not open on your phone, check Android's own switch for it:
+**Settings → Apps → Awakr → Notifications → Full-screen notifications** (older builds: *Settings → Apps
+→ Special access → Full screen notifications*). Some distributions default it to off for apps that
+were not installed from a store. Awakr keeps ringing either way, and the notification on the lock
+screen opens the ring screen when you tap it.
+
+## The ring screen comes back when I press Home
+
+That is on purpose. An alarm is dismissed by passing the mission or by snoozing, not by leaving the
+screen — the same way the system alarm clock behaves. Since 1.4.1, Home and Recents bring the ring
+screen straight back while the alarm is ringing.
+
 ## "Access denied for this app" / «Доступ для приложения запрещен» when I turn on "Display over other apps"
 
 This is an Android 13+ protection, not an Awakr error. Apps installed outside a store (adb, a file

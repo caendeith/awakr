@@ -187,9 +187,12 @@ class AlarmRingService : Service() {
             }
             currentAlarm = alarm
             if (triggerAtMillis <= 0L) triggerAtMillis = System.currentTimeMillis()
+            // Read the display state before anything else wakes it: the answer decides which launch
+            // path is used below.
+            val displayAsleep = getSystemService(PowerManager::class.java)?.isInteractive != true
             startVibration(alarm)
             notifyRinging(alarm)
-            launchRingActivity(alarm)
+            launchRingActivity(alarm, displayAsleep)
             // Resolving the sound id touches settings storage, so the UI above comes first.
             startSound(alarm)
             speakLabelIfEnabled(alarm)
@@ -218,7 +221,17 @@ class AlarmRingService : Service() {
      * as the app is allowed to launch activities from the background (see the onboarding step
      * that asks for "display over other apps").
      */
-    private fun launchRingActivity(alarm: Alarm) {
+    private fun launchRingActivity(alarm: Alarm, displayAsleep: Boolean) {
+        // With the screen off the notification's full screen intent is the only launch path the
+        // system honours: it is the one that also turns the display on. A direct start from a
+        // background service is refused there, and the refused attempt leaves the activity record
+        // half created, so the full screen intent cannot open anything afterwards either and the
+        // alarm rings on a black screen. The direct start therefore stays on the awake path only,
+        // where it opens the ring screen a little sooner than the notification does.
+        if (displayAsleep) {
+            Log.i(TAG, "display is off, the full screen intent opens the ring screen")
+            return
+        }
         runCatching { startActivity(AlarmIntents.ringActivityIntent(this, alarm.id, snoozeCount)) }
             .onFailure { Log.w(TAG, "could not launch ring activity", it) }
     }
@@ -460,7 +473,11 @@ class AlarmRingService : Service() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
             .setAutoCancel(false)
-            .setSilent(true)
+            // Never mark this notification silent. The system drops the full screen intent of a
+            // silent notification, and the ring screen then never opens over the keyguard: the
+            // alarm rings with the display off and there is no way to reach it but the shade.
+            // Quietness comes from the channel, which has no sound, and from the service, which
+            // plays the alarm through the audio manager.
             .setContentIntent(AlarmIntents.ringActivityPendingIntent(this, alarm.id))
             .setFullScreenIntent(AlarmIntents.ringActivityPendingIntent(this, alarm.id), true)
             .apply {

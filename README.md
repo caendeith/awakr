@@ -14,7 +14,7 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 <img alt="Kotlin 2.2" src="https://img.shields.io/badge/Kotlin-2.2.21-7f52ff?logo=kotlin&logoColor=white">
 <img alt="Jetpack Compose" src="https://img.shields.io/badge/Compose-Material%203-4285f4">
 <img alt="No INTERNET permission" src="https://img.shields.io/badge/INTERNET-not%20requested-critical">
-<img alt="Version" src="https://img.shields.io/badge/version-1.4.0-informational">
+<img alt="Version" src="https://img.shields.io/badge/version-1.4.1-informational">
 </p>
 
 <p><sub>254 unit tests · release APK 5.3 MB · ru + en · clean-room, no third-party code, assets or sounds</sub></p>

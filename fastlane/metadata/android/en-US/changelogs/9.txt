@@ -1,0 +1,6 @@
+Ring screen
+- The alarm now opens full screen over the lock screen even when the display is off. The notification was marked silent, and the system never opens a silent notification full screen, so the alarm used to ring on a black screen.
+- The ring screen can no longer be left: Home and Recents bring it straight back, because an alarm is not something to swipe away.
+
+Fixes
+- Wake-up check: dismissing or snoozing outside a ring no longer restarts the ring from a stale request.
