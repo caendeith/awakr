@@ -34,6 +34,9 @@
 
     <string name="ring_default_label">Alarm</string>
     <string name="ring_mission_placeholder">Complete the mission to stop the alarm.</string>
+    <string name="ring_wake_gate_title">Are you up?</string>
+    <string name="ring_wake_gate_hint">The alarm keeps ringing until you confirm. The mission comes next.</string>
+    <string name="ring_wake_gate_button">I\'m up</string>
     <string name="ring_dismiss">Dismiss</string>
     <string name="ring_snooze">Snooze</string>
     <string name="ring_fallback_title">Alarm is ringing</string>

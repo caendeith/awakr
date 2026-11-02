@@ -227,4 +227,22 @@ stayed off.
 | Leaving the ring screen | Home, then Recents | ✅ `RingActivity: leaving the ring is not allowed, bringing it back`, the ring screen returns; an alarm is dismissed by the mission or by snoozing |
 | Timer while a mission runs | watching the ring screen | ✅ "Время на задание" counts down from 1:30, the sound stays muted, and the board resets to a new target when it expires |
 
+## v1.5.0 pass — the "I'm up" gate
+
+Built from `versionCode 10` / `1.5.0`, installed on the Pixel 7 Pro (GrapheneOS, screen off, secure
+lock screen) with the alarm set three minutes ahead.
+
+| Area | What was done | Result |
+|---|---|---|
+| Gate on a dark display | alarm fires with the screen off and locked | ✅ screen wakes, `RingActivity` on top, no PIN; `AlarmRingService: display is off, the full screen intent opens the ring screen` |
+| Sound until the tap | 40 seconds of ringing before touching anything | ✅ `silenced=false` on every tick, `panic stage: ringing at full volume` after 40 s — no mission silences the alarm by itself |
+| Gate content | reading the ring screen | ✅ «Вы встали?» / «Будильник звенит, пока вы не подтвердите. Дальше — миссия.» / «Я встаю» + «Отложить»; no mission and no countdown yet |
+| After "I'm up" | tapping the button | ✅ `silenced=true`, «Время на задание» 1:27 and «Пример 1 из 2: 15 − 3 = ?» appear |
+| Dismiss path | solving both examples | ✅ `ring finished: DISMISSED`, back to the home screen |
+| Chain | ring with two missions | ⏳ the gate shows once, before the first step; the chain itself was verified in 1.4.1 |
+
+The mute effect in `RingScreen` now keys on the gate state, so no mission can silence a ring the
+user has not confirmed.
+
+
 

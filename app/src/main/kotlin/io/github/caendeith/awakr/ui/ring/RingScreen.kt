@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +43,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import io.github.caendeith.awakr.R
 import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.ui.component.AwakrCard
+import io.github.caendeith.awakr.core.ui.component.PrimaryButton
 import io.github.caendeith.awakr.core.ui.component.SecondaryButton
 import io.github.caendeith.awakr.core.ui.component.TimeText
 import io.github.caendeith.awakr.sdk.MissionPlugin
@@ -109,14 +111,22 @@ private fun RingContent(
     val missionOnScreen = missions.isNotEmpty()
     val resumed = rememberResumed()
 
+    // The alarm rings until the user admits being awake ("I'm up"); the mission comes after that.
+    // Silencing the alarm is the point of the gate, so the mission timer starts only once it is open.
+    var awake by rememberSaveable { mutableStateOf(false) }
     var missionAttempt by remember(missionKind) { mutableIntStateOf(0) }
     var countdownRound by remember { mutableIntStateOf(0) }
     var remainingMillis by remember { mutableLongStateOf(MissionTimer.DURATION_MILLIS) }
     var timeIsUp by remember { mutableStateOf(false) }
 
-    LaunchedEffect(countdownRound, missionOnScreen, resumed) {
+    LaunchedEffect(countdownRound, missionOnScreen, resumed, awake) {
         if (!missionOnScreen) {
             // The fallback mission is the last resort to end a ring, so it must be audible.
+            silenceChange(false)
+            return@LaunchedEffect
+        }
+        if (!awake) {
+            // The gate is what silences the alarm: until it is passed the sound stays on.
             silenceChange(false)
             return@LaunchedEffect
         }
@@ -165,7 +175,7 @@ private fun RingContent(
                 textAlign = TextAlign.Center,
             )
         }
-        if (missionOnScreen) {
+        if (missionOnScreen && awake) {
             if (missions.size > 1) {
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -185,22 +195,26 @@ private fun RingContent(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
+            if (missionOnScreen && !awake) {
+                WakeGate(onWakeUp = { awake = true })
+            } else {
             // A new attempt really re-creates the mission state, so math and typing hand out a
             // different task instead of keeping the previous answer on screen.
-            key(missionKind, missionAttempt, stepIndex) {
-                MissionHost(
-                    mission = step?.plugin,
-                    config = stepConfig,
-                    onSolved = {
-                        // Passing a step only advances the chain; the last one ends the ring.
-                        if (stepIndex < missions.lastIndex) {
-                            stepIndex++
-                            countdownRound++
-                        } else {
-                            onDismiss()
-                        }
-                    },
-                )
+                key(missionKind, missionAttempt, stepIndex) {
+                    MissionHost(
+                        mission = step?.plugin,
+                        config = stepConfig,
+                        onSolved = {
+                            // Passing a step only advances the chain; the last one ends the ring.
+                            if (stepIndex < missions.lastIndex) {
+                                stepIndex++
+                                countdownRound++
+                            } else {
+                                onDismiss()
+                            }
+                        },
+                    )
+                }
             }
         }
         if (showSnooze) {
@@ -213,6 +227,39 @@ private fun RingContent(
     }
 }
 
+/**
+ * The gate between "the alarm rings" and "here is your mission".
+ *
+ * A ring that jumps straight into a task starts by silencing itself, which makes it easy to sleep
+ * through. The ring screen therefore stays loud until the user admits to being awake, and only
+ * then does the mission (with its own countdown) start.
+ */
+@Composable
+private fun WakeGate(onWakeUp: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.ring_wake_gate_title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(R.string.ring_wake_gate_hint),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        PrimaryButton(
+            text = stringResource(R.string.ring_wake_gate_button),
+            onClick = onWakeUp,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
 /**
  * Countdown of the mission time budget.
  *

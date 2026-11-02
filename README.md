@@ -14,7 +14,7 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 <img alt="Kotlin 2.2" src="https://img.shields.io/badge/Kotlin-2.2.21-7f52ff?logo=kotlin&logoColor=white">
 <img alt="Jetpack Compose" src="https://img.shields.io/badge/Compose-Material%203-4285f4">
 <img alt="No INTERNET permission" src="https://img.shields.io/badge/INTERNET-not%20requested-critical">
-<img alt="Version" src="https://img.shields.io/badge/version-1.4.1-informational">
+<img alt="Version" src="https://img.shields.io/badge/version-1.5.0-informational">
 </p>
 
 <p><sub>254 unit tests · release APK 5.3 MB · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
@@ -58,6 +58,7 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 
 - **Missions instead of a snooze button.** Eight plugins ship in the app: math, camera code (QR / EAN-13 / EAN-8 / UPC-A / Code 128), shake, typing, memory (Simon-style 4x4), find-the-colour, squats and steps (accelerometer, no step-counter permission). A disabled or broken mission falls back to a "hold to dismiss" safety screen so an alarm can never get stuck ringing.
 - **Several missions in a row.** Chain up to three different missions on one alarm; each stage gets its own fresh task, the counter keeps counting and the alarm only stops after the last one.
+- **"I'm up" before the task.** The ring starts on a gate screen that asks one question. The alarm keeps ringing at full volume until you say you are awake — only then does the sound stop and the mission start, so showing a task can never silence an alarm you slept through.
 - **A code you already own.** Rather than printing a generated QR, scan the barcode of a product you keep away from the bed and bind it to the alarm. Pointing the camera at it dismisses the alarm; an optional shutter saves the frame for later.
 - **Reliability first.** Exact alarms via `setAlarmClock` (no SCHEDULE_EXACT_ALARM dance), re-scheduled on boot and on timezone/time changes, a foreground service with an alarm-usage audio stream, a full-screen ring activity over the lock screen, a fallback notification if a background start is blocked, and a queue so two alarms in the same minute do not cancel each other.
 - **Snooze is honest.** 5-30 minutes per alarm, at most `max_snoozes` times (3 by default), and the counter travels with the alarm intent so a stray re-trigger cannot reset it.

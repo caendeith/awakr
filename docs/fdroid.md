@@ -105,9 +105,9 @@ AutoName: Awakr
 RepoType: git
 Repo: https://github.com/caendeith/awakr.git
 Builds:
-  - versionName: 1.4.1
-    versionCode: 9
-    commit: v1.4.1
+  - versionName: 1.5.0
+    versionCode: 10
+    commit: v1.5.0
     gradle:
       - 'yes'
     output: app/build/outputs/apk/release/app-release.apk

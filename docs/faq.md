@@ -51,6 +51,16 @@ That is on purpose. An alarm is dismissed by passing the mission or by snoozing,
 screen — the same way the system alarm clock behaves. Since 1.4.1, Home and Recents bring the ring
 screen straight back while the alarm is ringing.
 
+## Why does the ring screen ask "Are you up?" before showing the task?
+
+**Since 1.5.0.** A mission silences the alarm while you solve it, so a ring that jumped straight into
+a task silenced itself within a second — easy to sleep through, loud bell or not. The ring now opens
+on a gate screen: the alarm keeps ringing at full volume (and reaches the panic stage after 40
+seconds) until you tap **I'm up** / **Я встаю**. Only then does the sound stop and the mission
+appear, with its own 90 second budget. If the budget runs out the sound comes back and you get a
+fresh task.
+
+Snooze still works from the gate, without solving anything.
 ## "Access denied for this app" / «Доступ для приложения запрещен» when I turn on "Display over other apps"
 
 This is an Android 13+ protection, not an Awakr error. Apps installed outside a store (adb, a file

@@ -1,0 +1,4 @@
+The alarm now starts on a gate screen: "Are you up?" with one big button.
+Only after you tap "I'm up" does the sound stop and the mission appear.
+Before that the alarm keeps ringing at full volume, so the app no longer
+silences itself the moment a task shows up.

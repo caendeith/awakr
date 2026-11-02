@@ -32,6 +32,9 @@
 
     <string name="ring_default_label">Будильник</string>
     <string name="ring_mission_placeholder">Выполните миссию, чтобы выключить будильник.</string>
+    <string name="ring_wake_gate_title">Вы встали?</string>
+    <string name="ring_wake_gate_hint">Будильник звенит, пока вы не подтвердите. Дальше — миссия.</string>
+    <string name="ring_wake_gate_button">Я встаю</string>
     <string name="ring_dismiss">Выключить</string>
     <string name="ring_snooze">Отложить</string>
     <string name="ring_fallback_title">Будильник звенит</string>

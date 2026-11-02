@@ -18,14 +18,14 @@ RepoType: git
 Repo: https://github.com/caendeith/awakr.git
 
 Builds:
-  - versionName: 1.4.1
-    versionCode: 9
-    commit: v1.4.1
+  - versionName: 1.5.0
+    versionCode: 10
+    commit: v1.5.0
     gradle:
       - 'yes'
     output: app/build/outputs/apk/release/app-release.apk
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.4.1
-CurrentVersionCode: 9
+CurrentVersion: 1.5.0
+CurrentVersionCode: 10
