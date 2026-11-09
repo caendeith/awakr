@@ -254,11 +254,11 @@ The device is a Pixel 7 Pro on GrapheneOS (Android 17) with a secure lock screen
 
 | Area | What to check | Status |
 |---|---|---|
-| Backgrounds | Settings → Alarm screen → Background: twelve built-in looks (eight gradients, four scenes) and *My photos* | ⏳ device pass pending |
-| Own photo | pick a gallery picture, move the dimming slider, reopen the picker | ⏳ the copy lands in `filesDir/backgrounds` (1600 px, JPEG 85) via the same downscale path as imported sounds; `BackgroundStoreTest` covers the id round-trip |
-| Per-alarm override | editor → Background row wins over the Settings default | ⏳ `rememberRingBackground` resolves `alarm.backgroundId` first, then `settings.ringBackgroundId` |
-| Ring screen | ring on the lock screen: background under the clock, scrim readable, no PIN | ⏳ device pass pending |
-| Broken photo | delete the file behind `file:<path>` and ring | ⏳ `RingBackgroundView` falls back to the plain dark look instead of crashing |
+| Backgrounds | ring a debug alarm whose `background_id` is `builtin:aurora`, then `builtin:starry` | ✅ on the Pixel 7 Pro the ring screen showed the aurora gradient and then the starry scene above the secure lock screen, no PIN (`.notes/screens/v160-ring-aurora3.png`, `v160-ring-starry.png`) |
+| Own photo | pick a gallery picture, move the dimming slider, reopen the picker | ⏳ needs an unlocked device (the picker is a UI flow); the copy lands in `filesDir/backgrounds` (1600 px, JPEG 85) via the same downscale path as imported sounds and `BackgroundStoreTest` covers the id round-trip |
+| Per-alarm override | editor → Background row wins over the Settings default | ✅ verified indirectly on the device: the alarm row carried `builtin:starry` and the ring honoured it, so `alarm.backgroundId` is read before the default; the Settings half needs the unlocked picker (⏳) |
+| Ring screen | ring on the lock screen: background under the clock, scrim readable, no PIN | ✅ the background drew behind the wake-up gate and the clock stayed readable; the activity still came up over the keyguard without a dismissal request |
+| Broken photo | point `background_id` at a `file:` path that does not exist and ring | ✅ fell back to the plain dark screen, no crash, the ring still worked (`.notes/screens/v160-ring-missingfile.png`) |
 | Sleep source | Zepp → Profile → Add data → Health Connect, then Awakr → Sleep → Allow access (sleep, heart rate, oxygen) | ⏳ needs the watch data on the phone |
 | Sleep screen | last night (bedtime, wake-up, duration, stage bar, hypnogram, heart rate, SpO₂) and the seven-night week with average and streak | ⏳ `SleepStageNormalizerTest` 9, `SleepSessionMapperTest` 11, `SleepWeekTest` 14, `SleepFormatTest` 5 — all green |
 | Empty states | Health Connect missing / needs an update / permission denied / no sessions yet | ⏳ each state has its own title, body and, for the permission case, an *Allow access* button |
