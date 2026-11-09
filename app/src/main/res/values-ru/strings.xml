@@ -87,6 +87,8 @@
     <string name="perm_exact_body">Без них Android может отложить звонок до первого пробуждения телефона.</string>
     <string name="perm_camera_title">Камера</string>
     <string name="perm_camera_body">Нужна только миссии с QR-кодом и только пока звенит будильник.</string>
+    <string name="perm_overlay_title">Поверх других приложений</string>
+    <string name="perm_overlay_body">Без этого разрешения экран звонка не может перекрыть приложение, которое открыто на разблокированном телефоне, — будильник покажет только уведомление.</string>
     <string name="perm_granted">Разрешено</string>
     <string name="perm_missing">Не разрешено</string>
     <string name="perm_optional">Необязательно</string>

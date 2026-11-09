@@ -24,6 +24,7 @@ import io.github.caendeith.awakr.core.alarm.AlarmOutcome
 import io.github.caendeith.awakr.core.audio.AlarmSoundPlayer
 import io.github.caendeith.awakr.core.audio.SoundResolver
 import io.github.caendeith.awakr.core.notify.AwakrNotifications
+import io.github.caendeith.awakr.core.perm.AlarmPermissionChecks
 import io.github.caendeith.awakr.ui.format.formatTime
 import io.github.caendeith.awakr.ui.widget.AlarmWidgetUpdater
 import kotlinx.coroutines.CoroutineScope
@@ -216,24 +217,33 @@ class AlarmRingService : Service() {
     }
 
     /**
-     * The full-screen intent is the sanctioned way to surface the ring screen, but some OEM
-     * builds and Do-not-disturb policies drop it. An explicit start covers those cases as soon
-     * as the app is allowed to launch activities from the background (see the onboarding step
-     * that asks for "display over other apps").
+     * Puts the ring screen in front of whatever is on the display.
+     *
+     * Two mechanisms exist and they cover different states. The notification's full screen intent
+     * is the sanctioned path, but the system only honours it while the screen is off or locked:
+     * on an unlocked phone the user just gets a heads-up banner and the alarm rings behind
+     * whatever app is open. A direct activity start covers that case, and Android only allows it
+     * from a background service when the app holds "display over other apps". That grant is the
+     * reason it is a required permission in the onboarding screen.
      */
     private fun launchRingActivity(alarm: Alarm, displayAsleep: Boolean) {
-        // With the screen off the notification's full screen intent is the only launch path the
-        // system honours: it is the one that also turns the display on. A direct start from a
-        // background service is refused there, and the refused attempt leaves the activity record
-        // half created, so the full screen intent cannot open anything afterwards either and the
-        // alarm rings on a black screen. The direct start therefore stays on the awake path only,
-        // where it opens the ring screen a little sooner than the notification does.
-        if (displayAsleep) {
-            Log.i(TAG, "display is off, the full screen intent opens the ring screen")
+        if (AlarmPermissionChecks.overlayAllowed(this)) {
+            // Granted: the start is allowed in every display state and the window also turns the
+            // display on through the activity's turn-screen-on flag.
+            Log.i(TAG, "display over other apps is granted, opening the ring screen directly")
+            runCatching { startActivity(AlarmIntents.ringActivityIntent(this, alarm.id, snoozeCount)) }
+                .onFailure { Log.w(TAG, "could not launch ring activity", it) }
             return
         }
-        runCatching { startActivity(AlarmIntents.ringActivityIntent(this, alarm.id, snoozeCount)) }
-            .onFailure { Log.w(TAG, "could not launch ring activity", it) }
+        // Without the grant a direct start from a background service is refused, and the refused
+        // attempt leaves the activity record half created, so the full screen intent cannot open
+        // anything afterwards either and the alarm rings on a black screen. The notification is
+        // then the only path, and it only works with the display off or locked.
+        if (displayAsleep) {
+            Log.i(TAG, "display is off, the full screen intent opens the ring screen")
+        } else {
+            Log.w(TAG, "display over other apps is not granted, ringing behind a heads-up banner")
+        }
     }
 
     /**

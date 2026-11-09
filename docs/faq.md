@@ -61,9 +61,21 @@ appear, with its own 90 second budget. If the budget runs out the sound comes ba
 fresh task.
 
 Snooze still works from the gate, without solving anything.
-## "Access denied for this app" / «Доступ для приложения запрещен» when I turn on "Display over other apps"
+## The alarm only shows a banner while I am using the phone / "Access denied for this app" when I turn on "Display over other apps"
 
-This is an Android 13+ protection, not an Awakr error. Apps installed outside a store (adb, a file
+**Since 1.6.1** Awakr asks for **Display over other apps** (Поверх других приложений) at onboarding and
+lists it in Settings → Permissions. Android 10+ refuses a background app the right to open a screen on
+top of the app you are currently using unless it holds that permission; the system alarm clock is
+exempt, third-party apps are not. With the permission granted, the ring screen takes over the display
+whether the phone is locked, idle or in the middle of a chat. Without it the alarm still rings loudly
+and the ring screen opens by itself when the display is off or on the lock screen, but while you are
+actively using the phone you get only a heads-up banner — tap it to open the ring screen.
+
+The permission is real but narrow: it lets Awakr draw over other apps, and Awakr only uses it to raise
+the ring screen while an alarm is ringing.
+
+If you turn the toggle on and Android answers "Access denied for this app" / «Доступ для приложения
+запрещен», that is an Android 13+ protection, not an Awakr error. Apps installed outside a store (adb, a file
 manager, F-Droid, our own repository) are put in *restricted settings*: sensitive toggles such as
 "Display over other apps" (Поверх других приложений) cannot be switched on until you allow them
 explicitly for that app. The dialog you get has only a "Close" button, and the text warns that the
@@ -82,10 +94,8 @@ The menu entry only appears after you have tried to use the restricted capabilit
 vendor ROMs the path differs (Samsung: *Apps → Awakr → ⋮ → Allow restricted settings*; Xiaomi/HyperOS
 keeps the same entry inside app info).
 
-**From 1.2.1 Awakr does not need this permission at all.** The ring screen is raised with the
-full-screen intent and `setShowWhenLocked`, which is how the system alarm works; the overlay
-permission was declared but never used, so it was removed from the manifest. After updating you can
-switch it off.
+A build between 1.2.1 and 1.6.0 shipped without the permission: the manifest declared it but nothing
+used it, so it was dropped. 1.6.1 brings it back, this time with a reason — see the section above.
 
 ## Nothing rings at all
 

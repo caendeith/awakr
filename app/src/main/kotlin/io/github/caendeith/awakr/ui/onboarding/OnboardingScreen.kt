@@ -170,11 +170,13 @@ private fun PermissionRow(
         AlarmPermission.NOTIFICATIONS -> R.string.perm_notifications_title
         AlarmPermission.EXACT_ALARM -> R.string.perm_exact_title
         AlarmPermission.CAMERA -> R.string.perm_camera_title
+        AlarmPermission.OVERLAY -> R.string.perm_overlay_title
     }
     val body = when (item.permission) {
         AlarmPermission.NOTIFICATIONS -> R.string.perm_notifications_body
         AlarmPermission.EXACT_ALARM -> R.string.perm_exact_body
         AlarmPermission.CAMERA -> R.string.perm_camera_body
+        AlarmPermission.OVERLAY -> R.string.perm_overlay_body
     }
     val status = when {
         granted -> stringResource(R.string.perm_granted)

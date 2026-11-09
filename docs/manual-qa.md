@@ -275,3 +275,18 @@ The device is a Pixel 7 Pro on GrapheneOS (Android 17) with a secure lock screen
   background verification needs a real alarm (or the notification) while the device is unlocked.
 - Health Connect on GrapheneOS is a system module; without the vendor app writing to it the sleep
   screen legitimately shows *No data yet*.
+
+## v1.6.1 pass — the ring screen takes over an unlocked phone
+
+Release APK `Awakr-1.6.1.apk` (versionCode 12) installed with `adb install -r` over the 1.6.0 release, on
+the same Pixel 7 Pro (GrapheneOS, Android 17), lock screen enabled, phone unlocked and in use.
+
+| Area | What to check | Status |
+|---|---|---|
+| Permission row | Settings → Permissions lists *Display over other apps* next to the three existing rows | ✅ the row rendered in Russian ("Поверх других приложений") with the explanation and an *Open settings* button, first as *Not allowed* (`.notes/screens/v161-permissions-granted.png`) |
+| Granting | tap *Open settings*, switch the system toggle on, come back | ✅ the button opened `com.android.settings.spa.SpaActivity` → the per-app page titled "Awakr 1.6.1 — Показывать поверх других приложений" (`.notes/screens/v161-overlay-settings.png`); after the toggle `appops get … SYSTEM_ALERT_WINDOW` read `allow` and the app row flipped to *Allowed* |
+| Ring over another app | alarm at 20:10, Settings open in the foreground, phone unlocked | ✅ the ring screen took the whole display 88 ms after the trigger: `START u0 {cmp=io.github.caendeith.awakr/.ui.ring.RingActivity} with LAUNCH_SINGLE_TASK from uid 10554 (io.github.caendeith.awakr) (BAL_ALLOW_SAW_PERMISSION) result code=0`, `topResumedActivity=…ui.ring.RingActivity` (`.notes/screens/v161-ring-over-app.png`) |
+| Lock screen without the permission | `appops set … SYSTEM_ALERT_WINDOW ignore`, screen off and locked, ring | ✅ the full-screen intent still raised the ring screen over the keyguard (`isKeyguardShowing=true`, `topResumedActivity=…RingActivity`, `.notes/screens/v161-ring-no-overlay-locked.png`) — the permission only matters while the phone is unlocked and in use |
+| Editor save | change the time in the editor and leave with the back arrow | ⚠️ the change is discarded silently: the editor only persists through its *Save* button, which sits below the sound section and is off-screen at first. Not a regression, worth a guard later |
+| Build | `:app:assembleRelease :app:testDebugUnitTest :data:testDebugUnitTest :core:perm:testDebugUnitTest :app:lintRelease` | ✅ green; APK `Awakr-1.6.1.apk` 5 586 045 B, sha256 `696a9ae5902a64f56873e3ebb29139a04830e3952a09996ba95979743cbefbf7` |
+

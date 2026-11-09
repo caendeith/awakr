@@ -11,21 +11,26 @@ class AlarmPermissionPolicyTest {
         AlarmPermissionPolicy.requirements(sdkInt, camera).filter { it.required }.map { it.permission }
 
     @Test
-    fun oldDevicesHaveNothingToAsk() {
-        assertEquals(emptyList<AlarmPermission>(), required(26, camera = false))
+    fun oldDevicesStillAskForTheOverlay() {
+        // The ring screen has to win over whatever is on screen on every version, so the overlay
+        // is asked for from Marshmallow on; nothing else is needed that early.
+        assertEquals(listOf(AlarmPermission.OVERLAY), required(26, camera = false))
     }
 
     @Test
     fun exactAlarmsAreRequiredFromAndroid12() {
         // Android 11 and older schedule exact alarms without asking.
-        assertEquals(emptyList<AlarmPermission>(), required(30, camera = false))
-        assertEquals(listOf(AlarmPermission.EXACT_ALARM), required(31, camera = false))
+        assertEquals(listOf(AlarmPermission.OVERLAY), required(30, camera = false))
+        assertEquals(
+            listOf(AlarmPermission.EXACT_ALARM, AlarmPermission.OVERLAY),
+            required(31, camera = false),
+        )
     }
 
     @Test
     fun notificationsAreRequiredFromAndroid13() {
         assertEquals(
-            listOf(AlarmPermission.NOTIFICATIONS, AlarmPermission.EXACT_ALARM),
+            listOf(AlarmPermission.NOTIFICATIONS, AlarmPermission.EXACT_ALARM, AlarmPermission.OVERLAY),
             required(33, camera = false),
         )
     }
@@ -38,7 +43,11 @@ class AlarmPermissionPolicyTest {
 
     @Test
     fun snapshotIsReadyWhenEveryRequiredPermissionIsGranted() {
-        val granted = setOf(AlarmPermission.NOTIFICATIONS, AlarmPermission.EXACT_ALARM)
+        val granted = setOf(
+            AlarmPermission.NOTIFICATIONS,
+            AlarmPermission.EXACT_ALARM,
+            AlarmPermission.OVERLAY,
+        )
         val snapshot = AlarmPermissionPolicy.snapshot(33, cameraMissionEnabled = false, granted = granted)
         assertTrue(snapshot.ready)
         assertEquals(emptyList<AlarmPermission>(), snapshot.missingRequired)
@@ -52,7 +61,7 @@ class AlarmPermissionPolicyTest {
             granted = setOf(AlarmPermission.NOTIFICATIONS),
         )
         assertEquals(
-            listOf(AlarmPermission.EXACT_ALARM, AlarmPermission.CAMERA),
+            listOf(AlarmPermission.EXACT_ALARM, AlarmPermission.CAMERA, AlarmPermission.OVERLAY),
             snapshot.missingRequired,
         )
         assertFalse(snapshot.ready)
@@ -60,7 +69,11 @@ class AlarmPermissionPolicyTest {
 
     @Test
     fun optionalPermissionsDoNotBlockOnboarding() {
-        val granted = setOf(AlarmPermission.NOTIFICATIONS, AlarmPermission.EXACT_ALARM)
+        val granted = setOf(
+            AlarmPermission.NOTIFICATIONS,
+            AlarmPermission.EXACT_ALARM,
+            AlarmPermission.OVERLAY,
+        )
         val snapshot = AlarmPermissionPolicy.snapshot(33, cameraMissionEnabled = false, granted = granted)
         assertFalse(snapshot.isGranted(AlarmPermission.CAMERA))
         assertTrue(snapshot.ready)

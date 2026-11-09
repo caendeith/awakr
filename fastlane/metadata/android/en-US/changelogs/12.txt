@@ -1,0 +1,3 @@
+* The ring screen now takes over the display even when the phone is unlocked and another app is open
+* New required permission: "Display over other apps", asked for during onboarding and listed in Settings → Permissions
+* Without that permission the ring screen still arrives through the alarm notification, but only as a banner while the phone is in use

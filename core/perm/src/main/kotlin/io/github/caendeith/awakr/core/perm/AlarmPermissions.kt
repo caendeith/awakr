@@ -20,6 +20,15 @@ enum class AlarmPermission {
 
     /** Only required while a camera based mission is enabled. */
     CAMERA,
+
+    /**
+     * "Display over other apps". Without it the system refuses an activity start from a
+     * background service (Android 10+ background activity launch rules), so the ring screen can
+     * only arrive through the notification's full screen intent, which the system ignores while
+     * the phone is unlocked and in use. Granting it is what makes the ring screen take over the
+     * display in every situation.
+     */
+    OVERLAY,
 }
 
 /**
@@ -57,6 +66,7 @@ object AlarmPermissionPolicy {
         PermissionItem(AlarmPermission.NOTIFICATIONS, required = sdkInt >= Build.VERSION_CODES.TIRAMISU),
         PermissionItem(AlarmPermission.EXACT_ALARM, required = sdkInt >= Build.VERSION_CODES.S),
         PermissionItem(AlarmPermission.CAMERA, required = cameraMissionEnabled),
+        PermissionItem(AlarmPermission.OVERLAY, required = true),
     )
 
     fun snapshot(
@@ -74,7 +84,12 @@ object AlarmPermissionChecks {
         AlarmPermission.EXACT_ALARM -> exactAlarmsAllowed(context)
         AlarmPermission.CAMERA ->
             context.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        AlarmPermission.OVERLAY -> overlayAllowed(context)
     }
+
+    /** Whether the app may draw and launch windows above other apps ("display over other apps"). */
+    fun overlayAllowed(context: Context): Boolean =
+        runCatching { Settings.canDrawOverlays(context) }.getOrDefault(false)
 
     fun snapshot(context: Context, cameraMissionEnabled: Boolean): PermissionSnapshot {
         val requirements = AlarmPermissionPolicy.requirements(
@@ -115,6 +130,7 @@ object AlarmPermissionChecks {
                 .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             AlarmPermission.EXACT_ALARM -> Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, packageUri)
             AlarmPermission.CAMERA -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri)
+            AlarmPermission.OVERLAY -> Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, packageUri)
         }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 }

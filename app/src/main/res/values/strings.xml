@@ -89,6 +89,8 @@
     <string name="perm_exact_body">Without it Android may delay the alarm until the phone wakes up for something else.</string>
     <string name="perm_camera_title">Camera</string>
     <string name="perm_camera_body">Only used by the QR mission, and only while the alarm rings.</string>
+    <string name="perm_overlay_title">Display over other apps</string>
+    <string name="perm_overlay_body">Lets the ring screen take over the display even when the phone is unlocked and you are using something else. Without it the alarm only shows a banner while the phone is in your hands.</string>
     <string name="perm_granted">Granted</string>
     <string name="perm_missing">Not granted</string>
     <string name="perm_optional">Optional</string>
