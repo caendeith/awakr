@@ -255,14 +255,18 @@ The device is a Pixel 7 Pro on GrapheneOS (Android 17) with a secure lock screen
 | Area | What to check | Status |
 |---|---|---|
 | Backgrounds | ring a debug alarm whose `background_id` is `builtin:aurora`, then `builtin:starry` | ✅ on the Pixel 7 Pro the ring screen showed the aurora gradient and then the starry scene above the secure lock screen, no PIN (`.notes/screens/v160-ring-aurora3.png`, `v160-ring-starry.png`) |
-| Own photo | pick a gallery picture, move the dimming slider, reopen the picker | ⏳ needs an unlocked device (the picker is a UI flow); the copy lands in `filesDir/backgrounds` (1600 px, JPEG 85) via the same downscale path as imported sounds and `BackgroundStoreTest` covers the id round-trip |
+| Default vs per-alarm | set the default in Settings, leave the alarm's own row on *As in settings*, ring | ✅ Settings → Aurora, the alarm row cleared, ring: the aurora gradient drew behind the gate (`.notes/screens/v160-ring-settings-aurora60.png`) |
+| Dimming | Settings → Darken background → 60 %, ring | ✅ the gradient stayed visible but clearly darker than at 35 % |
+| Own photo | pick a gallery picture, then ring | ⏳ the gallery step is the one flow left: the system photo picker needs a tap the automation cannot drive; the storage side is covered by `BackgroundStoreTest` (copy into `filesDir/backgrounds`, 1600 px, JPEG 85) |
 | Per-alarm override | editor → Background row wins over the Settings default | ✅ verified indirectly on the device: the alarm row carried `builtin:starry` and the ring honoured it, so `alarm.backgroundId` is read before the default; the Settings half needs the unlocked picker (⏳) |
 | Ring screen | ring on the lock screen: background under the clock, scrim readable, no PIN | ✅ the background drew behind the wake-up gate and the clock stayed readable; the activity still came up over the keyguard without a dismissal request |
 | Broken photo | point `background_id` at a `file:` path that does not exist and ring | ✅ fell back to the plain dark screen, no crash, the ring still worked (`.notes/screens/v160-ring-missingfile.png`) |
-| Sleep source | Zepp → Profile → Add data → Health Connect, then Awakr → Sleep → Allow access (sleep, heart rate, oxygen) | ⏳ needs the watch data on the phone |
-| Sleep screen | last night (bedtime, wake-up, duration, stage bar, hypnogram, heart rate, SpO₂) and the seven-night week with average and streak | ⏳ `SleepStageNormalizerTest` 9, `SleepSessionMapperTest` 11, `SleepWeekTest` 14, `SleepFormatTest` 5 — all green |
-| Empty states | Health Connect missing / needs an update / permission denied / no sessions yet | ⏳ each state has its own title, body and, for the permission case, an *Allow access* button |
-| Background sync | `SleepSyncWorker` every 3 hours (unique work, `KEEP`) imports the last 14 days and keeps 90 | ⏳ the worker is scheduled from `AwakrApplication.onCreate`; no manifest entry is needed |
+| Sleep source | Awakr → Sleep → *Allow access* → Health Connect grants *sleep, heart rate, oxygen* | ✅ the Health Connect sheet offered “Allow all” and the app read the data straight after the grant, no restart |
+| Sleep screen | last night (bedtime, wake-up, duration, stage bar, hypnogram) and the seven-night week with average and streak | ✅ real Amazfit data: 23:34 → 09:07, 8 h 54 min, stage bar with awake/REM/light/deep, a hypnogram, a five-night week averaging 9 h 39 min and “2 nights in a row” (`.notes/screens/v160-sleep-after-grant.png`); no heart-rate or SpO₂ card, because Zepp wrote neither to Health Connect |
+| Empty states | permission not granted yet | ✅ “Нужен доступ к сну” with the explanation and the *Разрешить доступ* button (`.notes/screens/v160-sleep-empty.png`); the home card said “Подключите часы через Health Connect” until data arrived |
+| Home card | the sleep card after the import | ✅ “Сон · Прошлая ночь · 8 ч 54 мин”, tap opens the screen |
+| Settings | Alarm screen → Background / Darken background, Health → Sleep | ✅ all three rows present and wired (`.notes/screens/v160-bg-picker.png`) |
+| Background sync | `SleepSyncWorker` every 3 hours (unique work, `KEEP`) imports the last 14 days and keeps 90 | ⏳ the worker is scheduled from `AwakrApplication.onCreate` and the first refresh filled the screen; the periodic run itself is not observable within one session |
 | Permissions | the merged manifest must not gain `INTERNET`, and the health permissions must stay read-only | ✅ `:app:assembleRelease` + `:app:lintRelease` + 185 unit tests green on the 1.6.0 tree |
 
 ### Known device limits
