@@ -125,6 +125,34 @@ Yes. Editor → sound card → **Import** (Импорт), pick any audio file. T
 private storage, so it keeps working after the original is deleted; uninstalling the app removes the
 copy. The alarm always rings even if the copy is missing (default sound fallback).
 
+## Can I put a photo or a gradient behind the ringing alarm?
+
+Yes (from 1.6.0). Two places: Settings → **Alarm screen → Background** sets the default, and the alarm
+editor has its own *Background* row for a single alarm (the alarm's own choice wins over the default).
+There are twelve built-in looks — eight gradients and four night scenes — and **My photos** lets you pick
+any picture from the gallery. A picked photo is copied into Awakr's private storage and downscaled to
+1600 px, so it survives deleting the original and costs no permission. *Darken background* (0–60 %)
+controls how much the picture is dimmed behind the clock. When nothing is chosen the ring screen keeps
+its plain dark look.
+
+## How do I get sleep data from my watch?
+
+Through **Health Connect**, not through a special watch app: your watch maker's app (Zepp for Amazfit,
+Mi Fitness for Xiaomi, Samsung Health, …) writes sleep to Health Connect, and Awakr reads it back. Steps:
+
+1. In the watch app, enable the Health Connect sync (Zepp: Profile → Add data → Health Connect).
+2. Open Awakr → **Sleep** (home card or Settings → Health → Sleep) → **Allow access**.
+3. Grant *Sleep*, *Heart rate* and *Oxygen saturation*; press **Check again**.
+
+The sleep screen then shows the last night (bedtime, wake-up, duration, stage bar, hypnogram, heart
+rate and SpO₂) and the last seven nights with the average and the streak. Awakr imports the last 14 days
+every three hours in the background and keeps 90 days; the data stays in the app's database on the
+phone and is never uploaded (Awakr has no internet permission at all).
+
+If the screen says Health Connect is unavailable, install or re-enable the **Health Connect** app
+(on GrapheneOS it is a system module — Settings → Apps → Health Connect). Awakr does not talk to the
+watch directly: no vendor SDK is open, and a proprietary bridge would be a privacy problem.
+
 ## I see a plugin list but no button to add a plugin
 
 By design. Missions are plugins in the source tree, not downloads: each one is a small Gradle

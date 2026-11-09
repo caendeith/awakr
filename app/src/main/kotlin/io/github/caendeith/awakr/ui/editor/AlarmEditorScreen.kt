@@ -81,6 +81,8 @@ import io.github.caendeith.awakr.data.repository.AlarmRepository
 import io.github.caendeith.awakr.mission.MissionChain
 import io.github.caendeith.awakr.mission.MissionStep
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
+import io.github.caendeith.awakr.ui.background.BackgroundPickerDialog
+import io.github.caendeith.awakr.ui.background.backgroundLabel
 import io.github.caendeith.awakr.ui.format.countdownText
 import io.github.caendeith.awakr.ui.format.dateLabel
 import io.github.caendeith.awakr.ui.format.formatTime
@@ -123,6 +125,7 @@ fun AlarmEditorScreen(
     var skipNext by remember { mutableStateOf(false) }
     var showTimeSheet by remember { mutableStateOf(false) }
     var showSoundSheet by remember { mutableStateOf(false) }
+    var showBackgroundDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(alarmId) {
@@ -381,6 +384,22 @@ fun AlarmEditorScreen(
             }
 
             Spacer(Modifier.height(20.dp))
+            SectionTitle(stringResource(R.string.bg_section))
+            AwakrCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = backgroundLabel(current.backgroundId),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    }
+                    TextButton(onClick = { showBackgroundDialog = true }) {
+                        Text(stringResource(R.string.bg_change))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
             AwakrCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -515,6 +534,17 @@ fun AlarmEditorScreen(
                 defaultSoundId = defaultSoundId,
                 onPick = { draft = draft?.copy(soundId = it) },
                 onDismiss = { showSoundSheet = false },
+            )
+        }
+
+        if (showBackgroundDialog) {
+            BackgroundPickerDialog(
+                currentId = current?.backgroundId,
+                onPick = { id ->
+                    draft = draft?.copy(backgroundId = id)
+                    showBackgroundDialog = false
+                },
+                onDismiss = { showBackgroundDialog = false },
             )
         }
 

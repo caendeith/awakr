@@ -14,7 +14,7 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 <img alt="Kotlin 2.2" src="https://img.shields.io/badge/Kotlin-2.2.21-7f52ff?logo=kotlin&logoColor=white">
 <img alt="Jetpack Compose" src="https://img.shields.io/badge/Compose-Material%203-4285f4">
 <img alt="No INTERNET permission" src="https://img.shields.io/badge/INTERNET-not%20requested-critical">
-<img alt="Version" src="https://img.shields.io/badge/version-1.5.0-informational">
+<img alt="Version" src="https://img.shields.io/badge/version-1.6.0-informational">
 </p>
 
 <p><sub>254 unit tests · release APK 5.3 MB · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
@@ -104,6 +104,7 @@ Fingerprint (SHA-256): `09 B3 D4 E7 27 89 22 EC F8 3E 5B 8B 02 13 99 63 9D F3 E4
 | Exact alarms (API 31+) | `setAlarmClock` cannot schedule without it | yes |
 | Camera | only the code mission, while the alarm rings, and the optional shutter | when the code plugin is on |
 | Microphone | only while you record your own alarm sound from the sound sheet | when you use the recorder |
+| Health Connect: sleep, heart rate, oxygen saturation (read only) | the sleep screen; nothing is written back and nothing leaves the phone | only if you open the sleep screen and grant it |
 
 No `INTERNET`, no location, no contacts, no storage permission. CI fails the build if `INTERNET` ever appears in the merged manifest.
 
@@ -165,6 +166,8 @@ Release signing is driven by an optional, git-ignored `keystore.properties`; wit
 | 9 | v1.2: bind any scanned code (product barcode) to an alarm | done |
 | 10 | v1.3: JSON backup and restore, Glance widget, sound packs and recording, Material You, pre-alarm notification, language switcher | done |
 | 11 | v1.4: mission chains (up to 3), memory / colour / squat / step missions, wake-up check, statistics, spoken label, accent colours, panic volume | done |
+| 12 | v1.5: softer ring flow, bigger mission set, backup polish | done |
+| 13 | v1.6: alarm-screen backgrounds (12 built-in looks + your own photos) and sleep tracking imported from Health Connect | done |
 
 Roadmap ideas for the next versions: a photo mission (compare a shot with a reference frame), sleep sounds with a sleep timer, alarm-linked habits, more barcode formats, Wear OS, and runtime-loaded plugin APKs (deliberately postponed - Play and F-Droid forbid them).
 

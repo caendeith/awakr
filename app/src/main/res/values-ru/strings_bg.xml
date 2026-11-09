@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Встроенные градиентные фоны -->
+    <string name="bg_ink">Чернила</string>
+    <string name="bg_amber">Янтарь</string>
+    <string name="bg_ember">Угли</string>
+    <string name="bg_aurora">Сияние</string>
+    <string name="bg_dawn">Рассвет</string>
+    <string name="bg_void">Пустота</string>
+    <string name="bg_moss">Мох</string>
+    <string name="bg_rose">Роза</string>
+
+    <!-- Встроенные сцены -->
+    <string name="bg_starry">Звёздное небо</string>
+    <string name="bg_mountains">Горы</string>
+    <string name="bg_dunes">Дюны</string>
+    <string name="bg_fog">Туман</string>
+
+    <!-- Выбор фона -->
+    <string name="bg_title">Фон звонка</string>
+    <string name="bg_section">Фон</string>
+    <string name="bg_value_default">Как в настройках</string>
+    <string name="bg_change">Изменить</string>
+    <string name="bg_tab_builtin">Встроенные</string>
+    <string name="bg_tab_photos">Мои фото</string>
+    <string name="bg_family_gradients">Градиенты</string>
+    <string name="bg_family_scenes">Сцены</string>
+    <string name="bg_add_photo">Добавить фото</string>
+    <string name="bg_delete_photo">Удалить фото</string>
+    <string name="bg_delete_title">Удалить это фото?</string>
+    <string name="bg_delete_message">Фото будет удалено из приложения. Будильники с этим фоном вернутся к фону по умолчанию.</string>
+    <string name="bg_delete_action">Удалить</string>
+    <string name="bg_import_failed">Не удалось добавить фото</string>
+    <string name="bg_photos_empty">Пока нет фото</string>
+    <string name="bg_photos_hint">Добавьте фото, чтобы будильник стал личным.</string>
+    <string name="bg_close">Закрыть</string>
+    <string name="bg_photo_name">Фото %1$s</string>
+    <string name="bg_selected">Выбрано</string>
+    <string name="bg_default_row">Фон по умолчанию</string>
+</resources>

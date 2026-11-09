@@ -167,6 +167,14 @@
     <string name="wake_up_check_action">I am up!</string>
     <string name="settings_minutes">%1$d min</string>
     <string name="settings_default_sound">Default sound</string>
+    <string name="home_sleep_last_night">Last night · %1$s</string>
+    <string name="home_sleep_body">Connect your watch through Health Connect</string>
+    <string name="settings_health">Health</string>
+    <string name="settings_sleep">Sleep</string>
+    <string name="settings_ring_screen">Alarm screen</string>
+    <string name="settings_ring_background">Background</string>
+    <string name="settings_ring_background_dim">Darken background</string>
+    <string name="settings_percent">%1$d%%</string>
     <string name="editor_duplicate">Duplicate</string>
     <string name="editor_sound">Sound</string>
     <string name="editor_sound_default">Default sound</string>

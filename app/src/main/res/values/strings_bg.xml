@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Built-in gradient backgrounds -->
+    <string name="bg_ink">Ink</string>
+    <string name="bg_amber">Amber</string>
+    <string name="bg_ember">Ember</string>
+    <string name="bg_aurora">Aurora</string>
+    <string name="bg_dawn">Dawn</string>
+    <string name="bg_void">Void</string>
+    <string name="bg_moss">Moss</string>
+    <string name="bg_rose">Rose</string>
+
+    <!-- Built-in scene backgrounds -->
+    <string name="bg_starry">Starry night</string>
+    <string name="bg_mountains">Mountains</string>
+    <string name="bg_dunes">Dunes</string>
+    <string name="bg_fog">Fog</string>
+
+    <!-- Picker -->
+    <string name="bg_title">Ring background</string>
+    <string name="bg_section">Background</string>
+    <string name="bg_value_default">As in settings</string>
+    <string name="bg_change">Change</string>
+    <string name="bg_tab_builtin">Built-in</string>
+    <string name="bg_tab_photos">My photos</string>
+    <string name="bg_family_gradients">Gradients</string>
+    <string name="bg_family_scenes">Scenes</string>
+    <string name="bg_add_photo">Add photo</string>
+    <string name="bg_delete_photo">Delete photo</string>
+    <string name="bg_delete_title">Delete this photo?</string>
+    <string name="bg_delete_message">The photo is removed from the app. Alarms that used it fall back to the default background.</string>
+    <string name="bg_delete_action">Delete</string>
+    <string name="bg_import_failed">Could not add that photo</string>
+    <string name="bg_photos_empty">No photos yet</string>
+    <string name="bg_photos_hint">Add a photo to make the alarm personal.</string>
+    <string name="bg_close">Close</string>
+    <string name="bg_photo_name">Photo %1$s</string>
+    <string name="bg_selected">Selected</string>
+    <string name="bg_default_row">Default background</string>
+</resources>

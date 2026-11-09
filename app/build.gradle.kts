@@ -25,8 +25,8 @@ android {
         applicationId = "io.github.caendeith.awakr"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.5.0"
+        versionCode = 11
+        versionName = "1.6.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -104,6 +104,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
+
+    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)

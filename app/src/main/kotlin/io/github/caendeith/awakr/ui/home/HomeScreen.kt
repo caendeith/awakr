@@ -105,6 +105,8 @@ fun HomeScreen(
     onEditAlarm: (Long) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenStats: () -> Unit = {},
+    onOpenSleep: () -> Unit = {},
+    sleepSummary: String? = null,
     missedLabels: List<String> = emptyList(),
     swipeAction: SwipeAction = SwipeAction.DELETE,
     onDelete: (List<Long>) -> Unit = {},
@@ -286,6 +288,9 @@ fun HomeScreen(
                     item(key = "stats") {
                         StatsShortcutCard(onClick = onOpenStats)
                     }
+                    item(key = "sleep") {
+                        SleepShortcutCard(summary = sleepSummary, onClick = onOpenSleep)
+                    }
                 }
                 if (missedLabels.isNotEmpty()) {
                     item(key = "missed") { MissedCard(missedLabels) }
@@ -412,6 +417,45 @@ private fun StatsShortcutCard(onClick: () -> Unit) {
                 )
                 Text(
                     text = stringResource(R.string.stats_shortcut_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/** Shows the last night the watch reported; opens the sleep screen either way. */
+@Composable
+private fun SleepShortcutCard(summary: String?, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.sleep_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text = if (summary == null) {
+                        stringResource(R.string.home_sleep_body)
+                    } else {
+                        stringResource(R.string.home_sleep_last_night, summary)
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

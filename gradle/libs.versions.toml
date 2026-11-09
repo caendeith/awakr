@@ -10,6 +10,7 @@ navigation = "2.9.8"
 work = "2.10.5"
 datastore = "1.1.7"
 room = "2.8.5"
+healthConnect = "1.1.0"
 camerax = "1.5.3"
 zxing = "3.5.4"
 splashscreen = "1.0.1"
@@ -34,6 +35,7 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "healthConnect" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }

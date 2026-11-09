@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sleep_title">Сон</string>
+    <string name="sleep_last_night">Прошлой ночью</string>
+    <string name="sleep_bedtime">Отбой</string>
+    <string name="sleep_wake_up">Подъём</string>
+    <string name="sleep_duration_title">Длительность</string>
+    <string name="sleep_duration">%1$d ч %2$d мин</string>
+    <string name="sleep_stage_awake">Бодрствование</string>
+    <string name="sleep_stage_rem">БС</string>
+    <string name="sleep_stage_light">Лёгкий</string>
+    <string name="sleep_stage_deep">Глубокий</string>
+    <string name="sleep_no_stages">Нет детализации стадий</string>
+    <string name="sleep_heart_rate">Пульс</string>
+    <string name="sleep_hr_min">Мин</string>
+    <string name="sleep_hr_avg">Сред.</string>
+    <string name="sleep_hr_max">Макс</string>
+    <string name="sleep_spo2">SpO₂</string>
+    <string name="sleep_spo2_value">%1$s%%</string>
+    <string name="sleep_week_title">Эта неделя</string>
+    <string name="sleep_week_average">Средний сон</string>
+    <plurals name="sleep_streak">
+        <item quantity="one">%1$d ночь подряд</item>
+        <item quantity="few">%1$d ночи подряд</item>
+        <item quantity="many">%1$d ночей подряд</item>
+        <item quantity="other">%1$d ночи подряд</item>
+    </plurals>
+    <string name="sleep_empty_title">Пока нет данных о сне</string>
+    <string name="sleep_empty_body">Наденьте часы на ночь и синхронизируйте: ночи появятся здесь, когда Health Connect их получит.</string>
+    <string name="sleep_sync_now">Синхронизировать</string>
+    <string name="sleep_sync">Синхронизировать</string>
+    <string name="sleep_syncing">Синхронизация…</string>
+    <string name="sleep_sync_failed">Не удалось прочитать Health Connect</string>
+    <string name="sleep_unavailable_title">Health Connect недоступен</string>
+    <string name="sleep_unavailable_body">Awakr читает сон из Health Connect, но он не установлен или выключен на этом устройстве. Установите или включите его и попробуйте снова. На GrapheneOS убедитесь, что модуль Health Connect включён.</string>
+    <string name="sleep_update_title">Health Connect требует обновления</string>
+    <string name="sleep_update_body">Откройте Health Connect, завершите обновление и вернитесь сюда.</string>
+    <string name="sleep_permission_title">Нужен доступ к сну</string>
+    <string name="sleep_permission_body">Awakr читает сон, пульс и насыщение кислородом из Health Connect. Данные остаются на телефоне и никуда не отправляются.</string>
+    <string name="sleep_permission_action">Разрешить доступ</string>
+    <string name="sleep_retry">Проверить снова</string>
+    <string name="sleep_chart_description">Стадии сна за ночь</string>
+    <string name="sleep_week_chart_description">Длительность сна за последние семь ночей</string>
+    <string name="sleep_none">—</string>
+</resources>

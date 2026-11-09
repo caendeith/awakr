@@ -47,6 +47,8 @@ import io.github.caendeith.awakr.core.ui.component.PrimaryButton
 import io.github.caendeith.awakr.core.ui.component.SecondaryButton
 import io.github.caendeith.awakr.core.ui.component.TimeText
 import io.github.caendeith.awakr.sdk.MissionPlugin
+import io.github.caendeith.awakr.ui.background.RingBackgroundView
+import io.github.caendeith.awakr.ui.background.rememberRingBackground
 import io.github.caendeith.awakr.ui.format.formatTime
 import io.github.caendeith.awakr.ui.format.parseMissionConfig
 import kotlinx.coroutines.delay
@@ -77,11 +79,21 @@ fun RingScreen(
     onSnooze: () -> Unit,
     onSilenceChanged: (Boolean) -> Unit,
 ) {
+    // The background sits under the whole screen: the wake gate and the mission both stay readable
+    // thanks to the scrim drawn by RingBackgroundView.
+    val background = rememberRingBackground(alarm)
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        RingContent(alarm, missions, showSnooze, onDismiss, onSnooze, onSilenceChanged)
+        Box(Modifier.fillMaxSize()) {
+            RingBackgroundView(
+                id = background.id,
+                dimPercent = background.dimPercent,
+                modifier = Modifier.fillMaxSize(),
+            )
+            RingContent(alarm, missions, showSnooze, onDismiss, onSnooze, onSilenceChanged)
+        }
     }
 }
 

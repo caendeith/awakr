@@ -48,6 +48,10 @@ data class AppSettings(
     val wakeUpCheckMinutes: Int = 0,
     /** App language: [LANGUAGE_SYSTEM], [LANGUAGE_ENGLISH] or [LANGUAGE_RUSSIAN]. */
     val language: String = LANGUAGE_SYSTEM,
+    /** Ring screen background: `builtin:<key>`, `file:<path>`, or empty for the plain look. */
+    val ringBackgroundId: String = "",
+    /** Extra darkening of the ring background so the clock stays readable, 0..60 percent. */
+    val ringBackgroundDim: Int = 35,
 )
 
 class AppSettingsRepository(context: Context) {
@@ -78,6 +82,8 @@ class AppSettingsRepository(context: Context) {
             preAlertMinutes = prefs[KEY_PRE_ALERT] ?: 30,
             wakeUpCheckMinutes = prefs[KEY_WAKE_UP_CHECK] ?: 0,
             language = normalizeLanguage(prefs[KEY_LANGUAGE]),
+            ringBackgroundId = prefs[KEY_RING_BG] ?: "",
+            ringBackgroundDim = (prefs[KEY_RING_BG_DIM] ?: 35).coerceIn(0, 60),
         )
     }
 
@@ -102,6 +108,10 @@ class AppSettingsRepository(context: Context) {
     suspend fun setSpeakLabel(value: Boolean) = store.edit { it[KEY_SPEAK_LABEL] = value }
 
     suspend fun setPreAlertMinutes(minutes: Int) = store.edit { it[KEY_PRE_ALERT] = minutes }
+
+    suspend fun setRingBackground(backgroundId: String) = store.edit { it[KEY_RING_BG] = backgroundId }
+
+    suspend fun setRingBackgroundDim(percent: Int) = store.edit { it[KEY_RING_BG_DIM] = percent.coerceIn(0, 60) }
 
     suspend fun setWakeUpCheckMinutes(minutes: Int) = store.edit { it[KEY_WAKE_UP_CHECK] = minutes }
 
@@ -138,6 +148,8 @@ class AppSettingsRepository(context: Context) {
         val KEY_PRE_ALERT = intPreferencesKey("pre_alert_minutes")
         val KEY_WAKE_UP_CHECK = intPreferencesKey("wake_up_check_minutes")
         val KEY_LANGUAGE = stringPreferencesKey("language")
+        val KEY_RING_BG = stringPreferencesKey("ring_background")
+        val KEY_RING_BG_DIM = intPreferencesKey("ring_background_dim")
 
         const val LANGUAGE_MIRROR_NAME = "awakr_language"
         const val KEY_LANGUAGE_MIRROR = "language"

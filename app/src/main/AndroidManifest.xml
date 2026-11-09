@@ -14,10 +14,21 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- Read-only sleep data imported from Health Connect (the watch syncs through its own app). -->
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
     <!-- USE_EXACT_ALARM is granted at install for alarm-clock apps; SCHEDULE_EXACT_ALARM
          stays declared for older releases and as a user-grantable fallback. -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- Health Connect lives in a separate package; Android 11+ hides it unless it is declared here.
+         Google builds ship com.google.android.apps.healthdata, AOSP/GrapheneOS ship the controller. -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+        <package android:name="com.android.healthconnect.controller" />
+    </queries>
 
     <application
         android:name=".AwakrApplication"
@@ -109,6 +120,20 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/alarm_widget_info" />
         </receiver>
+
+        <!-- Health Connect shows this app's permission rationale in its own UI. -->
+        <activity
+            android:name=".health.HealthConnectRationaleActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Awakr">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".alarm.AlarmRingService"

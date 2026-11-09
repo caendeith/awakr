@@ -1,0 +1,4 @@
+* Ring screen backgrounds: twelve built-in looks (gradients and night scenes) plus your own photos, with a dimming slider
+* Sleep tracking: import sleep stages, heart rate and oxygen saturation from Health Connect (Zepp, Mi Fitness, Samsung Health)
+* Sleep screen with last night, a seven-night week view, the average and the streak
+* Home card and Settings entry for sleep; the background can be set per alarm or as the default

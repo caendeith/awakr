@@ -165,6 +165,14 @@
     <string name="wake_up_check_action">Я проснулся!</string>
     <string name="settings_minutes">%1$d мин</string>
     <string name="settings_default_sound">Звук по умолчанию</string>
+    <string name="home_sleep_last_night">Прошлая ночь · %1$s</string>
+    <string name="home_sleep_body">Подключите часы через Health Connect</string>
+    <string name="settings_health">Здоровье</string>
+    <string name="settings_sleep">Сон</string>
+    <string name="settings_ring_screen">Экран будильника</string>
+    <string name="settings_ring_background">Фон</string>
+    <string name="settings_ring_background_dim">Затемнение фона</string>
+    <string name="settings_percent">%1$d%%</string>
     <string name="editor_duplicate">Дублировать</string>
     <string name="editor_sound">Звук</string>
     <string name="editor_sound_default">Звук по умолчанию</string>

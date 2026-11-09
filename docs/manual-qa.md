@@ -246,3 +246,28 @@ user has not confirmed.
 
 
 
+
+## v1.6.0 pass — ring backgrounds and sleep from Health Connect
+
+Release APK `Awakr-1.6.0.apk` (versionCode 11) installed with `adb install -r` over the 1.5.0 release.
+The device is a Pixel 7 Pro on GrapheneOS (Android 17) with a secure lock screen.
+
+| Area | What to check | Status |
+|---|---|---|
+| Backgrounds | Settings → Alarm screen → Background: twelve built-in looks (eight gradients, four scenes) and *My photos* | ⏳ device pass pending |
+| Own photo | pick a gallery picture, move the dimming slider, reopen the picker | ⏳ the copy lands in `filesDir/backgrounds` (1600 px, JPEG 85) via the same downscale path as imported sounds; `BackgroundStoreTest` covers the id round-trip |
+| Per-alarm override | editor → Background row wins over the Settings default | ⏳ `rememberRingBackground` resolves `alarm.backgroundId` first, then `settings.ringBackgroundId` |
+| Ring screen | ring on the lock screen: background under the clock, scrim readable, no PIN | ⏳ device pass pending |
+| Broken photo | delete the file behind `file:<path>` and ring | ⏳ `RingBackgroundView` falls back to the plain dark look instead of crashing |
+| Sleep source | Zepp → Profile → Add data → Health Connect, then Awakr → Sleep → Allow access (sleep, heart rate, oxygen) | ⏳ needs the watch data on the phone |
+| Sleep screen | last night (bedtime, wake-up, duration, stage bar, hypnogram, heart rate, SpO₂) and the seven-night week with average and streak | ⏳ `SleepStageNormalizerTest` 9, `SleepSessionMapperTest` 11, `SleepWeekTest` 14, `SleepFormatTest` 5 — all green |
+| Empty states | Health Connect missing / needs an update / permission denied / no sessions yet | ⏳ each state has its own title, body and, for the permission case, an *Allow access* button |
+| Background sync | `SleepSyncWorker` every 3 hours (unique work, `KEEP`) imports the last 14 days and keeps 90 | ⏳ the worker is scheduled from `AwakrApplication.onCreate`; no manifest entry is needed |
+| Permissions | the merged manifest must not gain `INTERNET`, and the health permissions must stay read-only | ✅ `:app:assembleRelease` + `:app:lintRelease` + 185 unit tests green on the 1.6.0 tree |
+
+### Known device limits
+
+- `RingActivity` is not exported, so `adb shell am start` cannot open the ring screen from a prompt;
+  background verification needs a real alarm (or the notification) while the device is unlocked.
+- Health Connect on GrapheneOS is a system module; without the vendor app writing to it the sleep
+  screen legitimately shows *No data yet*.

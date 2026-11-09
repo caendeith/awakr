@@ -44,6 +44,8 @@ import io.github.caendeith.awakr.data.settings.LANGUAGE_RUSSIAN
 import io.github.caendeith.awakr.data.settings.SwipeAction
 import io.github.caendeith.awakr.data.settings.ThemeMode
 import io.github.caendeith.awakr.locale.AppLanguage
+import io.github.caendeith.awakr.ui.background.BackgroundPickerDialog
+import io.github.caendeith.awakr.ui.background.backgroundLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +67,9 @@ fun SettingsScreen(
     onLanguageChange: (String) -> Unit = {},
     onAccentChange: (String) -> Unit = {},
     onSpeakLabelChange: (Boolean) -> Unit = {},
+    onRingBackgroundChange: (String) -> Unit = {},
+    onRingBackgroundDimChange: (Int) -> Unit = {},
+    onOpenSleep: () -> Unit = {},
 ) {
     var dialog by remember { mutableStateOf<SettingsDialog?>(null) }
 
@@ -165,6 +170,25 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_default_sound),
                 value = defaultSoundName,
                 onClick = { dialog = SettingsDialog.Sound },
+            )
+
+            SettingsSection(stringResource(R.string.settings_ring_screen))
+            SettingsRow(
+                title = stringResource(R.string.settings_ring_background),
+                value = backgroundLabel(settings.ringBackgroundId),
+                onClick = { dialog = SettingsDialog.RingBackground },
+            )
+            SettingsRow(
+                title = stringResource(R.string.settings_ring_background_dim),
+                value = stringResource(R.string.settings_percent, settings.ringBackgroundDim),
+                onClick = { dialog = SettingsDialog.RingBackgroundDim },
+            )
+
+            SettingsSection(stringResource(R.string.settings_health))
+            SettingsRow(
+                title = stringResource(R.string.settings_sleep),
+                value = "",
+                onClick = onOpenSleep,
             )
 
             SettingsSection(stringResource(R.string.settings_app))
@@ -290,6 +314,23 @@ fun SettingsScreen(
             onDismiss = { dialog = null },
             onSelect = { selected -> onDefaultSoundChange(selected); dialog = null },
         )
+        SettingsDialog.RingBackground -> BackgroundPickerDialog(
+            currentId = settings.ringBackgroundId,
+            onPick = { id -> onRingBackgroundChange(id); dialog = null },
+            onDismiss = { dialog = null },
+        )
+        SettingsDialog.RingBackgroundDim -> ChoiceDialog(
+            title = stringResource(R.string.settings_ring_background_dim),
+            options = listOf(0, 15, 25, 35, 45, 60).map { percent ->
+                Triple(
+                    percent,
+                    stringResource(R.string.settings_percent, percent),
+                    settings.ringBackgroundDim == percent,
+                )
+            },
+            onDismiss = { dialog = null },
+            onSelect = { selected -> onRingBackgroundDimChange(selected); dialog = null },
+        )
     }
 }
 
@@ -302,6 +343,8 @@ private sealed interface SettingsDialog {
     data object WakeUpCheck : SettingsDialog
     data object Language : SettingsDialog
     data object Accent : SettingsDialog
+    data object RingBackground : SettingsDialog
+    data object RingBackgroundDim : SettingsDialog
 }
 
 /** Picker label of the stored language preference. */

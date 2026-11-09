@@ -20,6 +20,8 @@ data class Alarm(
     val soundUri: String? = null,
     val soundPackId: String? = null,
     val soundId: String = "",
+    /** Ring screen background: `builtin:<key>`, `file:<path>`, or empty to follow the app setting. */
+    val backgroundId: String = "",
     val rampSeconds: Int = 30,
     val volumeStart: Int = 15,
     val vibrate: Boolean = true,

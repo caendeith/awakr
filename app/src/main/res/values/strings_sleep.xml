@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sleep_title">Sleep</string>
+    <string name="sleep_last_night">Last night</string>
+    <string name="sleep_bedtime">Bedtime</string>
+    <string name="sleep_wake_up">Wake-up</string>
+    <string name="sleep_duration_title">Duration</string>
+    <string name="sleep_duration">%1$d h %2$d min</string>
+    <string name="sleep_stage_awake">Awake</string>
+    <string name="sleep_stage_rem">REM</string>
+    <string name="sleep_stage_light">Light</string>
+    <string name="sleep_stage_deep">Deep</string>
+    <string name="sleep_no_stages">No stage details for this night</string>
+    <string name="sleep_heart_rate">Heart rate</string>
+    <string name="sleep_hr_min">Min</string>
+    <string name="sleep_hr_avg">Avg</string>
+    <string name="sleep_hr_max">Max</string>
+    <string name="sleep_spo2">SpO₂</string>
+    <string name="sleep_spo2_value">%1$s%%</string>
+    <string name="sleep_week_title">This week</string>
+    <string name="sleep_week_average">Average sleep</string>
+    <plurals name="sleep_streak">
+        <item quantity="one">%1$d night in a row</item>
+        <item quantity="other">%1$d nights in a row</item>
+    </plurals>
+    <string name="sleep_empty_title">No sleep data yet</string>
+    <string name="sleep_empty_body">Wear your watch overnight and sync. Nights appear here once Health Connect has them.</string>
+    <string name="sleep_sync_now">Sync now</string>
+    <string name="sleep_sync">Sync</string>
+    <string name="sleep_syncing">Syncing…</string>
+    <string name="sleep_sync_failed">Could not read Health Connect</string>
+    <string name="sleep_unavailable_title">Health Connect is not available</string>
+    <string name="sleep_unavailable_body">Awakr reads sleep from Health Connect, but it is not installed or enabled on this device. Install or enable it and try again. On GrapheneOS make sure the Health Connect module is enabled.</string>
+    <string name="sleep_update_title">Health Connect needs an update</string>
+    <string name="sleep_update_body">Open Health Connect, finish the update and come back here.</string>
+    <string name="sleep_permission_title">Sleep access needed</string>
+    <string name="sleep_permission_body">Awakr reads sleep, heart rate and oxygen saturation from Health Connect. The data stays on this phone and is never uploaded.</string>
+    <string name="sleep_permission_action">Allow access</string>
+    <string name="sleep_retry">Check again</string>
+    <string name="sleep_chart_description">Sleep stages through the night</string>
+    <string name="sleep_week_chart_description">Sleep duration for the last seven nights</string>
+    <string name="sleep_none">—</string>
+</resources>

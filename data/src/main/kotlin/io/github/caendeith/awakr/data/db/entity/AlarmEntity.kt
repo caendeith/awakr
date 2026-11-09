@@ -15,6 +15,7 @@ data class AlarmEntity(
     @ColumnInfo(name = "sound_uri") val soundUri: String? = null,
     @ColumnInfo(name = "sound_pack_id") val soundPackId: String? = null,
     @ColumnInfo(name = "sound_id") val soundId: String = "",
+    @ColumnInfo(name = "background_id") val backgroundId: String = "",
     @ColumnInfo(name = "ramp_seconds") val rampSeconds: Int = 30,
     @ColumnInfo(name = "volume_start") val volumeStart: Int = 15,
     val vibrate: Boolean = true,

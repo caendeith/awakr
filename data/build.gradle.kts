@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     api(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.health.connect.client)
 
     api(project(":core:alarm"))
     implementation(project(":core:time"))

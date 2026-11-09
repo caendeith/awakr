@@ -9,6 +9,7 @@ import io.github.caendeith.awakr.core.notify.AwakrNotifications
 import io.github.caendeith.awakr.data.AwakrData
 import io.github.caendeith.awakr.locale.AppLanguage
 import io.github.caendeith.awakr.plugin.runtime.PluginRegistry
+import io.github.caendeith.awakr.ui.sleep.SleepSyncWorker
 import io.github.caendeith.awakr.plugins.mission.math.MathMissionPlugin
 import io.github.caendeith.awakr.plugins.mission.code.CodeMissionPlugin
 import io.github.caendeith.awakr.plugins.mission.shake.ShakeMissionPlugin
@@ -79,6 +80,9 @@ class AwakrApplication : Application() {
             runCatching { scheduler.rescheduleAll(data.alarms.enabledAlarms()) }
             // The device may have been off at the scheduled minute; only the log comparison notices.
             MissedAlarmReporter.sweep(this@AwakrApplication)
+            // Importing needs the user's Health Connect grant, so the worker decides on every run
+            // and stays silent until the permission is there.
+            runCatching { SleepSyncWorker.schedule(this@AwakrApplication) }
         }
     }
 

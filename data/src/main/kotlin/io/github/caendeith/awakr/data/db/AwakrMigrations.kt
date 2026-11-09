@@ -27,5 +27,27 @@ internal object AwakrMigrations {
         }
     }
 
-    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+    /** v4 adds the ring screen background choice and the sleep sessions imported from Health Connect. */
+    val MIGRATION_3_4: Migration = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE alarms ADD COLUMN background_id TEXT NOT NULL DEFAULT ''")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `sleep_sessions` (" +
+                    "`id` TEXT NOT NULL, " +
+                    "`start_time` INTEGER NOT NULL, " +
+                    "`end_time` INTEGER NOT NULL, " +
+                    "`stages` TEXT NOT NULL DEFAULT '', " +
+                    "`hr_min` INTEGER, " +
+                    "`hr_avg` INTEGER, " +
+                    "`hr_max` INTEGER, " +
+                    "`spo2_avg` REAL, " +
+                    "`source` TEXT NOT NULL DEFAULT '', " +
+                    "`imported_at` INTEGER NOT NULL DEFAULT 0, " +
+                    "PRIMARY KEY(`id`))",
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_sleep_sessions_start_time` ON `sleep_sessions` (`start_time`)")
+        }
+    }
+
+    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
 }

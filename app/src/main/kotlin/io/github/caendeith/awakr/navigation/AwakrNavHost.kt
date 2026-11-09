@@ -8,12 +8,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.caendeith.awakr.AwakrApplication
+import io.github.caendeith.awakr.R
 import io.github.caendeith.awakr.alarm.WakeUpCheck
 import io.github.caendeith.awakr.core.alarm.Alarm
 import io.github.caendeith.awakr.core.audio.SoundResolver
@@ -29,6 +31,8 @@ import io.github.caendeith.awakr.ui.onboarding.OnboardingScreen
 import io.github.caendeith.awakr.ui.plugins.PluginsScreen
 import io.github.caendeith.awakr.ui.settings.BackupScreen
 import io.github.caendeith.awakr.ui.settings.SettingsScreen
+import io.github.caendeith.awakr.ui.sleep.SleepScreen
+import io.github.caendeith.awakr.ui.sleep.SleepWeekCalculator
 import io.github.caendeith.awakr.ui.stats.StatsScreen
 import io.github.caendeith.awakr.ui.widget.AlarmWidgetUpdater
 import kotlinx.coroutines.launch
@@ -53,6 +57,21 @@ fun AwakrNavHost(
     val resources = LocalResources.current
 
     val pluginStates by data.pluginStates.observeAll().collectAsState(initial = emptyList())
+    // The home card only needs the last night, so the whole history stays in the database.
+    val sleepSessions by data.sleep.observeAll().collectAsState(initial = emptyList())
+    val sleepWeek = remember(sleepSessions) {
+        SleepWeekCalculator.compute(sleepSessions, ZonedDateTime.now())
+    }
+    val lastNight = sleepWeek.lastNight
+    val sleepDurationText = if (lastNight == null) {
+        null
+    } else {
+        stringResource(
+            R.string.sleep_duration,
+            (lastNight.asleepMillis / 3_600_000L).toInt(),
+            ((lastNight.asleepMillis / 60_000L) % 60L).toInt(),
+        )
+    }
     val enabledPluginIds: Set<String> = plugins.missions
         .filter { plugin ->
             pluginStates.firstOrNull { it.pluginId == plugin.manifest.id }?.enabled ?: true
@@ -128,6 +147,8 @@ fun AwakrNavHost(
                 onEditAlarm = { id -> navController.navigate(Routes.editor(id)) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 onOpenStats = { navController.navigate(Routes.STATS) },
+                onOpenSleep = { navController.navigate(Routes.SLEEP) },
+                sleepSummary = sleepDurationText,
                 missedLabels = missedLabels,
                 onDelete = { ids ->
                     scope.launch {
@@ -280,6 +301,19 @@ fun AwakrNavHost(
                     // Read at ring time, so no alarm has to be re-armed for this.
                     scope.launch { data.settings.setSpeakLabel(speak) }
                 },
+                onRingBackgroundChange = { backgroundId ->
+                    scope.launch { data.settings.setRingBackground(backgroundId) }
+                },
+                onRingBackgroundDimChange = { percent ->
+                    scope.launch { data.settings.setRingBackgroundDim(percent) }
+                },
+                onOpenSleep = { navController.navigate(Routes.SLEEP) },
+            )
+        }
+        composable(Routes.SLEEP) {
+            SleepScreen(
+                data = data,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Routes.PLUGINS) {
