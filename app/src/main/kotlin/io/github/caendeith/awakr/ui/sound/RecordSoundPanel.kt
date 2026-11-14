@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
+import io.github.caendeith.awakr.core.ui.icon.AwakrIcons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -231,7 +232,7 @@ private fun PreviewActions(
             if (clip != null) {
                 IconButton(onClick = if (playing) onStopPreview else onPreview) {
                     Icon(
-                        imageVector = Icons.Filled.PlayArrow,
+                        imageVector = if (playing) AwakrIcons.Stop else Icons.Filled.PlayArrow,
                         contentDescription = stringResource(
                             if (playing) R.string.sound_picker_stop else R.string.sound_picker_preview,
                         ),

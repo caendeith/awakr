@@ -18,6 +18,14 @@ sealed interface SoundSection {
     data class Recorded(val sounds: List<RecordedSound>) : SoundSection
 }
 
+/** What a tap on a row's preview button does. */
+enum class SoundPreviewAction {
+    Play,
+
+    /** The tapped sound is the one already playing: the tap is a stop, not a restart. */
+    Stop,
+}
+
 /**
  * Pure layout rules of the sound picker: which chips exist, which sections are visible for a filter
  * and whether the stored id marks a row as selected. No Android types, so it is unit tested.
@@ -73,4 +81,15 @@ object SoundPickerModel {
     /** Exactly one row may be selected; the picker relies on this staying true. */
     fun selectionCount(sections: List<SoundSection>, currentSoundId: String?): Int =
         ids(sections).count { isSelected(currentSoundId, it) }
+
+    /**
+     * A preview button is a toggle: tapping the row that is already playing stops it instead of
+     * restarting it, so a looping preview never becomes impossible to silence.
+     */
+    fun nextPreviewAction(previewingId: String?, tapped: String): SoundPreviewAction =
+        if (previewingId != null && previewingId == tapped) {
+            SoundPreviewAction.Stop
+        } else {
+            SoundPreviewAction.Play
+        }
 }

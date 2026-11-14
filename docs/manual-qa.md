@@ -290,3 +290,25 @@ the same Pixel 7 Pro (GrapheneOS, Android 17), lock screen enabled, phone unlock
 | Editor save | change the time in the editor and leave with the back arrow | ⚠️ the change is discarded silently: the editor only persists through its *Save* button, which sits below the sound section and is off-screen at first. Not a regression, worth a guard later |
 | Build | `:app:assembleRelease :app:testDebugUnitTest :data:testDebugUnitTest :core:perm:testDebugUnitTest :app:lintRelease` | ✅ green; APK `Awakr-1.6.1.apk` 5 586 045 B, sha256 `696a9ae5902a64f56873e3ebb29139a04830e3952a09996ba95979743cbefbf7` |
 
+## v1.6.2 pass — a preview that stops
+
+Release APK `Awakr-1.6.2.apk` (versionCode 13) installed with `adb install -r` over the 1.6.1 release on
+the same Pixel 7 Pro (GrapheneOS, Android 17). The problem: a preview loops until the player is
+released, and neither the editor nor the picker had a control that stopped it.
+
+| Area | What to check | Status |
+|---|---|---|
+| Editor preview | tap *Прослушать*, then the same button again | ✅ the label flipped to *Остановить* while playing and back afterwards (`.notes/screens/v162-editor-previewing.png`, `v162-editor-stopped.png`); `dumpsys audio` showed the app's MediaPlayer as `state:started`, usage `USAGE_ALARM`, while playing, and no started player once stopped |
+| Row preview is a toggle | tap the play icon of a sound row twice | ✅ the icon became a stop square with the "Остановить" description while playing, and the second tap silenced it and restored the play icon (`.notes/screens/v162-picker.png`, `v162-picker-playing.png`) |
+| Stop bar | while a preview runs, look under the picker title | ✅ a bar appeared with the sound name ("Перезвон") and an *Остановить* button; tapping it stopped playback (0 started players in `dumpsys audio`) |
+| Closing the sheet | start a preview, dismiss the sheet with the scrim | ✅ playback stopped: `dumpsys audio` went from 1 started player to 0, and the editor row read *Прослушать* again |
+| Editor is left untouched | open an existing alarm, audition sounds, leave with the back arrow | ✅ the stored alarm kept its time (11:30) — a preview never writes to the draft |
+| Build | `:app:assembleRelease :app:testDebugUnitTest :data:testDebugUnitTest :core:perm:testDebugUnitTest :core:audio:testDebugUnitTest :app:lintRelease` | ✅ green on the 1.6.2 tree; APK 5 586 045 B, sha256 `3da51567c371d618c165489fcb5f9ac89d1c3595f9f39d18f2eaa042e85d9bd1` |
+
+### What changed in the code
+
+- `SoundPickerModel.nextPreviewAction` is the pure rule behind the toggle (same row → stop), unit tested;
+  the sheet keeps its own `previewingId` and no longer restarts a running preview.
+- The sheet stops the player in `DisposableEffect.onDispose`, so a dismissed sheet is silent.
+- `AwakrIcons.Stop` draws the stop square: the project ships `material-icons-core` only, which has no
+  `Stop` glyph, and the extended set is megabytes for one icon.

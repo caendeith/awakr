@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
+import io.github.caendeith.awakr.core.ui.icon.AwakrIcons
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -83,6 +84,8 @@ fun SoundPickerSheet(
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val player = remember { AlarmSoundPlayer(context) }
+    // A preview loops until it is stopped, so closing the sheet must not leave it ringing.
+    DisposableEffect(Unit) { onDispose { player.stop() } }
     val recorder = remember { AlarmRecorder(context) }
 
     var filter by remember { mutableStateOf<SoundFilter>(SoundFilter.All) }
@@ -161,14 +164,24 @@ fun SoundPickerSheet(
     }
 
     val previewSound: (String) -> Unit = { id ->
+        if (SoundPickerModel.nextPreviewAction(previewingId, id) == SoundPreviewAction.Stop) {
+            player.stop()
+            previewingId = null
+        } else {
+            player.stop()
+            player.play(
+                uri = SoundResolver.uri(context, id, defaultSoundId),
+                rampSeconds = 0,
+                startVolumePercent = 100,
+                scope = scope,
+            )
+            previewingId = id
+        }
+    }
+
+    val stopPreview: () -> Unit = {
         player.stop()
-        player.play(
-            uri = SoundResolver.uri(context, id, defaultSoundId),
-            rampSeconds = 0,
-            startVolumePercent = 100,
-            scope = scope,
-        )
-        previewingId = id
+        previewingId = null
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -254,6 +267,35 @@ fun SoundPickerSheet(
                 modifier = Modifier.padding(bottom = 12.dp),
             )
 
+            // Always-on stop control: a looping preview is loud and long, so it needs a way out
+            // that does not depend on finding the row that started it.
+            previewingId?.let { id ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = AwakrIcons.Stop,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        text = SoundResolver.name(context, id)
+                            ?: stringResource(R.string.sound_picker_preview),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp),
+                    )
+                    TextButton(onClick = stopPreview) {
+                        Text(stringResource(R.string.sound_picker_stop))
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -291,6 +333,7 @@ fun SoundPickerSheet(
                                 selected = SoundPickerModel.isSelected(currentSoundId, id),
                                 onClick = { choose(id) },
                                 onPreview = { previewSound(id) },
+                                playing = previewingId == id,
                             )
                         }
                     }
@@ -312,6 +355,7 @@ fun SoundPickerSheet(
                                 onClick = { choose(sound.soundId) },
                                 onPreview = { previewSound(sound.soundId) },
                                 onDelete = { pendingDelete = sound },
+                                playing = previewingId == sound.soundId,
                             )
                         }
                     }
@@ -411,6 +455,7 @@ private fun SoundRow(
     selected: Boolean,
     onClick: () -> Unit,
     onPreview: (() -> Unit)? = null,
+    playing: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
 ) {
     Row(
@@ -435,9 +480,15 @@ private fun SoundRow(
         if (onPreview != null) {
             IconButton(onClick = onPreview) {
                 Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = stringResource(R.string.sound_picker_preview),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    imageVector = if (playing) AwakrIcons.Stop else Icons.Filled.PlayArrow,
+                    contentDescription = stringResource(
+                        if (playing) R.string.sound_picker_stop else R.string.sound_picker_preview,
+                    ),
+                    tint = if (playing) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
             }
         }
@@ -451,6 +502,7 @@ private fun RecordedRow(
     onClick: () -> Unit,
     onPreview: () -> Unit,
     onDelete: () -> Unit,
+    playing: Boolean = false,
 ) {
     Row(
         modifier = Modifier
@@ -479,9 +531,15 @@ private fun RecordedRow(
         }
         IconButton(onClick = onPreview) {
             Icon(
-                imageVector = Icons.Filled.PlayArrow,
-                contentDescription = stringResource(R.string.sound_picker_preview),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                imageVector = if (playing) AwakrIcons.Stop else Icons.Filled.PlayArrow,
+                contentDescription = stringResource(
+                    if (playing) R.string.sound_picker_stop else R.string.sound_picker_preview,
+                ),
+                tint = if (playing) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
         }
         IconButton(onClick = onDelete) {

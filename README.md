@@ -14,7 +14,7 @@ solve arithmetic, shake the phone, retype a phrase, or scan a barcode you left i
 <img alt="Kotlin 2.2" src="https://img.shields.io/badge/Kotlin-2.2.21-7f52ff?logo=kotlin&logoColor=white">
 <img alt="Jetpack Compose" src="https://img.shields.io/badge/Compose-Material%203-4285f4">
 <img alt="No INTERNET permission" src="https://img.shields.io/badge/INTERNET-not%20requested-critical">
-<img alt="Version" src="https://img.shields.io/badge/version-1.6.1-informational">
+<img alt="Version" src="https://img.shields.io/badge/version-1.6.2-informational">
 </p>
 
 <p><sub>254 unit tests · release APK 5.3 MB · ru + en · clean-room, no third-party code, assets or sounds</sub></p>
@@ -170,6 +170,7 @@ Release signing is driven by an optional, git-ignored `keystore.properties`; wit
 | 12 | v1.5: softer ring flow, bigger mission set, backup polish | done |
 | 13 | v1.6: alarm-screen backgrounds (12 built-in looks + your own photos) and sleep tracking imported from Health Connect | done |
 | 14 | v1.6.1: the ring screen opens full screen on an unlocked phone that is in use (needs "Display over other apps") | done |
+| 15 | v1.6.2: a sound preview stops with the same button that started it | done |
 
 Roadmap ideas for the next versions: a photo mission (compare a shot with a reference frame), sleep sounds with a sleep timer, alarm-linked habits, more barcode formats, Wear OS, and runtime-loaded plugin APKs (deliberately postponed - Play and F-Droid forbid them).
 

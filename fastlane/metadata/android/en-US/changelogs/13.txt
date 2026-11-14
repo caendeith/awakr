@@ -1,0 +1,8 @@
+Stop a preview with the same button that started it.
+
+* The preview on a sound row is now a toggle: tap it again to stop the looping
+  sound, and the button turns into a stop square while it plays.
+* While a preview is playing, the picker shows a stop bar under its title, so
+  there is always a way out without hunting for the row.
+* Preview in the alarm editor toggles too, and closing the picker or opening it
+  from the editor silences whatever was playing.

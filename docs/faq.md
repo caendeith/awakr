@@ -135,6 +135,14 @@ Yes. Editor → sound card → **Import** (Импорт), pick any audio file. T
 private storage, so it keeps working after the original is deleted; uninstalling the app removes the
 copy. The alarm always rings even if the copy is missing (default sound fallback).
 
+## The preview keeps playing — how do I stop it?
+
+Tap the same button again. The preview is a toggle (from 1.6.2): in the sound picker the play icon on
+a row turns into a stop square while that sound is playing, and one more tap silences it. While any
+preview runs, a bar under the sheet title shows the name and an **Остановить / Stop** button, so you
+never have to scroll back to the row that started it. The **Прослушать / Preview** button in the
+alarm editor works the same way, and closing the picker stops whatever was playing.
+
 ## Can I put a photo or a gradient behind the ringing alarm?
 
 Yes (from 1.6.0). Two places: Settings → **Alarm screen → Background** sets the default, and the alarm

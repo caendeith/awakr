@@ -183,7 +183,13 @@ fun AlarmEditorScreen(
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
         val player = remember { AlarmSoundPlayer(context) }
+        var previewing by remember { mutableStateOf(false) }
+        // Previews loop, so leaving the editor or opening the picker must silence the last one.
         DisposableEffect(Unit) { onDispose { player.stop() } }
+        val stopPreview: () -> Unit = {
+            player.stop()
+            previewing = false
+        }
 
         val importSound = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
@@ -368,16 +374,30 @@ fun AlarmEditorScreen(
                         )
                     }
                     TextButton(onClick = {
-                        player.play(
-                            uri = SoundResolver.uri(context, current.soundId, defaultSoundId),
-                            rampSeconds = 0,
-                            startVolumePercent = 100,
-                            scope = scope,
-                        )
+                        if (previewing) {
+                            stopPreview()
+                        } else {
+                            player.play(
+                                uri = SoundResolver.uri(context, current.soundId, defaultSoundId),
+                                rampSeconds = 0,
+                                startVolumePercent = 100,
+                                scope = scope,
+                            )
+                            previewing = true
+                        }
                     }) {
-                        Text(stringResource(R.string.editor_sound_preview))
+                        Text(
+                            stringResource(
+                                if (previewing) R.string.sound_picker_stop else R.string.editor_sound_preview,
+                            ),
+                        )
                     }
-                    TextButton(onClick = { showSoundSheet = true }) {
+                    TextButton(
+                        onClick = {
+                            stopPreview()
+                            showSoundSheet = true
+                        },
+                    ) {
                         Text(stringResource(R.string.editor_sound_choose))
                     }
                 }

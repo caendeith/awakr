@@ -103,4 +103,22 @@ class SoundPickerModelTest {
         assertTrue(SoundPickerModel.isSelected("builtin:pulse", "builtin:pulse"))
         assertFalse(SoundPickerModel.isSelected(null, "builtin:pulse"))
     }
+
+    @Test
+    fun tappingThePlayingRowStopsInsteadOfRestarting() {
+        // Nothing playing: any tap starts a preview.
+        assertEquals(SoundPreviewAction.Play, SoundPickerModel.nextPreviewAction(null, "builtin:bell"))
+
+        // Another row: the new sound replaces the old one.
+        assertEquals(
+            SoundPreviewAction.Play,
+            SoundPickerModel.nextPreviewAction("builtin:bell", "builtin:pulse"),
+        )
+
+        // The same row again: the looping preview stops.
+        assertEquals(
+            SoundPreviewAction.Stop,
+            SoundPickerModel.nextPreviewAction("builtin:bell", "builtin:bell"),
+        )
+    }
 }
